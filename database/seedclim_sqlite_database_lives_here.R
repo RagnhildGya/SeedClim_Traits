@@ -1,1 +1,0 @@
-seedclim.sqlite database lives here
