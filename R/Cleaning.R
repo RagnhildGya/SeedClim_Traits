@@ -8,7 +8,7 @@ library("lubridate")
 
 #### Load trait data ####
 
-traits <-read.csv("Traits/Data/LeafTraits_SeedClim.csv", header=TRUE, sep = ";", stringsAsFactors = FALSE)
+traits <-read.csv("Data/LeafTraits_SeedClim.csv", header=TRUE, sep = ";", stringsAsFactors = FALSE)
 
 
 #### Cleaning the trait data ####
