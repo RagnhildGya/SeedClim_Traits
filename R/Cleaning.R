@@ -26,7 +26,7 @@ traits <- traits %>%
   
 #### Load leaf area data ####
 
-LA <- read.csv2("Traits/Data/Leaf_area_total.csv", stringsAsFactors = FALSE)
+LA <- read.csv2("Data/Leaf_area_total.csv", stringsAsFactors = FALSE)
 
 LA<-transform(LA, Leaf_area = as.numeric(Leaf_area))
 
@@ -44,11 +44,11 @@ traitdata <- traits %>%
 
 #### Load CN data ####
 
-CN <- read.csv2("Traits/Data/CNratio.csv", dec=".", sep=";")
+CN <- read.csv2("Data/CNratio.csv", dec=".", sep=";")
 
 #Making a dictionary for the CN name abreviations
 
-dict_CN <- read.csv2("Traits/Data/Dict_CN.csv", header = TRUE, sep=";", stringsAsFactors = FALSE)
+dict_CN <- read.csv2("Data/Dict_CN.csv", header = TRUE, sep=";", stringsAsFactors = FALSE)
 
 #Making a dictionary for the site names in the CN file
 
@@ -136,9 +136,9 @@ traitdata_trans <- traitdata %>%
 #### Add info about species ####
 
 
-systematics_species<- read.csv2("Traits/Data/systematics_species.csv", sep=";", stringsAsFactors = FALSE)
+systematics_species<- read.csv2("Data/systematics_species.csv", sep=";", stringsAsFactors = FALSE)
 
-species_info<- read.csv2("Traits/Data/species_info.csv", sep=";", stringsAsFactors = FALSE)
+species_info<- read.csv2("Data/species_info.csv", sep=";", stringsAsFactors = FALSE)
 
 species_info <- species_info%>%
   select(species, functionalGroup, lifeSpan, occurrence)%>%
@@ -157,7 +157,7 @@ traitdata_1 <- traitdata_1 %>%
 
 # Reading in and cleaning the community data so that it is ready to be used only for cover
 
-community <-read.csv2("Traits/Data/funcab_composition_2016.csv", header=TRUE, sep=";", stringsAsFactors = FALSE)
+community <-read.csv2("Data/funcab_composition_2016.csv", header=TRUE, sep=";", stringsAsFactors = FALSE)
 
 community<-community %>%
   filter(Site!="")%>%
