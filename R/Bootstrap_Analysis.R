@@ -328,6 +328,11 @@ RDA <- rda(PCA_boot_traits[, -(1:2)]~ env$Temp*env$Precip*env$VPD, scale = TRUE)
 
 summary(RDA)
 plot(RDA)
+screeplot(RDA)
+
+coef(RDA)
+
+RsquareAdj(RDA)
 
 # Code that doesn't work for contrained analysis
 # biplot(RDA, scaling = "symmetric")
