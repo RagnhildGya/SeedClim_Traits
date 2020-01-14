@@ -341,14 +341,14 @@ plot(RDA)
 
 # There were two codes for making the dataset ready for the model, I think this was the old one and that could maybe be deleted, keeping it here in case I need it later. 
 
-Bootstrap_Traits2 <- Bootstrap_Traits1 %>% 
-  ungroup() %>%
-  #left_join(metaNorway %>% select(Site, VPD, bio10, bio12), by = "Site") %>% 
-  #rename("Temp_summer" = "bio10", "Precip_annual" = "bio12") %>% 
-  gather(Moment, Value, Mean, Variance, Skewness, Kurtosis) %>% 
-  # pivot_longer(cols %in% ("Mean", "Variance", "Skewness", "Kurtosis"),
-  #              names_to = "Moments",
-  #              values_to = "Value")
-  select(Trait, Moment, Site, VPD, Value) %>% 
-  group_by(Trait, Moment) %>% 
-  nest() 
+# Bootstrap_Traits2 <- Bootstrap_Traits1 %>% 
+#   ungroup() %>%
+#   #left_join(metaNorway %>% select(Site, VPD, bio10, bio12), by = "Site") %>% 
+#   #rename("Temp_summer" = "bio10", "Precip_annual" = "bio12") %>% 
+#   gather(Moment, Value, Mean, Variance, Skewness, Kurtosis) %>% 
+#   # pivot_longer(cols %in% ("Mean", "Variance", "Skewness", "Kurtosis"),
+#   #              names_to = "Moments",
+#   #              values_to = "Value")
+#   select(Trait, Moment, Site, VPD, Value) %>% 
+#   group_by(Trait, Moment) %>% 
+#   nest() 
