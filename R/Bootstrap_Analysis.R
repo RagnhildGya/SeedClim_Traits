@@ -85,9 +85,9 @@ mixed_model_temp_precip<-function(df) {
 #   lmer(Value ~ Soil_moisture + (1 | Site), data = df)
 # }
 
-mixed_model_VPD<-function(df) {
-  lmer(Value ~ VPD + (1 | Site), data = df)
-}
+# mixed_model_VPD<-function(df) {
+#   lmer(Value ~ VPD + (1 | Site), data = df)
+# }
 
 predict_without_random<-function(model) {
    predict(object = model, re.form=NA)
