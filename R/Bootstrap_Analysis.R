@@ -2,8 +2,8 @@
 
 ### Source ###
 
-source("Traits/Cleaning.R")
-source("Traits/Bootstraping.R")
+source("R/Cleaning.R")
+source("R/Bootstraping.R")
 
 ### Libraries ###
 
@@ -89,9 +89,10 @@ mixed_model_VPD<-function(df) {
   lmer(Value ~ VPD + (1 | Site), data = df)
 }
 
-# predict_without_random<-function(model) {
-#   predict(object = model, re.form=NA)
-# }
+predict_without_random<-function(model) {
+   predict(object = model, re.form=NA)
+ }
+
 # 
 # mixed_model_temp<-function(df) {
 #   lmer(Value ~ Temp + (1 | Site), data = df)
@@ -129,17 +130,18 @@ Bootstrap_Traits2 <- Bootstrap_Traits1 %>%
 #   rename(mynewdata = data)
 # 
 
-### This is the code to run the model on, time consuming(!) therefor commented out ###
+### This is the code to run the model on - TIME CONSUMING ###
 
-# results <- Bootstrap_Traits2 %>%
-#   mutate(model = map(data, mixed_model_temp_precip))
+ results <- Bootstrap_Traits2 %>%
+   mutate(model = map(data, mixed_model_temp_precip))
 
 # Tidying the model, giving the model output in a nice format. Making predicted values for each of the trait:moment combination along the climatic gradients. Calculating pseudo R squared values based on the method in paper Nakagawa et al 2017.
 
 tidy_model_predicted <- results %>%
   mutate(model_output = map(model, tidy)) %>%
-  mutate(predicted = map(model, predict_without_random)) %>%
-  mutate(R_squared = map(model, rsquared))
+  mutate(predicted = map(model, predict_without_random))
+  #%>%
+  #mutate(R_squared = map(model, rsquared))
 
 # Making a dataset with only the predicted values. Unnesting the list of the predicted values.
 
@@ -152,15 +154,15 @@ predicted_values <- tidy_model_predicted %>%
 # Making a dataset with the model output and the test-statistics (R squared), and summarizing them.
 
 model_output <- tidy_model_predicted %>% 
-  select(Trait, Moment, n, model_output, R_squared) %>% 
-  unnest(c(model_output, R_squared)) %>% 
+  select(Trait, Moment, n, model_output) %>% #, R_squared) %>% 
+  unnest(model_output) %>% #c(model_output, R_squared)) %>% 
   filter(term %in% c("Temp", "scale(Precip)")) %>% 
-  select(Trait, Moment, term, n, estimate, Marginal, Conditional) %>% 
+  select(Trait, Moment, term, n, estimate) %>%  #, Marginal, Conditional) %>% 
   ungroup() %>% 
   group_by(Trait, Moment, term) %>% 
   summarize(effect = mean(estimate),
-            R2_marginal = mean(Marginal),
-            R2_conditional = mean(Conditional),
+            #R2_marginal = mean(Marginal),
+            #R2_conditional = mean(Conditional),
             CIlow.fit = effect - sd(estimate),
             CIhigh.fit = effect + sd(estimate)) %>% 
   mutate(Significant = case_when(CIlow.fit < 0 & CIhigh.fit < 0 ~ "Negative",
@@ -229,6 +231,8 @@ fviz_pca_var(res.pca,
              repel = TRUE     # Avoid text overlapping
 )
 
+#ggsave("PCA.jpg", width = 25 , height = 15, units = "cm")
+
 #Make a biplot of individuals and variables
 
 fviz_pca_biplot(res.pca, repel = TRUE,
@@ -237,6 +241,8 @@ fviz_pca_biplot(res.pca, repel = TRUE,
                 label = "var"
 )
 
+#ggsave("PCA_communitypoints.jpg", width = 15 , height = 15, units = "cm")
+
 #Visualize individuals, add ellpises with tempereature and preacipitation
 
 fviz_pca_ind(res.pca,
@@ -244,26 +250,34 @@ fviz_pca_ind(res.pca,
              habillage = PCA_boot_traits$T_cat,
              addEllipses=TRUE, ellipse.level=0.95
 )
-
+#ggsave("PCA_temp.jpg", width = 21 , height = 15, units = "cm")
 
 fviz_pca_ind(res.pca,
              label = "none",
              habillage = PCA_boot_traits$P_cat,
              addEllipses=TRUE, ellipse.level=0.95
 )
-
+#ggsave("PCA_precip.jpg", width = 21 , height = 15, units = "cm")
 
 fviz_pca_biplot(res.pca, 
-                col.ind = PCA_boot_traits$T_cat, palette = "jco", 
+                col.ind = PCA_boot_traits$P_cat, 
                 addEllipses = TRUE, label = "var",
                 col.var = "black", repel = TRUE,
                 legend.title = "Temperature") 
 
+#ggsave("PCA_precip_with_traitaxes.jpg", width = 21 , height = 15, units = "cm")
+
+fviz_pca_biplot(res.pca, 
+                col.ind = PCA_boot_traits$T_cat, 
+                addEllipses = TRUE, label = "var",
+                col.var = "black", repel = TRUE,
+                legend.title = "Temperature") 
+
+#ggsave("PCA_temp_with_traitaxes.jpg", width = 21 , height = 15, units = "cm")
 
 # Eigenvalues
 eig.val <- get_eigenvalue(res.pca) #Extract the eigenvalues/variances of principal components
 eig.val
-eig.val_R1 <- get_eigenvalue(res.pca_R1)
 
 
 res.var <- get_pca_var(res.pca) #Extract the results for variables
@@ -280,6 +294,7 @@ res.ind$contrib        # Contributions to the PCs
 res.ind$cos2           # Quality of representation 
 
 ggcorrplot(res.var$cos2, method = "circle")
+#ggsave("PCA_dimentions_traits.jpg", width = 18 , height = 15, units = "cm")
 
 fviz_cos2(res.pca, choice = "var", axes = 1)
 fviz_cos2(res.pca, choice = "var", axes = 2)
@@ -303,7 +318,7 @@ res.desc$Dim.1
 library(vegan)
 library("ggvegan")
 
-env <- CI_Mean_Boot_Traits1 %>% 
+env <- CI_Mean_Boot_Traits %>% 
   ungroup() %>% 
   dplyr::select(turfID, Temp, Precip, VPD) %>%
   distinct() %>% 
@@ -317,6 +332,9 @@ biplot(RDA, scaling = "symmetric")
 RsquareAdj(RDA)
 
 plot(RDA)
+rda_fort <- fortify(RDA)
+
+autoplot(RDA)
 
 
 #### Old code ####
