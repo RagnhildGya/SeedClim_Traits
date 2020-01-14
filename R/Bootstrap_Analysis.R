@@ -11,7 +11,7 @@ library(broom.mixed)
 library(lme4)
 library(lmerTest)
 library(purrr)
-library(piecewiseSEM)
+#library(piecewiseSEM) #commenting our as it is not working right now
 library(factoextra)
 library(GGally)
 library(ggcorrplot)
@@ -327,14 +327,14 @@ env <- CI_Mean_Boot_Traits %>%
 RDA <- rda(PCA_boot_traits[, -(1:2)]~ env$Temp*env$Precip*env$VPD, scale = TRUE)
 
 summary(RDA)
-
-biplot(RDA, scaling = "symmetric")
-RsquareAdj(RDA)
-
 plot(RDA)
-rda_fort <- fortify(RDA)
 
-autoplot(RDA)
+# Code that doesn't work for contrained analysis
+# biplot(RDA, scaling = "symmetric")
+# RsquareAdj(RDA)
+
+# rda_fort <- fortify(RDA)
+# autoplot(RDA)
 
 
 #### Old code ####
