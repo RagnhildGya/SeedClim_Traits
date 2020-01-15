@@ -49,11 +49,12 @@ Raw_Data_Weighted %>%
 ## Mean
 
 CI_Mean_Boot_Traits %>% 
-  ggplot(aes(VPD, meanMean, color = T_cat, shape = P_cat)) +
+  ggplot(aes(Temp, meanMean, color = T_cat)) +
   geom_point(alpha = 0.5) +
   geom_errorbar(aes(ymin = CIlow.Mean, ymax = CIhigh.Mean)) +
-  facet_wrap(~Trait, nrow = 3, scales = "free_y") +
-  labs(y = "Community weighted Mean", x = "Vapour pressure deficit")+
+  facet_wrap(~Trait, nrow = 3, scales = "free_x") +
+  labs(y = "Community weighted Mean", x = "Temp") +
+  coord_flip() +
   theme_bw()
 
 ## Variance
@@ -68,17 +69,20 @@ CI_Mean_Boot_Traits %>%
 
 ## Kurtosis
 
-CI_Mean_Boot_Traits1 %>% 
-  ggplot(aes(VPD, meanKurt, color = T_cat)) +
+CI_Mean_Boot_Traits %>% 
+  ggplot(aes(Temp, meanKurt, color = T_cat)) +
   geom_point(alpha = 0.5) +
   geom_errorbar(aes(ymin = CIlow.Kurt, ymax = CIhigh.Kurt)) +
-  facet_wrap(~Trait, nrow = 3, scales = "free_y") +
-  labs(y = "Community weighted Kurtosis", x = "Vapour pressure deficit")+
+  facet_wrap(~Trait, nrow = 3, scales = "free_x") +
+  labs(y = "Community weighted Kurtosis", x = "Vapour pressure deficit") +
+  coord_flip() +
+  geom_hline(yintercept = 0) +
+  geom_hline(yintercept = mean()) +
   theme_bw()
 
 ## Skewness
 
-CI_Mean_Boot_Traits1 %>% 
+CI_Mean_Boot_Traits %>% 
   ggplot(aes(VPD, meanSkew, color = T_cat)) +
   geom_point(alpha = 0.5) +
   geom_errorbar(aes(ymin = CIlow.Skew, ymax = CIhigh.Skew)) +
@@ -245,12 +249,13 @@ model_output_graph_precip <- model_output %>%
 
 
 
-############ Old code - can this be used to something, or should it just be removed? ###########
+############ Code for making the skewness and kurtosis plots with mean and confidence intervals ###########
+### Need to make into a function ###
 
 
 ## Skewness Leaf thickness ##
 
-CI_Mean_Boot_Traits2 <- CI_Mean_Boot_Traits1 %>% 
+CI_Mean_Boot_Traits2 <- CI_Mean_Boot_Traits %>% 
   group_by(Trait) %>% 
   mutate(M_meanMean = mean(meanMean),
          CIlow_M_Mean = M_meanMean - sd(meanMean),
@@ -267,7 +272,7 @@ CI_Mean_Boot_Traits2 <- CI_Mean_Boot_Traits1 %>%
 
 Lth_skew <- CI_Mean_Boot_Traits2 %>% 
   filter(Trait == "Leaf_Thickness_Ave_mm") %>% 
-  ggplot(aes(VPD, meanSkew)) +
+  ggplot(aes(Temp, meanSkew)) +
   geom_point(alpha = 0.5) +
   geom_errorbar(aes(ymin = CIlow.Skew, ymax = CIhigh.Skew)) +
   geom_hline(yintercept = 0) +
@@ -282,7 +287,7 @@ Lth_skew <- CI_Mean_Boot_Traits2 %>%
 
 LA_Skew <- CI_Mean_Boot_Traits2 %>% 
   filter(Trait == "Leaf_Area_cm2_log") %>% 
-  ggplot(aes(VPD, meanSkew)) +
+  ggplot(aes(Temp, meanSkew)) +
   geom_point(alpha = 0.5) +
   geom_errorbar(aes(ymin = CIlow.Skew, ymax = CIhigh.Skew)) +
   labs(y = "Leaf area (cm2)")+
@@ -295,7 +300,7 @@ LA_Skew <- CI_Mean_Boot_Traits2 %>%
 
 Dry_Skew <- CI_Mean_Boot_Traits2 %>% 
   filter(Trait == "Dry_Mass_g_log") %>% 
-  ggplot(aes(VPD, meanSkew)) +
+  ggplot(aes(Temp, meanSkew)) +
   geom_point(alpha = 0.5) +
   geom_errorbar(aes(ymin = CIlow.Skew, ymax = CIhigh.Skew)) +
   labs(y = "Dry mass (g)")+
@@ -309,7 +314,7 @@ Dry_Skew <- CI_Mean_Boot_Traits2 %>%
 
 CN_Skew <- CI_Mean_Boot_Traits2 %>% 
   filter(Trait == "CN_ratio") %>% 
-  ggplot(aes(VPD, meanSkew)) +
+  ggplot(aes(Temp, meanSkew)) +
   geom_point(alpha = 0.5) +
   geom_errorbar(aes(ymin = CIlow.Skew, ymax = CIhigh.Skew)) +
   labs(y = "C/N ratio")+
@@ -322,7 +327,7 @@ CN_Skew <- CI_Mean_Boot_Traits2 %>%
 
 C_Skew <- CI_Mean_Boot_Traits2 %>% 
   filter(Trait == "C_percent") %>% 
-  ggplot(aes(VPD, meanSkew)) +
+  ggplot(aes(Temp, meanSkew)) +
   geom_point(alpha = 0.5) +
   geom_errorbar(aes(ymin = CIlow.Skew, ymax = CIhigh.Skew)) +
   labs(y = "C %")+
@@ -335,7 +340,7 @@ C_Skew <- CI_Mean_Boot_Traits2 %>%
 
 N_Skew <- CI_Mean_Boot_Traits2 %>% 
   filter(Trait == "N_percent") %>% 
-  ggplot(aes(VPD, meanSkew)) +
+  ggplot(aes(Temp, meanSkew)) +
   geom_point(alpha = 0.5) +
   geom_errorbar(aes(ymin = CIlow.Skew, ymax = CIhigh.Skew)) +
   labs(y = "N %")+
@@ -348,7 +353,7 @@ N_Skew <- CI_Mean_Boot_Traits2 %>%
 
 SLA_Skew <- CI_Mean_Boot_Traits2 %>% 
   filter(Trait == "SLA_cm2_g") %>% 
-  ggplot(aes(VPD, meanSkew)) +
+  ggplot(aes(Temp, meanSkew)) +
   geom_point(alpha = 0.5) +
   geom_errorbar(aes(ymin = CIlow.Skew, ymax = CIhigh.Skew)) +
   labs(y = "SLA (cm2/g)")+
@@ -361,7 +366,7 @@ SLA_Skew <- CI_Mean_Boot_Traits2 %>%
 
 Height_Skew <- CI_Mean_Boot_Traits2 %>% 
   filter(Trait == "Plant_Height_mm_log") %>% 
-  ggplot(aes(VPD, meanSkew)) +
+  ggplot(aes(Temp, meanSkew)) +
   geom_point(alpha = 0.5) +
   geom_errorbar(aes(ymin = CIlow.Skew, ymax = CIhigh.Skew)) +
   labs(y = "Height (mm)")+
@@ -374,7 +379,7 @@ Height_Skew <- CI_Mean_Boot_Traits2 %>%
 
 LDMC_Skew <- CI_Mean_Boot_Traits2 %>% 
   filter(Trait == "LDMC") %>% 
-  ggplot(aes(VPD, meanSkew)) +
+  ggplot(aes(Temp, meanSkew)) +
   geom_point(alpha = 0.5) +
   geom_errorbar(aes(ymin = CIlow.Skew, ymax = CIhigh.Skew)) +
   labs(y = "LDMC")+
@@ -391,11 +396,13 @@ Skew_fig <- ggarrange(LDMC_Skew, SLA_Skew, CN_Skew, C_Skew, N_Skew, Lth_skew, LA
 
 annotate_figure(Skew_fig, top = text_grob("Skewness", face = "bold", size = 14))
 
+ggsave("Skewness_Temp.jpg", width = 20 , height = 20, units = "cm")
+
 ### Make multiple plots with Kurtosis
 
 Lth_Kurt <- CI_Mean_Boot_Traits2 %>% 
   filter(Trait == "Leaf_Thickness_Ave_mm") %>% 
-  ggplot(aes(VPD, meanKurt)) +
+  ggplot(aes(Temp, meanKurt)) +
   geom_point(alpha = 0.5) +
   geom_errorbar(aes(ymin = CIlow.Kurt, ymax = CIhigh.Kurt)) +
   geom_hline(yintercept = 0) +
@@ -410,7 +417,7 @@ Lth_Kurt <- CI_Mean_Boot_Traits2 %>%
 
 LA_Kurt <- CI_Mean_Boot_Traits2 %>% 
   filter(Trait == "Leaf_Area_cm2_log") %>% 
-  ggplot(aes(VPD, meanKurt)) +
+  ggplot(aes(Temp, meanKurt)) +
   geom_point(alpha = 0.5) +
   geom_errorbar(aes(ymin = CIlow.Kurt, ymax = CIhigh.Kurt)) +
   labs(y = "Leaf area (cm2)")+
@@ -423,7 +430,7 @@ LA_Kurt <- CI_Mean_Boot_Traits2 %>%
 
 Dry_Kurt <- CI_Mean_Boot_Traits2 %>% 
   filter(Trait == "Dry_Mass_g_log") %>% 
-  ggplot(aes(VPD, meanKurt)) +
+  ggplot(aes(Temp, meanKurt)) +
   geom_point(alpha = 0.5) +
   geom_errorbar(aes(ymin = CIlow.Kurt, ymax = CIhigh.Kurt)) +
   labs(y = "Dry mass (g)")+
@@ -436,7 +443,7 @@ Dry_Kurt <- CI_Mean_Boot_Traits2 %>%
 
 CN_Kurt <- CI_Mean_Boot_Traits2 %>% 
   filter(Trait == "CN_ratio") %>% 
-  ggplot(aes(VPD, meanKurt)) +
+  ggplot(aes(Temp, meanKurt)) +
   geom_point(alpha = 0.5) +
   geom_errorbar(aes(ymin = CIlow.Kurt, ymax = CIhigh.Kurt)) +
   labs(y = "C/N ratio")+
@@ -449,7 +456,7 @@ CN_Kurt <- CI_Mean_Boot_Traits2 %>%
 
 C_Kurt <- CI_Mean_Boot_Traits2 %>% 
   filter(Trait == "C_percent") %>% 
-  ggplot(aes(VPD, meanKurt)) +
+  ggplot(aes(Temp, meanKurt)) +
   geom_point(alpha = 0.5) +
   geom_errorbar(aes(ymin = CIlow.Kurt, ymax = CIhigh.Kurt)) +
   labs(y = "C %")+
@@ -462,7 +469,7 @@ C_Kurt <- CI_Mean_Boot_Traits2 %>%
 
 N_Kurt <- CI_Mean_Boot_Traits2 %>% 
   filter(Trait == "N_percent") %>% 
-  ggplot(aes(VPD, meanKurt)) +
+  ggplot(aes(Temp, meanKurt)) +
   geom_point(alpha = 0.5) +
   geom_errorbar(aes(ymin = CIlow.Kurt, ymax = CIhigh.Kurt)) +
   labs(y = "N %")+
@@ -475,7 +482,7 @@ N_Kurt <- CI_Mean_Boot_Traits2 %>%
 
 SLA_Kurt <- CI_Mean_Boot_Traits2 %>% 
   filter(Trait == "SLA_cm2_g") %>% 
-  ggplot(aes(VPD, meanKurt)) +
+  ggplot(aes(Temp, meanKurt)) +
   geom_point(alpha = 0.5) +
   geom_errorbar(aes(ymin = CIlow.Kurt, ymax = CIhigh.Kurt)) +
   labs(y = "SLA (cm2/g)")+
@@ -488,7 +495,7 @@ SLA_Kurt <- CI_Mean_Boot_Traits2 %>%
 
 Height_Kurt <- CI_Mean_Boot_Traits2 %>% 
   filter(Trait == "Plant_Height_mm_log") %>% 
-  ggplot(aes(VPD, meanKurt)) +
+  ggplot(aes(Temp, meanKurt)) +
   geom_point(alpha = 0.5) +
   geom_errorbar(aes(ymin = CIlow.Kurt, ymax = CIhigh.Kurt)) +
   labs(y = "Height (mm)")+
@@ -501,7 +508,7 @@ Height_Kurt <- CI_Mean_Boot_Traits2 %>%
 
 LDMC_Kurt <- CI_Mean_Boot_Traits2 %>% 
   filter(Trait == "LDMC") %>% 
-  ggplot(aes(VPD, meanKurt)) +
+  ggplot(aes(Temp, meanKurt)) +
   geom_point(alpha = 0.5) +
   geom_errorbar(aes(ymin = CIlow.Kurt, ymax = CIhigh.Kurt)) +
   labs(y = "LDMC")+
@@ -517,4 +524,6 @@ Kurt_fig <- ggarrange(LDMC_Kurt, SLA_Kurt, CN_Kurt, C_Kurt, N_Kurt, Lth_Kurt, LA
           ncol = 3, nrow = 3)
 
 annotate_figure(Kurt_fig, top = text_grob("Kurtosis", face = "bold", size = 14))
+
+ggsave("Kurtosis_Temp.jpg", width = 20 , height = 20, units = "cm")
                 
