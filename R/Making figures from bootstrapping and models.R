@@ -10,33 +10,16 @@ library(ggpubr)
 ### Raw data bootstrapped - visualizing the distirbutions we calculate mean, variance, skewness and kurtosis on ###
 
 Raw_Data_Weighted %>% 
-  filter(Trait %in% c("CN_ratio", "LDMC",  "Plant_Height_mm_log", "SLA_cm2_g")) %>% 
+  filter(Trait %in% c("C_percent", "N_percent", "CN_ratio", "Plant_Height_mm_log", "Leaf_Area_cm2_log", "Leaf_Thickness_Ave_mm", "Dry_Mass_g_log", "SLA_cm2_g", "LDMC")) %>% 
   ggplot(aes(Value, fill = as.factor(T_level))) +
   geom_density(alpha = 0.5) +
   facet_wrap(~Trait, scales = "free") +
   labs(fill = "Summer temperature (C)") +
-  theme_bw() 
-#scale_fill_manual(values = c("cyan3", "darkolivegreen","goldenrod2" "red"))
-
-Raw_Data_Weighted %>% 
-  filter(Trait %in% c("Leaf_Thickness_Ave_mm",  "Plant_Height_mm_log")) %>% 
-  ggplot(aes(Value, fill = as.factor(P_level))) +
-  geom_density(alpha = 0.5) +
-  facet_wrap(~Trait, scales = "free") +
-  labs(fill = "Precipitation (mm/year)") +
-  theme_bw() 
-
-Raw_Data_Weighted %>% 
-  filter(Trait %in% c("Leaf_Thickness_Ave_mm",  "Plant_Height_mm_log")) %>% 
-  ggplot(aes(Value, fill = as.factor(T_level))) +
-  geom_density(alpha = 0.5) +
-  facet_wrap(~Trait, scales = "free") +
-  labs(fill = "Summer temperature (C)") +
-  theme_bw() 
+  scale_fill_manual(values = c("#0066CC", "#669900","#FFCC00")) +
+  theme_bw()
 
 
-
-#ggsave("Raw_data_distributions.jpg", width = 25 , height = 15, units = "cm")
+#ggsave("Raw_data_distributions.jpg", width = 25 , height = 12, units = "cm")
 
 ### Plotting the significant trends from the test ###
 
