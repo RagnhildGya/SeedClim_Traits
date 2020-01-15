@@ -7,7 +7,7 @@ library(ggpubr)
 #CI_Mean_Boot_Traits is the community weighted means calculated with the boostrapping method, summarized to one value per plot and trait combination, including confidence intervals for the calculations.
 #model_ouptut is the results of the model with the predictions and statistical information with R2 and 95 % confidence intervals, the last one being calculated from the 100 runs of the model.
 
-### Raw data bootstrapped - visualizing the distirbutions we calculate mean, variance, skewness and kurtosis on ###
+### Raw data bootstrapped - visualizing the distirbutions that we use to calculate mean, variance, skewness and kurtosis on ###
 
 Raw_Data_Weighted %>% 
   filter(Trait %in% c("C_percent", "N_percent", "CN_ratio", "Plant_Height_mm_log", "Leaf_Area_cm2_log", "Leaf_Thickness_Ave_mm", "Dry_Mass_g_log", "SLA_cm2_g", "LDMC")) %>% 
@@ -20,62 +20,6 @@ Raw_Data_Weighted %>%
 
 
 #ggsave("Raw_data_distributions.jpg", width = 25 , height = 12, units = "cm")
-
-### Plotting the significant trends from the test ###
-
-#Make a function for plotting this
-
-# plot_skewness<-function(df) {
-# 
-#   df %>% 
-#     ggplot(aes(Precip, meanSkew, color = T_cat)) +
-#     geom_point(alpha = 0.5) +
-#     geom_errorbar(aes(ymin = CIlow.Skew, ymax = CIhigh.Skew)) +
-#     labs(y = "Skewness - Dry mass (g)")+
-#     theme_bw()
-# }
-
-## Mean
-
-CI_Mean_Boot_Traits %>% 
-  ggplot(aes(Temp, meanMean, color = T_cat)) +
-  geom_point(alpha = 0.5) +
-  geom_errorbar(aes(ymin = CIlow.Mean, ymax = CIhigh.Mean)) +
-  facet_wrap(~Trait, nrow = 3, scales = "free_x") +
-  labs(y = "Community weighted Mean", x = "Temp") +
-  coord_flip() +
-  theme_bw()
-
-## Variance
-
-CI_Mean_Boot_Traits %>% 
-  ggplot(aes(VPD, meanVar, color = T_cat, shape = P_cat)) +
-  geom_point(alpha = 0.5) +
-  geom_errorbar(aes(ymin = CIlow.Var, ymax = CIhigh.Var)) +
-  facet_wrap(~Trait, nrow = 3, scales = "free_y") +
-  labs(y = "Community weighted Variance", x = "Vapour pressure deficit")+
-  theme_bw()
-
-## Kurtosis
-
-CI_Mean_Boot_Traits %>% 
-  ggplot(aes(VPD, meanKurt, color = T_cat)) +
-  geom_point(alpha = 0.5) +
-  geom_errorbar(aes(ymin = CIlow.Kurt, ymax = CIhigh.Kurt)) +
-  facet_wrap(~Trait, nrow = 3, scales = "free_x") +
-  labs(y = "Community weighted Kurtosis", x = "Vapour pressure deficit") +
-  theme_bw()
-
-## Skewness
-
-CI_Mean_Boot_Traits %>% 
-  ggplot(aes(VPD, meanSkew, color = T_cat)) +
-  geom_point(alpha = 0.5) +
-  geom_errorbar(aes(ymin = CIlow.Skew, ymax = CIhigh.Skew)) +
-  facet_wrap(~Trait, nrow = 3, scales = "free_y") +
-  labs(y = "Community weighted Skewness", x = "Vapour pressure deficit")+
-  theme_bw()
-
 
 
 ## Probability distribution of the community weighted mean of SLA ##
@@ -513,3 +457,60 @@ annotate_figure(Kurt_fig, top = text_grob("Kurtosis", face = "bold", size = 14))
 
 ggsave("Kurtosis_Temp.jpg", width = 20 , height = 20, units = "cm")
                 
+
+###### OLD CODE - can be deleted ######
+
+### Plotting the significant trends from the test ###
+
+#Make a function for plotting this
+
+# plot_skewness<-function(df) {
+# 
+#   df %>% 
+#     ggplot(aes(Precip, meanSkew, color = T_cat)) +
+#     geom_point(alpha = 0.5) +
+#     geom_errorbar(aes(ymin = CIlow.Skew, ymax = CIhigh.Skew)) +
+#     labs(y = "Skewness - Dry mass (g)")+
+#     theme_bw()
+# }
+
+## Mean
+
+CI_Mean_Boot_Traits %>% 
+  ggplot(aes(Temp, meanMean, color = T_cat)) +
+  geom_point(alpha = 0.5) +
+  geom_errorbar(aes(ymin = CIlow.Mean, ymax = CIhigh.Mean)) +
+  facet_wrap(~Trait, nrow = 3, scales = "free_x") +
+  labs(y = "Community weighted Mean", x = "Temp") +
+  coord_flip() +
+  theme_bw()
+
+## Variance
+
+CI_Mean_Boot_Traits %>% 
+  ggplot(aes(VPD, meanVar, color = T_cat, shape = P_cat)) +
+  geom_point(alpha = 0.5) +
+  geom_errorbar(aes(ymin = CIlow.Var, ymax = CIhigh.Var)) +
+  facet_wrap(~Trait, nrow = 3, scales = "free_y") +
+  labs(y = "Community weighted Variance", x = "Vapour pressure deficit")+
+  theme_bw()
+
+## Kurtosis
+
+CI_Mean_Boot_Traits %>% 
+  ggplot(aes(VPD, meanKurt, color = T_cat)) +
+  geom_point(alpha = 0.5) +
+  geom_errorbar(aes(ymin = CIlow.Kurt, ymax = CIhigh.Kurt)) +
+  facet_wrap(~Trait, nrow = 3, scales = "free_x") +
+  labs(y = "Community weighted Kurtosis", x = "Vapour pressure deficit") +
+  theme_bw()
+
+## Skewness
+
+CI_Mean_Boot_Traits %>% 
+  ggplot(aes(VPD, meanSkew, color = T_cat)) +
+  geom_point(alpha = 0.5) +
+  geom_errorbar(aes(ymin = CIlow.Skew, ymax = CIhigh.Skew)) +
+  facet_wrap(~Trait, nrow = 3, scales = "free_y") +
+  labs(y = "Community weighted Skewness", x = "Vapour pressure deficit")+
+  theme_bw()
