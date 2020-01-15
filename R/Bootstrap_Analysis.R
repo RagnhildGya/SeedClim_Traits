@@ -23,7 +23,7 @@ set.seed(47)
 ## Run the bootstrapping, output community weighted trait distributions ##
 # Output is the distributions pulled from the raw data weighted by cover, and it shows the distributions used to calculated mean, variance, skewness and kurtosis on. This code only gives 10 (nrep) replicates per plot, but pulls 200 leaves (samplesize) each time.
 
-Raw_Data_Weighted <- CWM_Bootstrapping(community_cover, traitdata_1, nrep = 10, samplesize = 200, moments = FALSE)
+Raw_Data_Weighted <- CWM_Bootstrapping(community_cover, traitdata_1, nrep = 30, samplesize = 200, moments = FALSE)
 
 # Adding VPD values to the dataset for ploting
 
