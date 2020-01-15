@@ -1,6 +1,12 @@
 ### Make multiple plots with Skewness
 library(ggpubr)
 
+### Data description ###
+#Raw_Data_weighted is the raw data bootstrapped, so this is what is used to calculate the mean, variance, skewness and kurtosis
+#Bootstrap_Traits1 is the bootstrapped moments with all the boostrapping sessions still included, and climate information
+#CI_Mean_Boot_Traits is the community weighted means calculated with the boostrapping method, summarized to one value per plot and trait combination, including confidence intervals for the calculations.
+#model_ouptut is the results of the model with the predictions and statistical information with R2 and 95 % confidence intervals, the last one being calculated from the 100 runs of the model.
+
 ### Raw data bootstrapped - visualizing the distirbutions we calculate mean, variance, skewness and kurtosis on ###
 
 Raw_Data_Weighted %>% 
@@ -70,14 +76,11 @@ CI_Mean_Boot_Traits %>%
 ## Kurtosis
 
 CI_Mean_Boot_Traits %>% 
-  ggplot(aes(Temp, meanKurt, color = T_cat)) +
+  ggplot(aes(VPD, meanKurt, color = T_cat)) +
   geom_point(alpha = 0.5) +
   geom_errorbar(aes(ymin = CIlow.Kurt, ymax = CIhigh.Kurt)) +
   facet_wrap(~Trait, nrow = 3, scales = "free_x") +
   labs(y = "Community weighted Kurtosis", x = "Vapour pressure deficit") +
-  coord_flip() +
-  geom_hline(yintercept = 0) +
-  geom_hline(yintercept = mean()) +
   theme_bw()
 
 ## Skewness
