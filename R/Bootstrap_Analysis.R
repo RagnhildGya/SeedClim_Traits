@@ -202,138 +202,152 @@ ggcorrplot(corr, hc.order = FALSE,
 
 # Making data ready for ordination
 
-PCA_boot_traits <- CI_Mean_Boot_Traits %>% 
-  ungroup() %>% 
-  filter(!Trait == "Wet_Mass_g_log") %>% 
-  select(turfID, Trait, T_cat, P_cat, meanMean) %>% 
-  #gather(Moment, Value, -(turfID:P_cat)) %>% 
-  #unite(temp, Trait, Moment) %>% 
-  spread(key = Trait, value = meanMean) %>% 
-  column_to_rownames("turfID")
 
-res.pca <- prcomp(PCA_boot_traits[, -(1:2)], scale = TRUE)
-
-fviz_eig(res.pca, addlabels = TRUE) #Visualize eigenvalues/scree plot
-
-
-#Visualize the results for individuals (plots)
-
-fviz_pca_ind(res.pca,
-             col.ind = "cos2", # Color by the quality of representation
-             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-             repel = TRUE     # Avoid text overlapping
-)
-
-#Visualize the results for variables (traits) with the cos2 values (contribution to the PC)
-
-fviz_pca_var(res.pca,
-             col.var = "contrib", # Color by contributions to the PC
-             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-             repel = TRUE     # Avoid text overlapping
-)
-
-#ggsave("PCA.jpg", width = 25 , height = 15, units = "cm")
-
-#Make a biplot of individuals and variables
-
-fviz_pca_biplot(res.pca, repel = TRUE,
-                col.var = "#2E9FDF", # Variables color
-                col.ind = "#696969",  # Individuals color
-                label = "var"
-)
-
-#ggsave("PCA_communitypoints.jpg", width = 15 , height = 15, units = "cm")
-
-#Visualize individuals, add ellpises with tempereature and preacipitation
-
-fviz_pca_ind(res.pca,
-             label = "none",
-             habillage = PCA_boot_traits$T_cat,
-             addEllipses=TRUE, ellipse.level=0.95
-)
-#ggsave("PCA_temp.jpg", width = 21 , height = 15, units = "cm")
-
-fviz_pca_ind(res.pca,
-             label = "none",
-             habillage = PCA_boot_traits$P_cat,
-             addEllipses=TRUE, ellipse.level=0.95
-)
-#ggsave("PCA_precip.jpg", width = 21 , height = 15, units = "cm")
-
-fviz_pca_biplot(res.pca, 
-                col.ind = PCA_boot_traits$P_cat, 
-                addEllipses = TRUE, label = "var",
-                col.var = "black", repel = TRUE,
-                legend.title = "Temperature") 
-
-#ggsave("PCA_precip_with_traitaxes.jpg", width = 21 , height = 15, units = "cm")
-
-fviz_pca_biplot(res.pca, 
-                col.ind = PCA_boot_traits$T_cat, 
-                addEllipses = TRUE, label = "var",
-                col.var = "black", repel = TRUE,
-                legend.title = "Temperature") 
-
-#ggsave("PCA_temp_with_traitaxes.jpg", width = 21 , height = 15, units = "cm")
-
-# Eigenvalues
-eig.val <- get_eigenvalue(res.pca) #Extract the eigenvalues/variances of principal components
-eig.val
-
-
-res.var <- get_pca_var(res.pca) #Extract the results for variables
-
-res.var$coord          # Coordinates
-res.var$contrib        # Contributions to the PCs
-res.var$cos2           # Quality of representation
-
-
-res.ind <- get_pca_ind(res.pca) #Extract the results for individuals
-
-res.ind$coord          # Coordinates
-res.ind$contrib        # Contributions to the PCs
-res.ind$cos2           # Quality of representation 
-
-ggcorrplot(res.var$cos2, method = "circle")
-#ggsave("PCA_dimentions_traits.jpg", width = 18 , height = 15, units = "cm")
-
-fviz_cos2(res.pca, choice = "var", axes = 1)
-fviz_cos2(res.pca, choice = "var", axes = 2)
-
-
-library("corrplot")
-corrplot(res.var$cos2, is.corr=FALSE)
-corrplot(res.var$contrib, is.corr=FALSE)  #Contribution to the PCs
-
-# Contributions of variables to PC1
-fviz_contrib(res.pca, choice = "var", axes = 1, top = 10)
-# Contributions of variables to PC2
-fviz_contrib(res.pca, choice = "var", axes = 2, top = 10)
-
-library("FactoMineR")
-res.desc <- dimdesc(res.pca, proba = 0.05)
-# Description of dimension 1
-res.desc$Dim.1
+# 
+# res.pca <- prcomp(PCA_boot_traits[, -(1:2)], scale = TRUE)
+# 
+# fviz_eig(res.pca, addlabels = TRUE) #Visualize eigenvalues/scree plot
+# 
+# 
+# #Visualize the results for individuals (plots)
+# 
+# fviz_pca_ind(res.pca,
+#              col.ind = "cos2", # Color by the quality of representation
+#              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+#              repel = TRUE     # Avoid text overlapping
+# )
+# 
+# #Visualize the results for variables (traits) with the cos2 values (contribution to the PC)
+# 
+# fviz_pca_var(res.pca,
+#              col.var = "contrib", # Color by contributions to the PC
+#              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+#              repel = TRUE     # Avoid text overlapping
+# )
+# 
+# #ggsave("PCA.jpg", width = 25 , height = 15, units = "cm")
+# 
+# #Make a biplot of individuals and variables
+# 
+# fviz_pca_biplot(res.pca, repel = TRUE,
+#                 col.var = "#2E9FDF", # Variables color
+#                 col.ind = "#696969",  # Individuals color
+#                 label = "var"
+# )
+# 
+# #ggsave("PCA_communitypoints.jpg", width = 15 , height = 15, units = "cm")
+# 
+# #Visualize individuals, add ellpises with tempereature and preacipitation
+# 
+# fviz_pca_ind(res.pca,
+#              label = "none",
+#              habillage = PCA_boot_traits$T_cat,
+#              addEllipses=TRUE, ellipse.level=0.95
+# )
+# #ggsave("PCA_temp.jpg", width = 21 , height = 15, units = "cm")
+# 
+# fviz_pca_ind(res.pca,
+#              label = "none",
+#              habillage = PCA_boot_traits$P_cat,
+#              addEllipses=TRUE, ellipse.level=0.95
+# )
+# #ggsave("PCA_precip.jpg", width = 21 , height = 15, units = "cm")
+# 
+# fviz_pca_biplot(res.pca, 
+#                 col.ind = PCA_boot_traits$P_cat, 
+#                 addEllipses = TRUE, label = "var",
+#                 col.var = "black", repel = TRUE,
+#                 legend.title = "Temperature") 
+# 
+# #ggsave("PCA_precip_with_traitaxes.jpg", width = 21 , height = 15, units = "cm")
+# 
+# fviz_pca_biplot(res.pca, 
+#                 col.ind = PCA_boot_traits$T_cat, 
+#                 addEllipses = TRUE, label = "var",
+#                 col.var = "black", repel = TRUE,
+#                 legend.title = "Temperature") 
+# 
+# #ggsave("PCA_temp_with_traitaxes.jpg", width = 21 , height = 15, units = "cm")
+# 
+# # Eigenvalues
+# eig.val <- get_eigenvalue(res.pca) #Extract the eigenvalues/variances of principal components
+# eig.val
+# 
+# 
+# res.var <- get_pca_var(res.pca) #Extract the results for variables
+# 
+# res.var$coord          # Coordinates
+# res.var$contrib        # Contributions to the PCs
+# res.var$cos2           # Quality of representation
+# 
+# 
+# res.ind <- get_pca_ind(res.pca) #Extract the results for individuals
+# 
+# res.ind$coord          # Coordinates
+# res.ind$contrib        # Contributions to the PCs
+# res.ind$cos2           # Quality of representation 
+# 
+# ggcorrplot(res.var$cos2, method = "circle")
+# #ggsave("PCA_dimentions_traits.jpg", width = 18 , height = 15, units = "cm")
+# 
+# fviz_cos2(res.pca, choice = "var", axes = 1)
+# fviz_cos2(res.pca, choice = "var", axes = 2)
+# 
+# 
+# library("corrplot")
+# corrplot(res.var$cos2, is.corr=FALSE)
+# corrplot(res.var$contrib, is.corr=FALSE)  #Contribution to the PCs
+# 
+# # Contributions of variables to PC1
+# fviz_contrib(res.pca, choice = "var", axes = 1, top = 10)
+# # Contributions of variables to PC2
+# fviz_contrib(res.pca, choice = "var", axes = 2, top = 10)
+# 
+# library("FactoMineR")
+# res.desc <- dimdesc(res.pca, proba = 0.05)
+# # Description of dimension 1
+# res.desc$Dim.1
 
 
 library(vegan)
 library("ggvegan")
 
-env <- CI_Mean_Boot_Traits %>% 
+
+Ord_boot_traits <- CI_Mean_Boot_Traits %>% 
   ungroup() %>% 
-  dplyr::select(turfID, Temp, Precip, VPD) %>%
-  distinct() %>% 
+  filter(!Trait == "Wet_Mass_g_log") %>% 
+  select(turfID, Trait, Temp, Precip, VPD, meanMean) %>% 
+  #gather(Moment, Value, -(turfID:P_cat)) %>% 
+  #unite(temp, Trait, Moment) %>% 
+  spread(key = Trait, value = meanMean) %>% 
   column_to_rownames("turfID")
 
-RDA <- rda(PCA_boot_traits[, -(1:2)]~ env$Temp*env$Precip*env$VPD, scale = TRUE)
+RDA <- rda(Ord_boot_traits[, -(1:3)]~ Temp+Precip, scale = TRUE, data = Ord_boot_traits)
 
-summary(RDA)
+autoplot(RDA) +
+  theme_bw()
+
+autoplot(RDA, arrows = TRUE, data = PCA_boot_traits) +
+  scale_x_continuous(expand = c(0.22, 0)) +
+  geom_point(data = RDA, aes(RDA1, RDA2), size=2, alpha=0.5) +
+  geom_abline(intercept = 0,slope = 0,linetype="dashed", size=0.8) +
+  geom_vline(aes(xintercept=0), linetype="dashed", size=0.8) + labs(x = "Axis 1", y="Axis 2") + 
+  theme_bw()
+
+ggplot(RDA_fort, aes(x = RDA1, y = RDA2)) +
+  geom_point(show.legend = FALSE) +
+  scale_size(range = 2) +
+  coord_equal()
+
+RDA_fort <- fortify(RDA)
+
+RDA
 plot(RDA)
 screeplot(RDA)
 
 coef(RDA)
 
-RsquareAdj(RDA)
+RsquareAdj(RDA)$adj.r.squared
 
 # Code that doesn't work for contrained analysis
 # biplot(RDA, scaling = "symmetric")
