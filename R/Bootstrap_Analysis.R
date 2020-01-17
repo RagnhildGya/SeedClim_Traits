@@ -105,6 +105,8 @@ predict_without_random<-function(model) {
 
 ## Mixed effcet model with temperature, precipitation and interaction ##
 
+# Making  dataset ready for model 
+
 Bootstrap_Traits2 <- Bootstrap_Traits1 %>% 
   #left_join(metaNorway %>% select(Site, VPD, bio10, bio12), by = "Site") %>% 
   #rename("Temp_summer" = "bio10", "Precip_annual" = "bio12") %>% 
@@ -139,9 +141,8 @@ Bootstrap_Traits2 <- Bootstrap_Traits1 %>%
 
 tidy_model_predicted <- results %>%
   mutate(model_output = map(model, tidy)) %>%
-  mutate(predicted = map(model, predict_without_random))
-  #%>%
-  #mutate(R_squared = map(model, rsquared))
+  mutate(predicted = map(model, predict_without_random)) %>% 
+  mutate(R_squared = map(model, rsquared))
 
 # Making a dataset with only the predicted values. Unnesting the list of the predicted values.
 
@@ -154,15 +155,15 @@ predicted_values <- tidy_model_predicted %>%
 # Making a dataset with the model output and the test-statistics (R squared), and summarizing them.
 
 model_output <- tidy_model_predicted %>% 
-  select(Trait, Moment, n, model_output) %>% #, R_squared) %>% 
-  unnest(model_output) %>% #c(model_output, R_squared)) %>% 
+  select(Trait, Moment, n, model_output, R_squared) %>% 
+  unnest(c(model_output, R_squared)) %>% 
   filter(term %in% c("Temp", "scale(Precip)")) %>% 
-  select(Trait, Moment, term, n, estimate) %>%  #, Marginal, Conditional) %>% 
+  select(Trait, Moment, term, n, estimate, Marginal, Conditional) %>% 
   ungroup() %>% 
   group_by(Trait, Moment, term) %>% 
   summarize(effect = mean(estimate),
-            #R2_marginal = mean(Marginal),
-            #R2_conditional = mean(Conditional),
+            R2_marginal = mean(Marginal),
+            R2_conditional = mean(Conditional),
             CIlow.fit = effect - sd(estimate),
             CIhigh.fit = effect + sd(estimate)) %>% 
   mutate(Significant = case_when(CIlow.fit < 0 & CIhigh.fit < 0 ~ "Negative",
