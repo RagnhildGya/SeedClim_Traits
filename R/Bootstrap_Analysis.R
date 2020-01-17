@@ -11,7 +11,7 @@ library(broom.mixed)
 library(lme4)
 library(lmerTest)
 library(purrr)
-#library(piecewiseSEM) #commenting our as it is not working right now
+library(piecewiseSEM)
 library(factoextra)
 library(GGally)
 library(ggcorrplot)
