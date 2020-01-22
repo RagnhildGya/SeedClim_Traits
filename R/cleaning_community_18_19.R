@@ -4,28 +4,31 @@
 
 # Script by Eva Lieungh and Ragnhild Gya
 
-#setwd('C:/Users/evaler/OneDrive - Universitetet i Oslo/Eva/PHD/Paper 3 community dispersal interactions') # Evas directory
-#setwd() # Ragnhilds directory
-
 #### Libraries ####
 library("tidyverse")
-#library("lubridate")
-#library("mosaic")
+
 
 #### Load community data ####
 community <- read.csv('Data fra Ragnhild/INCLINE_community_2018_2019.csv', sep = ';') # 8676 obs. of 164 variables
-str(community)
+
 
 #### Clean and reorganise data ####
-
-## make a new column with unique plot ID from Site,block and plot ID
 community <- community %>%
-  unite(plotID, c(Site,Block,plot), remove = FALSE)
-
-## cover data
-cover <- community %>%
   filter(Site!="")%>% # remove any lines with no Site
   mutate(Site= substr(Site, 1,3))%>% # Shorten site name to first three letters
+  unite(plotID, c(Site,Block,plot), remove = FALSE) # make a new column with unique plot ID from Site,block and plot ID
+
+## make a new column with treatment and match with plot
+plot.treatment <- read.csv('Data fra Ragnhild/Plot_treatment.csv')
+community <- merge(community,plot.treatment) # about 2000 rows are lost with this line. Need to check what and why!
+
+## merge uncertain species (e.g. collapse 'cf.' into proposed species)
+
+
+
+
+#### Filter out cover data ####
+cover <- community %>%
   filter(Measure == "cover") # keep just the cover data
 
 cover <- cover %>% # not exactly sure what this chunk of code does, copied from Cleaning2 script
@@ -46,12 +49,15 @@ cover <- cover %>% # find the mean cover by plot (or by site)
   mutate(cover_species=cover/sum_cover*100) %>% 
   filter(! turfID == "Lav1XC") #Only has one species in it
 
-## community (subPlot) data
+
+
+#### Filter out community/subplot data ####
 community <- community %>%
-  filter(Site!="")%>% # remove any lines with no Site
-  mutate(Site= substr(Site, 1,3))%>% # Shorten site name to first three letters
   filter(Measure == "subPlot") # keep just the subPlot data
 
 
 ## transform data from broad to long format
-com.long <- gather()
+#community.long <- community %>%
+#  gather(plotID, year)
+
+
