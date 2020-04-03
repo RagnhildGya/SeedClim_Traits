@@ -32,6 +32,17 @@ community <- community %>%
   select(1:11, Treatment, moss:comments, everything()) 
 head(community[,1:25])
 
+
+## fill in blanks with 0 for species columns and NA for other variables
+community[] <- lapply(community, as.character)
+communityOther <- community[,1:25]
+communityOther[communityOther==''|is.na(communityOther)] <- 'NA'
+communitySpecies <- community[,26:180]
+communitySpecies[communitySpecies==''|is.na(communitySpecies)] <- 0
+community <- cbind(communityOther,communitySpecies)
+
+
+
 ## split species records (J/1/D/F) into separate columns - NOT FINISHED CODE
  # community <- community %>%
  # maxchar = max(nchar(as.character(df$y)))  # https://stackoverflow.com/questions/37731324/split-or-separate-uneven-unequal-strings-with-no-delimiter 
