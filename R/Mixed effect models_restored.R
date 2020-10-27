@@ -6,6 +6,42 @@ library(broom)
 
 #devtools::source_gist("https://gist.github.com/phipsgabler/91a81883a82a54bb6a92", filename="qqline.r")
 
+#### The whole community ####
+
+model_wcom <- wcommunity_df %>%
+  mutate(scale_Precip = scale(Precip),
+         scale_Temp = scale(Temp)) %>%
+  ungroup() %>% 
+  select(scale_Precip, scale_Temp, Temp, Precip, Site, Wmean_SLA, turfID) %>% 
+  distinct() %>% 
+  do({
+    model <- lmer(Wmean_SLA ~ scale_Temp*scale_Precip + (1 | Site), data = .)
+    tidy(model)
+  }) %>%
+  filter(term == "scale_Temp"| term =="scale_Precip" | term == "scale_Temp:scale_Precip")
+
+SLA_temp_95 <- SLA_temp_95%>%
+  mutate(lower = (estimate - std.error*1.96),
+         upper = (estimate + std.error*1.96))
+
+Agr_cap_plot <- ggplot(wcommunity_df, aes(Precip, Wmean_SLA,lty = as.factor(T_level),colour = as.factor(T_level))) +
+  geom_jitter(show.legend = FALSE) +
+  theme_minimal(base_size = 11) +
+  geom_line(aes(
+    x = Precip,
+    y = fit, color=factor(Temp)), data=newdata_Agr, size = 1, inherit.aes = FALSE,
+    show.legend = FALSE) +
+  labs(
+    title = "Agrostis capillaris",
+    x = "",
+    y = "Specific leaf area (cm2/g)",
+    colour = "Temperature (ºC)",
+    lty = "Temperature (ºC)"
+  ) +
+  scale_color_manual(values = c("#99CCFF", "#FFCC33", "#FF6666")) +
+  theme(plot.title = element_text(hjust = 0.5, face="italic"))+
+  expand_limits(y=c(20,700))
+
 
 #### Temperature ####
 
@@ -34,6 +70,16 @@ TheLucky15<-traitdata %>%
 scalevalues<- scale(TheLucky15$Temp) #Finding the values to scale the temperature back with
 #attributes(scalevalues)
 
+TheLucky15 %>% 
+  mutate(Species = as.factor(Species)) %>% 
+  ggplot(aes(y = SLA, fill = Species)) +
+  geom_jitter(aes(x = Species), alpha = 0.2) +
+  geom_violin(aes(x = Species), alpha = 0.7) +
+  theme_minimal() +
+  theme(legend.position = "none", axis.text.x = element_text(angle = -75))
+  #scale_x_discrete(guide = guide_axis(check.overlap = TRUE))
+
+ggsave("SLA_TheLucky15.jpg")
 
 #SLA
 
@@ -64,7 +110,7 @@ SLA_temp_95 %>%
   geom_errorbar(width = 0.5, position = position_dodge(width = 0.5)) +
   geom_point(position = position_dodge(width = 0.5)) +
   coord_flip()+
-  scale_color_manual(labels = c("Precipitation", "Temperature", "Interaction"), values=rev(c("#FF6666","#FFCC33","#99CCFF")))+
+  scale_color_brewer(labels = c("Precipitation", "Temperature", "Interaction"), palette = "Dark2")+
   labs(y="Change in SLA per unit precipitation and/or temperature", x = "", color="")+
   theme_minimal()+
   geom_hline(
@@ -99,7 +145,7 @@ Agr_cap_plot <- ggplot(Agr_cap, aes(Precip, SLA,lty = as.factor(T_level),colour 
   labs(
     title = "Agrostis capillaris",
     x = "",
-    y = "cm2/g",
+    y = "Specific leaf area (cm2/g)",
     colour = "Temperature (ºC)",
     lty = "Temperature (ºC)"
   ) +
@@ -133,7 +179,7 @@ Ant_odo_plot <- ggplot(Ant_odo, aes(Precip, SLA, lty=as.factor(T_level), colour=
   labs(
     title = "Anthoxanthum odoratum",
     x = "",
-    y = "cm2/g"
+    y = ""
   ) +
   scale_color_manual(values=c("#99CCFF", "#FFCC33", "#FF6666")) +
   theme(plot.title = element_text(hjust = 0.5, face="italic"))+
@@ -153,12 +199,12 @@ newdata_Cam<-expand.grid(Precip=seq(500,3200, length=3000), Temp=c(6.5, 8.5, 10.
 newdata_Cam$fit <- predict(model_Cam_rot, re.form=NA, newdata=newdata_Cam)
 
 Cam_rot_plot <- ggplot(Cam_rot, aes(Precip, SLA,lty = as.factor(T_level), color = as.factor(T_level))) +
-  geom_jitter(aes(color = as.factor(T_level))) +
+  geom_jitter(show.legend = FALSE) +
   theme_minimal(base_size = 11) +
   geom_line(aes(
-    y = fit, x=Precip, color=factor(Temp)), data = newdata_Cam, size = 1, inherit.aes = FALSE) +
+    y = fit, x=Precip, color=factor(Temp)), data = newdata_Cam, size = 1, inherit.aes = FALSE, show.legend = FALSE) +
   labs(
-    title = "(c) Campanula rotundifolia",
+    title = "Campanula rotundifolia",
     x = "Precipitation (mm/year)",
     y = "Specific leaf area (cm2/g)",
     colour = "Temperature (ºC)",
@@ -190,9 +236,9 @@ Des_ces_plot <- ggplot(Des_ces, aes(Precip, SLA, lty = as.factor(T_level), color
   geom_line(aes( x = Precip,
     y = fit, color= factor(Temp)), data=newdata_Des, size = 1, inherit.aes = FALSE, show.legend = FALSE) +
   labs(
-    title = "(d) Deschampsia cespitosa",
+    title = "Deschampsia cespitosa",
     x = "Precipitation (mm/year)",
-    y = "cm2/g"
+    y = ""
   ) +
   scale_color_manual(values = c("#99CCFF", "#FFCC33", "#FF6666")) +
   theme(plot.title = element_text(hjust = 0.5, face="italic"))+
@@ -201,10 +247,13 @@ Des_ces_plot <- ggplot(Des_ces, aes(Precip, SLA, lty = as.factor(T_level), color
 
 
 library(gridExtra)
-grid.arrange(Agr_cap_plot, Ant_odo_plot, Cam_rot_plot, Des_ces_plot, widths=c(0.6, 0.4), ncol=2)
+library(ggpubr)
+The_four_species_plot <- ggarrange(Agr_cap_plot, Ant_odo_plot, Cam_rot_plot, Des_ces_plot, ncol = 2, nrow = 2)
+
+annotate_figure(The_four_species_plot)
 
 
-png("Species_trends_SLA.png", width = 1668, height = 2532, res = 400)
+ggsave("Species_trends_SLA.jpg", width = 20, height = 12, units = "cm")
 grid.arrange(Ant_odo_plot, Agr_cap_plot, Des_ces_plot, ncol=1)
 dev.off()
 
