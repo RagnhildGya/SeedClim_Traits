@@ -11,17 +11,13 @@ traits <-read.csv("Data/LeafTraits_SeedClim.csv", header=TRUE, sep = ";", string
 #### Cleaning the trait data ####
 
 traits <- traits %>%
-  rename(Height=Height..mm., Lth_1=Lth.1..mm., Lth_2= Lth.2..mm., Lth_3= Lth.3..mm., Wet_mass=Wet.mass..g., Dry_mass=Dry.mass..g., Site=Location) %>%
-  select(-Lth.average..mm.) %>%
-  mutate(Date = mdy(Date)) %>%
-  mutate(Site = factor(Site, levels = c("Ulv", "Lav", "Gud", "Skj", "Alr", "Hog", "Ram", "Ves", "Fau", "Vik", "Arh", "Ovs"))) %>%
-  mutate(T_level = recode(Site, Ulv = 6.5, Lav = 6.5,  Gud = 6.5, Skj = 6.5, Alr = 8.5, Hog = 8.5, Ram = 8.5, Ves = 8.5, Fau = 10.5, Vik = 10.5, Arh = 10.5, Ovs = 10.5)) %>%
-  mutate(Temp = recode(Site, Ulv=6.17, Lav=6.45, Gud=5.87, Skj=6.58, Alr=9.14, Hog=9.17, Ram=8.77, Ves=8.67, Fau=10.3, Vik=10.55, Arh=10.60, Ovs=10.78))%>%
-  mutate(Precip= recode(Site, Ulv=596, Lav=1321, Gud=1925, Skj=2725, Alr=789, Hog=1356, Ram=1848, Ves=3029, Fau=600, Vik=1161, Arh=2044, Ovs=2923))%>%
-  mutate(P_level = recode(Site, Ulv = 600, Alr = 600, Fau = 600, Lav = 1200, Hog = 1200, Vik = 1200, Gud = 2000, Ram = 2000, Arh = 2000, Skj = 2700, Ves = 2700, Ovs = 2700)) %>%
-  mutate(Wet_mass = as.numeric(Wet_mass)) %>% 
-  mutate(Dry_mass = replace(Dry_mass, Dry_mass < 0.0005, NA))%>%
-  mutate(Wet_mass = replace(Wet_mass, Wet_mass < 0.0005, NA))
+  rename(Height=Height..mm., Lth_1=Lth.1..mm., Lth_2= Lth.2..mm., Lth_3= Lth.3..mm., Wet_mass=Wet.mass..g., Dry_mass=Dry.mass..g., Site=Location) %>% #Renaming weird named columns
+  select(-Lth.average..mm.) %>% #removing this column, as we make it again later
+  mutate(Date = mdy(Date)) %>% #formating the date column
+  mutate(Site = factor(Site, levels = c("Ulv", "Lav", "Gud", "Skj", "Alr", "Hog", "Ram", "Ves", "Fau", "Vik", "Arh", "Ovs"))) %>% #Ordering the sites from cold to warm and dry to wet
+  mutate(Dry_mass = replace(Dry_mass, Dry_mass < 0.0005, NA)) %>% #Replacing anything that us under 0.0005 grams with NA because these values are so low and not very trustworthy (outside of the margin of error of the balance)
+  mutate(Wet_mass = replace(Wet_mass, Wet_mass < 0.0005, NA)) %>% #
+  mutate(Lth_3 = replace(Lth_3, Lth_3 < 0.9, NA)) #One outlier that is very far off measurment 1 and 2, replacing with NA.
   
   
 #### Load leaf area data ####
@@ -76,7 +72,7 @@ CN<-CN %>%
   mutate(Species = plyr::mapvalues(Species, from = dict_CN$CN_ab, to = dict_CN$Species)) %>%
   mutate(Site = plyr::mapvalues(Site, from = dict_Site$old, to = dict_Site$new)) %>%
   mutate(ID = paste0(Site, "_", Species, "_", Individual, ".jpg")) %>%
-  filter(!(Name=="VECAR101"))%>% #Because of mistakes in the data, to small sample
+  filter(!(Name=="VECAR101"))%>% #Because it was a to small sample to get good data from it
 select(-Humidity.., -Name, -Weight, -Method, -N.Factor, -C.Factor, -N.Blank, -C.Blank, -Memo, -Info, -Date..Time, -N.Area, -C.Area) %>% 
   rename(C_percent=C.., N_percent = N.., CN_ratio = CN.ratio) %>% 
   mutate(Site = factor(Site, levels = c("Ulv", "Lav", "Gud", "Skj", "Alr", "Hog", "Ram", "Ves", "Fau", "Vik", "Arh", "Ovs")))
@@ -90,9 +86,9 @@ traitdata <- traitdata %>%
 #### Remove data points for different reasons ###
 
 traitdata <- traitdata %>% 
-  filter(!(Species=="Hyp_mac" & Site=="Alr")) %>% #They were collected outside of the fence
-  filter(!(Species=="Agr_cap" & Site =="Alr" & Individual=="9")) %>%  #Looks wierd from picture
-  filter(!(ID=="Ves_Leo_aut_6.jpg")) #Looks wierd from picture
+  filter(!(Species=="Agr_cap" & Site =="Alr" & Individual=="9")) %>%  #Looks weird from picture
+  filter(!(ID=="Ves_Leo_aut_6.jpg")) #Looks damaged from scan of leaf area
+#filter(!(Species=="Hyp_mac" & Site=="Alr")) %>% #They were collected inside of the fence
 #filter(!(Species=="Car_vag" & Site == "Ves"))%>% #Less then 4 individuals
 #filter(!(Species=="Fes_rub" & Site == "Ulv"))%>% #Less then 4 individuals
 #filter(!(Species=="Fes_rub" & Site == "Gud"))%>% #Less then 4 individuals
@@ -105,13 +101,11 @@ traitdata <- traitdata %>%
 
 ### Calculate traits and transform traits ###
 
-# Should SLA and LDMC be calculated from the log transformed numbers, or for them original numbers?
-
 traitdata <- traitdata %>% 
   mutate(SLA = Leaf_area/Dry_mass) %>%
   mutate(LDMC = Dry_mass/Wet_mass)%>%
   mutate(Lth_ave = rowMeans(select(traitdata, starts_with("Lth")), na.rm = TRUE)) %>% #Make the numbers only with four digits
-  filter(LDMC<1) %>% 
+  #filter(LDMC<1) %>% 
   select(-Lth_1, -Lth_2, -Lth_3)
 
 traitdata_trans <- traitdata %>% 
@@ -152,61 +146,43 @@ traitdata_1 <- traitdata_trans %>%
 traitdata_1 <- traitdata_1 %>%
   left_join(species_info, by =c("Species" = "species"))
 
+#### Community SeedClim data ####
 
-#### Community ####
+# Reading in and cleaning the community data 
 
-# Reading in and cleaning the community data so that it is ready to be used only for cover
+community <-read.csv2("Data/comdat2009_2017.csv", header=TRUE, sep=",", stringsAsFactors = FALSE)
 
-community <-read.csv2("Data/funcab_composition_2016.csv", header=TRUE, sep=";", stringsAsFactors = FALSE)
+community <- community %>%
+  mutate(Site= substr(siteID, 1,3)) %>% 
+  select(-X) %>% 
+  mutate(Site = as.character(Site, levels = c("Ulv", "Lav", "Gud", "Skj", "Alr", "Hog", "Ram", "Ves", "Fau", "Vik", "Arh", "Ovs"))) %>% 
+  mutate(cover9 = replace(cover9, cover9 == 0, NA)) %>% 
+  mutate(cover17 = replace(cover17, cover17 == 0, NA))
 
-community<-community %>%
-  filter(Site!="")%>%
-  mutate(Site= substr(Site, 1,3))%>%
-  filter(Measure == "Cover")
 
-community_cover<-community%>%
-  select(-subPlot, -year, -date, -Measure, -recorder, -Nid.herb, -Nid.gram, -Nid.rosett, -Nid.seedling, -liver, -lichen, -litter, -soil, -rock, -X.Seedlings) %>%
-  select(-TotalGraminoids, -totalForbs, -totalBryophytes, -vegetationHeight, -mossHeight, -comment, -ver.seedl, -canum, -totalVascular, -totalBryophytes.1, -acro, -pleuro, -totalLichen)%>%
-  gather(species, cover, Ach.mil:Vis.vul)%>%
-  mutate(cover = as.numeric(cover))%>%
-  filter(!is.na(cover))%>%  #Takes out the species that is not present in the dataset
-  mutate(species=gsub("\\.", "_", species))%>%
-  mutate(Site = as.character(Site, levels = c("Ulv", "Lav", "Gud", "Skj", "Alr", "Hog", "Ram", "Ves", "Fau", "Vik", "Arh", "Ovs")))
+community <- community %>%
+  left_join(systematics_species, by = c("species"="Species"))
 
-#Adding a dictionary to make the names in the traits dataset and the community datafram match
-dict_com <- read.table(header = TRUE, stringsAsFactors = FALSE, text = 
-                         "old new
-                       Nar_stri Nar_str
-                       Tarax Tar_sp
-                       Euph_sp Eup_sp
-                       Phle_alp Phl_alp
-                       Rhin_min Rhi_min
-                       Rum_ac_la Rum_acl
-                       Trien_eur Tri_eur
-                       Rub_idae Rub_ida
-                       Saus_alp Sau_alp
-                       Ave__pub Ave_pub
-                       Car_atra Car_atr
-                       Hypo_rad Hyp_rad
-                       Bart_alp Bar_alp
-                       Car_pulic Car_pul
-                       Carex_sp Car_sp
-                       Hier_sp Hie_sp
-                       Salix_sp Sal_sp
-                       Vio_can Vio_riv")
+## Environmental data ##
+
+env <- tibble(Site = as.factor(c("Ulv", "Lav", "Gud", "Skj", "Alr", "Hog", "Ram", "Ves", "Fau", "Vik", "Arh", "Ovs"))) %>% 
+mutate(T_level = recode(Site, Ulv = 6.5, Lav = 6.5,  Gud = 6.5, Skj = 6.5, Alr = 8.5, Hog = 8.5, Ram = 8.5, Ves = 8.5, Fau = 10.5, Vik = 10.5, Arh = 10.5, Ovs = 10.5)) %>% #Making the temperature levels
+  mutate(Temp = recode(Site, Ulv=6.17, Lav=6.45, Gud=5.87, Skj=6.58, Alr=9.14, Hog=9.17, Ram=8.77, Ves=8.67, Fau=10.3, Vik=10.55, Arh=10.60, Ovs=10.78)) %>% #Giving the accurate temperatures to each site
+  mutate(Precip= recode(Site, Ulv=596, Lav=1321, Gud=1925, Skj=2725, Alr=789, Hog=1356, Ram=1848, Ves=3029, Fau=600, Vik=1161, Arh=2044, Ovs=2923)) %>% #Giving the accurate precipitaions to each site
+  mutate(P_level = recode(Site, Ulv = 600, Alr = 600, Fau = 600, Lav = 1200, Hog = 1200, Vik = 1200, Gud = 2000, Ram = 2000, Arh = 2000, Skj = 2700, Ves = 2700, Ovs = 2700))#Making the precipitation levels
 
 
 
-community_cover<-community_cover%>%
-  group_by(Site, species)%>%
-  mutate(mean_cover=mean(cover, na.rm=TRUE))%>% #If you want the turf data use mutate, if you want the site data use summarise
-  ungroup()%>%
-  mutate(species = plyr::mapvalues(species, from = dict_com$old, to = dict_com$new))%>%
-  mutate(Site = factor(Site, levels = c("Ulv", "Lav", "Gud", "Skj", "Alr", "Hog", "Ram", "Ves", "Fau", "Vik", "Arh", "Ovs")))%>%
-  group_by(turfID)%>%
-  mutate(sum_cover= sum(cover))%>%
-  mutate(cover_species=cover/sum_cover*100) %>% 
-  filter(! turfID == "Lav1XC") #Only has one species in it
+
+
+# #Adding a dictionary to make the names in the traits dataset and the community datafram match
+# dict_com <- read.table(header = TRUE, stringsAsFactors = FALSE, text = 
+#                          "old new
+#                        Hypo_mac Hyp_mac")
+
+
+
+#community_cover<-community %>% rename(replace = c("Hypo_mac" = "Hyp_mac")) #Does not work yet
 
 
 ####################  Old code #####################
@@ -215,6 +191,59 @@ community_cover<-community_cover%>%
 ### Also to look for mistakes and filter out     ###
 ### 80 % community etc.                          ###
 ####################################################
+
+# # Reading in and cleaning the community data so that it is ready to be used only for cover
+# 
+# community <-read.csv2("Data/funcab_composition_2016.csv", header=TRUE, sep=";", stringsAsFactors = FALSE)
+# 
+# community<-community %>%
+#   filter(Site!="")%>%
+#   mutate(Site= substr(Site, 1,3))%>%
+#   filter(Measure == "Cover")
+# 
+# community_cover<-community%>%
+#   select(-subPlot, -year, -date, -Measure, -recorder, -Nid.herb, -Nid.gram, -Nid.rosett, -Nid.seedling, -liver, -lichen, -litter, -soil, -rock, -X.Seedlings) %>%
+#   select(-TotalGraminoids, -totalForbs, -totalBryophytes, -vegetationHeight, -mossHeight, -comment, -ver.seedl, -canum, -totalVascular, -totalBryophytes.1, -acro, -pleuro, -totalLichen)%>%
+#   gather(species, cover, Ach.mil:Vis.vul)%>%
+#   mutate(cover = as.numeric(cover))%>%
+#   filter(!is.na(cover))%>%  #Takes out the species that is not present in the dataset
+#   mutate(species=gsub("\\.", "_", species))%>%
+#   mutate(Site = as.character(Site, levels = c("Ulv", "Lav", "Gud", "Skj", "Alr", "Hog", "Ram", "Ves", "Fau", "Vik", "Arh", "Ovs")))
+# 
+# #Adding a dictionary to make the names in the traits dataset and the community datafram match
+# dict_com <- read.table(header = TRUE, stringsAsFactors = FALSE, text = 
+#                          "old new
+#                        Nar_stri Nar_str
+#                        Tarax Tar_sp
+#                        Euph_sp Eup_sp
+#                        Phle_alp Phl_alp
+#                        Rhin_min Rhi_min
+#                        Rum_ac_la Rum_acl
+#                        Trien_eur Tri_eur
+#                        Rub_idae Rub_ida
+#                        Saus_alp Sau_alp
+#                        Ave__pub Ave_pub
+#                        Car_atra Car_atr
+#                        Hypo_rad Hyp_rad
+#                        Bart_alp Bar_alp
+#                        Car_pulic Car_pul
+#                        Carex_sp Car_sp
+#                        Hier_sp Hie_sp
+#                        Salix_sp Sal_sp
+#                        Vio_can Vio_riv")
+# 
+# 
+# 
+# community_cover<-community_cover%>%
+#   group_by(Site, species)%>%
+#   mutate(mean_cover=mean(cover, na.rm=TRUE))%>% #If you want the turf data use mutate, if you want the site data use summarise
+#   ungroup()%>%
+#   mutate(species = plyr::mapvalues(species, from = dict_com$old, to = dict_com$new))%>%
+#   mutate(Site = factor(Site, levels = c("Ulv", "Lav", "Gud", "Skj", "Alr", "Hog", "Ram", "Ves", "Fau", "Vik", "Arh", "Ovs")))%>%
+#   group_by(turfID)%>%
+#   mutate(sum_cover= sum(cover))%>%
+#   mutate(cover_species=cover/sum_cover*100) %>% 
+#   filter(! turfID == "Lav1XC") #Only has one species in it
 
 
 ### Making means, both weighted and non-weighted ###
@@ -248,34 +277,44 @@ community_cover<-community_cover%>%
 #   ungroup
 #         
 # #### Joining the datasets and making that ready for analysis ####
+#
+# traitdata_wcom <- traitdata %>%
+#   group_by(Species, Site) %>% 
+#   mutate(SLA_mean = mean(SLA),
+#          LDMC_mean = mean(LDMC),
+#          Lth_mean = mean(Lth_ave),
+#          LA_mean = mean(Leaf_area),
+#          Height_mean = mean(Height),
+#          CN_ratio_mean = mean(CN_ratio))
 # 
-# wcommunity <- left_join(traitdata_1, community_cover, by=c( "Site"="Site", "Species"="species"))
+# 
+# wcommunity <- left_join(traitdata_wcom, community_cover, by=c( "Site"="Site", "Species"="species"))
 
 #### Weighting the traits data by the community ####
 
 # If I just want the averages I must use summerise and not mutate
 
 
-
-#wcommunity_df <- filter(wcommunity, turfID %in% Complete_turfs)
-
-
-# wcommunity_df <- wcommunity%>%
-#   group_by(turfID, Site)%>%
-#   mutate(Wmean_LDMC= weighted.mean(LDMC_mean, cover, na.rm=TRUE),
-#             Wmean_Lth= weighted.mean(Lth_mean, cover, na.rm=TRUE),
-#             Wmean_LA= weighted.mean(LA_mean, cover, na.rm=TRUE),
-#             Wmean_SLA= weighted.mean(SLA_mean, cover, na.rm=TRUE),
-#             Wmean_Height= weighted.mean(Height_mean, cover, na.rm=TRUE),
-#             Wmean_CN = weighted.mean(CN_ratio_mean, cover, na.rm=TRUE))%>%
-#   mutate(Wmean_global_LDMC= weighted.mean(LDMC_mean_global, cover, na.rm=TRUE),
-#          Wmean_global_Lth= weighted.mean(Lth_mean_global, cover, na.rm=TRUE),
-#          Wmean_global_LA= weighted.mean(LA_mean_global, cover, na.rm=TRUE),
-#          Wmean_global_SLA= weighted.mean(SLA_mean_global, cover, na.rm=TRUE),
-#          Wmean_global_Height= weighted.mean(Height_mean_global, cover, na.rm=TRUE),
-#          Wmean_global_CN = weighted.mean(CN_ratio_mean_global, cover, na.rm=TRUE))%>%
-#   ungroup()%>%
-#   select(Site, Species, T_level, P_level, Temp, Precip, SLA, LDMC, Lth_ave, Leaf_area, Height, CN_ratio, SLA_mean, LDMC_mean, Lth_mean, LA_mean, Height_mean, CN_ratio_mean, Genus, Family, Order, LDMC_mean_global, Lth_mean_global, SLA_mean_global, LA_mean_global, CN_ratio_mean_global, Height_mean_global, Wmean_LDMC, Wmean_Lth, Wmean_LA, Wmean_SLA, Wmean_Height, Wmean_CN, Wmean_global_CN, Wmean_global_Height, Wmean_global_SLA, Wmean_global_LA, Wmean_global_Lth, Wmean_global_LDMC, occurrence, functionalGroup, turfID, cover, sum_cover, cover_species, Full_name)
+# 
+# wcommunity_df <- filter(wcommunity, turfID %in% Complete_turfs)
+# 
+# 
+#  wcommunity_df <- wcommunity%>%
+#    group_by(turfID, Site)%>%
+#    mutate(Wmean_LDMC= weighted.mean(LDMC_mean, cover, na.rm=TRUE),
+#              Wmean_Lth= weighted.mean(Lth_mean, cover, na.rm=TRUE),
+#              Wmean_LA= weighted.mean(LA_mean, cover, na.rm=TRUE),
+#              Wmean_SLA= weighted.mean(SLA_mean, cover, na.rm=TRUE),
+#              Wmean_Height= weighted.mean(Height_mean, cover, na.rm=TRUE),
+             # Wmean_CN = weighted.mean(CN_ratio_mean, cover, na.rm=TRUE))
+   # mutate(Wmean_global_LDMC= weighted.mean(LDMC_mean_global, cover, na.rm=TRUE),
+   #        Wmean_global_Lth= weighted.mean(Lth_mean_global, cover, na.rm=TRUE),
+   #        Wmean_global_LA= weighted.mean(LA_mean_global, cover, na.rm=TRUE),
+   #        Wmean_global_SLA= weighted.mean(SLA_mean_global, cover, na.rm=TRUE),
+   #        Wmean_global_Height= weighted.mean(Height_mean_global, cover, na.rm=TRUE),
+   #        Wmean_global_CN = weighted.mean(CN_ratio_mean_global, cover, na.rm=TRUE))%>%
+   # ungroup()%>%
+   # select(Site, Species, T_level, P_level, Temp, Precip, SLA, LDMC, Lth_ave, Leaf_area, Height, CN_ratio, SLA_mean, LDMC_mean, Lth_mean, LA_mean, Height_mean, CN_ratio_mean, Genus, Family, Order, LDMC_mean_global, Lth_mean_global, SLA_mean_global, LA_mean_global, CN_ratio_mean_global, Height_mean_global, Wmean_LDMC, Wmean_Lth, Wmean_LA, Wmean_SLA, Wmean_Height, Wmean_CN, Wmean_global_CN, Wmean_global_Height, Wmean_global_SLA, Wmean_global_LA, Wmean_global_Lth, Wmean_global_LDMC, occurrence, functionalGroup, turfID, cover, sum_cover, cover_species, Full_name)
 
 
 
@@ -311,18 +350,18 @@ community_cover<-community_cover%>%
 #   mutate(cover_traits = (sum(cover)))%>%
 #   filter(!is.na(SLA_mean))%>%
 #   mutate(community_covered_trait=cover_traits/sum_cover*100)
-# 
-# 
+#
+#
 # uncomplete_turf <- check_community_df%>%
 #   filter(community_covered_trait<80)%>%
 #   distinct(turfID, .keep_all=TRUE)
-# 
+#
 # Uncomplete_turfs<-as.vector(uncomplete_turf$turfID)
-# 
+#
 # complete_turf <- check_community_df%>%
 #   filter(community_covered_trait>70)%>%
 #   distinct(turfID, .keep_all=TRUE)
-# 
+#
 # Complete_turfs<-as.vector(complete_turf$turfID)
 
 #### Checking which species I need to do ####
