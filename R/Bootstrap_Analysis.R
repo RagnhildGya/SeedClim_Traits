@@ -3,22 +3,66 @@
 ### Source ###
 
 source("R/Cleaning.R")
-source("R/Bootstraping.R")
+#source("R/Bootstraping.R")
 
 ### Libraries ###
 
-library(broom.mixed)
-library(lme4)
-library(lmerTest)
-library(purrr)
-library(piecewiseSEM)
-library(factoextra)
-library(GGally)
-library(ggcorrplot)
-library(textshape)
-
+# library(broom.mixed)
+# library(lme4)
+# library(lmerTest)
+# library(purrr)
+# library(piecewiseSEM)
+# library(factoextra)
+# library(GGally)
+# library(ggcorrplot)
+# library(textshape)
+library(traitstrap)
 
 set.seed(47)
+
+## Trying traitstrap ##
+
+community2009 <- community %>% 
+  filter(!is.na(cover9))
+
+community2017 <- community %>% 
+  filter(!is.na(cover17))
+
+SeedClim_traits_2009 <- trait_impute(comm = community2009,
+                                traits = traitdata_1, 
+                                scale_hierarchy = "Site",
+                                global = FALSE,
+                                taxon_col = c("Full_name", "Genus", "Family"),
+                                trait_col = "Trait_trans",
+                                value_col = "Value",
+                                abundance_col = "cover9")
+
+SeedClim_traits_2017 <- trait_impute(comm = community2017,
+                                     traits = traitdata_1, 
+                                     scale_hierarchy = "Site",
+                                     global = FALSE,
+                                     taxon_col = c("Full_name", "Genus", "Family"),
+                                     trait_col = "Trait_trans",
+                                     value_col = "Value",
+                                     abundance_col = "cover17")
+
+
+SC_moments_2009 <- trait_np_bootstrap(imputed_traits = SeedClim_traits_2009, nrep = 100)
+SC_moments_2017 <- trait_np_bootstrap(imputed_traits = SeedClim_traits_2017, nrep = 100)
+
+sum_SC_moments_2009 = trait_summarise_boot_moments(SC_moments_2009)
+sum_SC_moments_2017 = trait_summarise_boot_moments(SC_moments_2017)
+
+
+
+summarised_boot_moments_climate_2009 = bind_rows(
+  sum_SC_moments_2009 %>% 
+    left_join(env, by = c("Site" = "Site")))
+
+
+
+
+
 
 ## Run the bootstrapping, output community weighted trait distributions ##
 # Output is the distributions pulled from the raw data weighted by cover, and it shows the distributions used to calculated mean, variance, skewness and kurtosis on. This code only gives 10 (nrep) replicates per plot, but pulls 200 leaves (samplesize) each time.
@@ -206,7 +250,9 @@ ggcorrplot(corr, hc.order = FALSE,
 
 Ord_raw_traits <- traitdata_1 %>% 
   ungroup() %>% 
-  select(Trait_trans, )
+  select(Trait_trans, Value, T_level, P_level, Site) %>% 
+  ungroup() %>% 
+  spread(key = Trait_trans, value = Value)
   # filter(!Trait == "Wet_Mass_g_log") %>% 
   # select(turfID, Trait, Temp, Precip, VPD, meanMean) %>% 
   # #gather(Moment, Value, -(turfID:P_cat)) %>% 
@@ -214,8 +260,17 @@ Ord_raw_traits <- traitdata_1 %>%
   # spread(key = Trait, value = meanMean) %>% 
   # column_to_rownames("turfID")
 
+Ord_boot_traits <- CI_Mean_Boot_Traits %>% 
+  ungroup() %>% 
+  filter(!Trait == "Wet_Mass_g_log") %>% 
+  select(turfID, Trait, T_level, P_level, VPD, meanMean) %>% 
+  #gather(Moment, Value, -(turfID:P_cat)) %>% 
+  #unite(temp, Trait, Moment) %>% 
+  spread(key = Trait, value = meanMean) %>% 
+  column_to_rownames("turfID")
 
-res.pca <- prcomp(PCA_boot_traits[, -(1:2)], scale = TRUE)
+
+res.pca <- prcomp(Ord_boot_traits[, -(1:3)], scale = TRUE)
 
 fviz_eig(res.pca, addlabels = TRUE) #Visualize eigenvalues/scree plot
 
@@ -240,43 +295,52 @@ fviz_pca_var(res.pca,
 # 
 # #Make a biplot of individuals and variables
 # 
-# fviz_pca_biplot(res.pca, repel = TRUE,
-#                 col.var = "#2E9FDF", # Variables color
-#                 col.ind = "#696969",  # Individuals color
-#                 label = "var"
-# )
-# 
-# #ggsave("PCA_communitypoints.jpg", width = 15 , height = 15, units = "cm")
+fviz_pca_biplot(res.pca, repel = TRUE,
+                col.var = "#2E9FDF", # Variables color
+                col.ind = "#696969",  # Individuals color
+                label = "var",
+                labelsize = 5)+
+  theme_minimal(base_size = 20)
+
+  ggsave("PCA_communitypoints.jpg", width = 15 , height = 15, units = "cm")
 # 
 # #Visualize individuals, add ellpises with tempereature and preacipitation
+
 # 
-# fviz_pca_ind(res.pca,
-#              label = "none",
-#              habillage = PCA_boot_traits$T_cat,
-#              addEllipses=TRUE, ellipse.level=0.95
-# )
-# #ggsave("PCA_temp.jpg", width = 21 , height = 15, units = "cm")
+fviz_pca_ind(res.pca,
+             label = "none",
+             habillage = Ord_boot_traits$T_level,
+             addEllipses=TRUE, ellipse.level=0.95)+
+  scale_color_brewer(palette = "YlOrRd") +
+  scale_fill_brewer(palette = "YlOrRd") +
+  theme_minimal(base_size = 15)
+
+
+ggsave("PCA_temp.jpg", width = 15 , height = 10, units = "cm")
+
+fviz_pca_ind(res.pca,
+             label = "none",
+             habillage = as.factor(Ord_boot_traits$P_level),
+             addEllipses=TRUE, ellipse.level=0.95) +
+  scale_color_brewer(palette = "RdBu") + 
+  scale_fill_brewer(palette = "RdBu") + 
+  theme_minimal(base_size = 15)
+
+ggsave("PCA_precip.jpg", width = 15 , height = 10, units = "cm")
 # 
-# fviz_pca_ind(res.pca,
-#              label = "none",
-#              habillage = PCA_boot_traits$P_cat,
-#              addEllipses=TRUE, ellipse.level=0.95
-# )
-# #ggsave("PCA_precip.jpg", width = 21 , height = 15, units = "cm")
-# 
-# fviz_pca_biplot(res.pca, 
-#                 col.ind = PCA_boot_traits$P_cat, 
-#                 addEllipses = TRUE, label = "var",
-#                 col.var = "black", repel = TRUE,
-#                 legend.title = "Temperature") 
+fviz_pca_biplot(res.pca,
+                col.ind = as.factor(Ord_boot_traits$T_level),
+                addEllipses = TRUE, label = "var",
+                col.var = "black", repel = TRUE,
+                legend.title = "Temperature")
 # 
 # #ggsave("PCA_precip_with_traitaxes.jpg", width = 21 , height = 15, units = "cm")
 # 
-# fviz_pca_biplot(res.pca, 
-#                 col.ind = PCA_boot_traits$T_cat, 
+# fviz_pca_biplot(res.pca,
+#                 col.ind = Ord_boot_traits$T_cat,
 #                 addEllipses = TRUE, label = "var",
 #                 col.var = "black", repel = TRUE,
-#                 legend.title = "Temperature") 
+#                 legend.title = "Temperature")
 # 
 # #ggsave("PCA_temp_with_traitaxes.jpg", width = 21 , height = 15, units = "cm")
 # 
@@ -323,16 +387,6 @@ fviz_pca_var(res.pca,
 library(vegan)
 library("ggvegan")
 
-
-Ord_boot_traits <- CI_Mean_Boot_Traits %>% 
-  ungroup() %>% 
-  filter(!Trait == "Wet_Mass_g_log") %>% 
-  select(turfID, Trait, Temp, Precip, VPD, meanMean) %>% 
-  #gather(Moment, Value, -(turfID:P_cat)) %>% 
-  #unite(temp, Trait, Moment) %>% 
-  spread(key = Trait, value = meanMean) %>% 
-  column_to_rownames("turfID")
-
 RDA <- rda(Ord_boot_traits[, -(1:3)]~ Temp+Precip, scale = TRUE, data = Ord_boot_traits)
 
 autoplot(RDA) +
@@ -340,7 +394,7 @@ autoplot(RDA) +
 
 autoplot(RDA, arrows = TRUE, data = PCA_boot_traits) +
   scale_x_continuous(expand = c(0.22, 0)) +
-  geom_point(data = RDA, aes(RDA1, RDA2), size=2, alpha=0.5) +
+  geom_point(data = RDA, aes(RDA1, RDA2), size=2) +
   geom_abline(intercept = 0,slope = 0,linetype="dashed", size=0.8) +
   geom_vline(aes(xintercept=0), linetype="dashed", size=0.8) + labs(x = "Axis 1", y="Axis 2") + 
   theme_bw()
