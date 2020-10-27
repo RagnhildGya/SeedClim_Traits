@@ -20,7 +20,7 @@ library(traitstrap)
 
 set.seed(47)
 
-## Trying traitstrap ##
+## Making data ready for traitstrap ##
 
 community2009 <- community %>% 
   filter(!is.na(cover9))
@@ -31,6 +31,8 @@ community2017 <- community %>%
 traitdata_2 <- traitdata_1 %>% 
   mutate(blockID = "",
          turfID = "")
+
+## Trait impute ##
 
 SeedClim_traits_2009 <- trait_impute(comm = community2009,
                                 traits = traitdata_2, 
@@ -50,6 +52,7 @@ SeedClim_traits_2017 <- trait_impute(comm = community2017,
                                      value_col = "Value",
                                      abundance_col = "cover17")
 
+## Bootstraping community weighted means and making summarised moments of the distributions ##
 
 SC_moments_2009 <- trait_np_bootstrap(imputed_traits = SeedClim_traits_2009, nrep = 100)
 SC_moments_2017 <- trait_np_bootstrap(imputed_traits = SeedClim_traits_2017, nrep = 100)
@@ -57,7 +60,7 @@ SC_moments_2017 <- trait_np_bootstrap(imputed_traits = SeedClim_traits_2017, nre
 sum_SC_moments_2009 = trait_summarise_boot_moments(SC_moments_2009)
 sum_SC_moments_2017 = trait_summarise_boot_moments(SC_moments_2017)
 
-
+## Adding climate info ##
 
 summarised_boot_moments_climate_2009 = bind_rows(
   sum_SC_moments_2009 %>% 
