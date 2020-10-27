@@ -29,11 +29,13 @@ Bootstrap_Traits1 %>%
   ggplot(aes(Mean, fill = T_cat))+
   geom_density(alpha = 0.5)+
   #facet_wrap(~P_cat, nrow = 1) +
-  labs(x = "Community weighted means - SLA (cm2/g)", fill = "Temperature category", title = "Porbability distribution of the community weighted mean of SLA")+
-  theme_bw()+
-  scale_fill_manual(values = c("#99CCFF", "#9999FF", "#FF9999"))
+  labs(x = "Community weighted means - SLA (cm2/g)", fill = "Temperature category", title = "Specific leaf area (SLA)")+
+  theme_bw(base_size = 12)+
+  scale_fill_brewer(palette = "YlOrRd")
+  #scale_fill_manual(values = c("#99CCFF", "#9999FF", "#FF9999"))
 
 #Plot showing the (probability distribution of) community weighted mean in points for four chosen traits
+ggsave("Bootstrap_SLA_mean.jpg", width = 15 , height = 10, units = "cm")
 
 # Bootstrap_Traits2 %>% 
 #   ungroup() %>% 
@@ -45,7 +47,7 @@ Bootstrap_Traits1 %>%
 #   facet_grid(Moment ~ Trait, scales = "free_y")
 
 
-#ggsave("Bootstrap_SLA_mean.jpg", width = 20 , height = 15, units = "cm")
+ggsave("Bootstrap_SLA_mean.jpg", width = 13,3 , height = 10, units = "cm")
 
 ## Variance, Kurtosis, Skewness ##
 
@@ -55,7 +57,8 @@ Bootstrap_Traits1 %>%
   geom_density(alpha = 0.5)+
   #facet_wrap(~P_cat, nrow = 1) +
   labs(x = "Community weighted variance - SLA (cm2/g)", fill = "Temperature category")+
-  theme_bw()
+  theme_bw(base_size = 12)+
+  scale_fill_brewer(palette = "YlOrRd")
 
 Bootstrap_Traits1 %>% 
   filter(Trait == "Plant_Height_mm_log") %>% 
@@ -63,8 +66,8 @@ Bootstrap_Traits1 %>%
   geom_density(alpha = 0.5)+
   #facet_wrap(~P_cat, nrow = 1) +
   labs(x = "Community weighted skewness - SLA (cm2/g)", fill = "Temperature category")+
-  theme_bw()+
-  scale_fill_manual(values = c("#FFDB6D", "#C3D7A4", "#4E84C4", "#3333CC"))
+  theme_bw(base_size = 12)+
+  scale_fill_brewer(palette = "YlOrRd")
 
 Bootstrap_Traits1 %>% 
   filter(Trait == "SLA_cm2_g") %>% 
@@ -72,23 +75,24 @@ Bootstrap_Traits1 %>%
   geom_density(alpha = 0.5)+
   #facet_wrap(~P_cat, nrow = 1) +
   labs(x = "Community weighted kurtosis - SLA (cm2/g)", fill = "Temperature category")+
-  theme_bw()+
-  geom_vline(xintercept = 1.2)
+  geom_vline(xintercept = 1.2) +
+  theme_bw(base_size = 12) +
+  scale_fill_brewer(palette = "YlOrRd")
 
 
 ## Mean of all traits ##
 
 Bootstrap_Traits1 %>% 
-  filter(Trait %in% c("CN_ratio", "LDMC",  "Plant_Height_mm_log", "SLA_cm2_g")) %>% 
+  filter(Trait %in% c("Plant_Height_mm_log", "SLA_cm2_g")) %>% 
   ggplot(aes(Mean, fill = T_cat))+
   geom_density(alpha = 0.5)+
-  facet_wrap(~Trait, scales = "free") +
-  labs(x = "Community weighted means", fill = "Temperature category")+
-  theme_bw()+ 
-  scale_fill_manual(values = c("#99CCFF", "#9999FF", "#FF9999"))
+  facet_wrap(~Trait, scales = "free", nrow = 2) +
+  labs(x = "Community weighted means", fill = "Temperature")+
+  theme_bw(base_size = 17)+
+  scale_fill_brewer(palette = "YlOrRd")
 
 
-#ggsave("Bootstrap_all_traits_mean.jpg", width = 20 , height = 15, units = "cm")
+#ggsave("Bootstrap_height_SLA_mean.jpg", width = 15 , height = 20, units = "cm")
 
 
 ### Kurtosis vs. skewness ##
@@ -158,7 +162,8 @@ model_output_graph_temp <- model_output %>%
   geom_hline(yintercept = 0) +
   coord_flip() +
   facet_wrap(~Moment, scales = "free_x", nrow = 1) +
-  labs(y = "Estimate of model")+
+  labs(y = "Estimate of model") +
+  ggtitle("Temperature") +
   theme_bw() +
   scale_color_manual(values = c("Blue", "Black", "Red"))
 
@@ -173,11 +178,50 @@ model_output_graph_precip <- model_output %>%
   geom_hline(yintercept = 0) +
   coord_flip() +
   facet_wrap(~Moment, scales = "free_x", nrow = 1) +
-  labs(y = "Estimate of model")+
+  labs(y = "Estimate of model") +
+  ggtitle("Precipitation") +
   theme_bw() +
   scale_color_manual(values = c("Blue", "Black", "Red"))
 
+model_output %>% 
+  ungroup() %>% 
+  filter(term %in% c("scale(Precip)", "Temp")) %>% 
+  mutate(term_1 = recode(term,"Precipitation" = "scale(Precip)")) %>% 
+  mutate(Moment = factor(Moment, levels = c("Mean", "Variance", "Skewness", "Kurtosis"))) %>% 
+  filter(Moment == "Variance") %>% 
+  mutate(Trait = factor(Trait, levels = c("C_percent", "N_percent", "CN_ratio", "Plant_Height_mm_log", "Leaf_Area_cm2_log", "Leaf_Thickness_Ave_mm", "Dry_Mass_g_log", "Wet_Mass_g_log", "SLA_cm2_g", "LDMC"))) %>% 
+  ggplot(aes(Trait, scale(effect, center = 0), col = Significant)) +
+  geom_point(alpha = 0.6, size = 4) +
+  geom_errorbar(aes(ymin = scale(CIlow.fit, center = 0), ymax = scale(CIhigh.fit, center = 0))) +
+  geom_hline(yintercept = 0) +
+  coord_flip() +
+  facet_wrap(~term_1, scales = "free_x", nrow = 1) +
+  labs(y = "Estimate of model") +
+  ggtitle("Variance with precipitation & temperature") +
+  theme_bw(base_size = 17) +
+  scale_color_manual(values = c("Blue", "Black", "Red"))
 
+#Precipition
+Bootstrap_Traits1 %>% 
+  filter(Trait %in% c("CN_ratio", "Plant_Height_mm_log")) %>% 
+  ggplot(aes(Variance, fill = T_cat))+
+  geom_density(alpha = 0.5)+
+  facet_wrap(~Trait, scales = "free", nrow = 2) +
+  labs(x = "Community weighted means", fill = "Precipitation")+
+  theme_bw(base_size = 17)+
+  scale_fill_brewer(palette = "YlOrRd")
+
+Raw_Data_Weighted %>% 
+  filter(Trait %in% c("CN_ratio", "Plant_Height_mm_log")) %>% 
+  ggplot(aes(Value, fill = as.factor(T_level))) +
+  geom_density(alpha = 0.5) +
+  facet_wrap(~Trait, scales = "free", nrow = 2) +
+  labs(fill = "Summer temperature (C)") +
+  scale_fill_brewer(palette = "YlOrRd") +
+  theme_bw(base_size = 17)
+
+
+ggsave("Bootstrap_Variance_summary.jpg", width = 20 , height = 12, units = "cm")
 
 ############ Code for making the skewness and kurtosis plots with mean and confidence intervals ###########
 ### Need to make into a function ###
@@ -203,7 +247,7 @@ CI_Mean_Boot_Traits2 <- CI_Mean_Boot_Traits %>%
 Lth_skew <- CI_Mean_Boot_Traits2 %>% 
   filter(Trait == "Leaf_Thickness_Ave_mm") %>% 
   ggplot(aes(Temp, meanSkew)) +
-  geom_point(alpha = 0.5) +
+  geom_point(alpha = 0.5, size = 3) +
   geom_errorbar(aes(ymin = CIlow.Skew, ymax = CIhigh.Skew)) +
   geom_hline(yintercept = 0) +
   geom_line(aes(y = M_meanSkew, col = "red")) +
@@ -271,7 +315,7 @@ C_Skew <- CI_Mean_Boot_Traits2 %>%
 N_Skew <- CI_Mean_Boot_Traits2 %>% 
   filter(Trait == "N_percent") %>% 
   ggplot(aes(Temp, meanSkew)) +
-  geom_point(alpha = 0.5) +
+  geom_point(alpha = 0.5, size = 3) +
   geom_errorbar(aes(ymin = CIlow.Skew, ymax = CIhigh.Skew)) +
   labs(y = "N %")+
   geom_hline(yintercept = 0) +
@@ -284,7 +328,7 @@ N_Skew <- CI_Mean_Boot_Traits2 %>%
 SLA_Skew <- CI_Mean_Boot_Traits2 %>% 
   filter(Trait == "SLA_cm2_g") %>% 
   ggplot(aes(Temp, meanSkew)) +
-  geom_point(alpha = 0.5) +
+  geom_jitter(alpha = 0.5, size = 3) +
   geom_errorbar(aes(ymin = CIlow.Skew, ymax = CIhigh.Skew)) +
   labs(y = "SLA (cm2/g)")+
   geom_hline(yintercept = 0) +
@@ -327,6 +371,12 @@ Skew_fig <- ggarrange(LDMC_Skew, SLA_Skew, CN_Skew, C_Skew, N_Skew, Lth_skew, LA
 annotate_figure(Skew_fig, top = text_grob("Skewness", face = "bold", size = 14))
 
 ggsave("Skewness_Temp.jpg", width = 20 , height = 20, units = "cm")
+
+##Making smaller figures for the poster ##
+N_Skew + theme_bw(base_size = 17) + theme(legend.position = "none") 
+SLA_Skew + theme_bw(base_size = 17) + theme(legend.position = "none")
+Lth_skew + theme_bw(base_size = 17) + theme(legend.position = "none")
+ggsave("Skewness_Lth_Temp.jpg", width = 12 , height = 10, units = "cm")
 
 ### Make multiple plots with Kurtosis
 
