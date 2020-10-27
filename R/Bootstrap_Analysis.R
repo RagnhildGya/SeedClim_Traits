@@ -202,29 +202,40 @@ ggcorrplot(corr, hc.order = FALSE,
 
 # Making data ready for ordination
 
+# Old code for the boot strapped traits
 
-# 
-# res.pca <- prcomp(PCA_boot_traits[, -(1:2)], scale = TRUE)
-# 
-# fviz_eig(res.pca, addlabels = TRUE) #Visualize eigenvalues/scree plot
-# 
-# 
-# #Visualize the results for individuals (plots)
-# 
-# fviz_pca_ind(res.pca,
-#              col.ind = "cos2", # Color by the quality of representation
-#              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-#              repel = TRUE     # Avoid text overlapping
-# )
-# 
-# #Visualize the results for variables (traits) with the cos2 values (contribution to the PC)
-# 
-# fviz_pca_var(res.pca,
-#              col.var = "contrib", # Color by contributions to the PC
-#              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-#              repel = TRUE     # Avoid text overlapping
-# )
-# 
+Ord_raw_traits <- traitdata_1 %>% 
+  ungroup() %>% 
+  select(Trait_trans, )
+  # filter(!Trait == "Wet_Mass_g_log") %>% 
+  # select(turfID, Trait, Temp, Precip, VPD, meanMean) %>% 
+  # #gather(Moment, Value, -(turfID:P_cat)) %>% 
+  # #unite(temp, Trait, Moment) %>% 
+  # spread(key = Trait, value = meanMean) %>% 
+  # column_to_rownames("turfID")
+
+
+res.pca <- prcomp(PCA_boot_traits[, -(1:2)], scale = TRUE)
+
+fviz_eig(res.pca, addlabels = TRUE) #Visualize eigenvalues/scree plot
+
+
+#Visualize the results for individuals (plots)
+
+fviz_pca_ind(res.pca,
+             col.ind = "cos2", # Color by the quality of representation
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE     # Avoid text overlapping
+)
+
+#Visualize the results for variables (traits) with the cos2 values (contribution to the PC)
+
+fviz_pca_var(res.pca,
+             col.var = "contrib", # Color by contributions to the PC
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE     # Avoid text overlapping
+)
+
 # #ggsave("PCA.jpg", width = 25 , height = 15, units = "cm")
 # 
 # #Make a biplot of individuals and variables
@@ -334,14 +345,15 @@ autoplot(RDA, arrows = TRUE, data = PCA_boot_traits) +
   geom_vline(aes(xintercept=0), linetype="dashed", size=0.8) + labs(x = "Axis 1", y="Axis 2") + 
   theme_bw()
 
+RDA_fort <- fortify(RDA)
+
 ggplot(RDA_fort, aes(x = RDA1, y = RDA2)) +
   geom_point(show.legend = FALSE) +
   scale_size(range = 2) +
   coord_equal()
 
-RDA_fort <- fortify(RDA)
 
-RDA
+RDA_VPD
 plot(RDA)
 screeplot(RDA)
 
