@@ -150,15 +150,12 @@ traitdata_1 <- traitdata_1 %>%
 
 # Reading in and cleaning the community data 
 
-community <-read.csv2("Data/comdat2009_2017.csv", header=TRUE, sep=",", stringsAsFactors = FALSE)
+community <-read.csv2("Data/comdat_TTC.csv", header=TRUE, sep=",", stringsAsFactors = FALSE)
 
 community <- community %>%
   mutate(Site= substr(siteID, 1,3)) %>% 
   select(-X) %>% 
-  mutate(Site = as.character(Site, levels = c("Ulv", "Lav", "Gud", "Skj", "Alr", "Hog", "Ram", "Ves", "Fau", "Vik", "Arh", "Ovs"))) %>% 
-  mutate(cover9 = replace(cover9, cover9 == 0, NA)) %>% 
-  mutate(cover17 = replace(cover17, cover17 == 0, NA))
-
+  mutate(Site = as.character(Site, levels = c("Ulv", "Lav", "Gud", "Skj", "Alr", "Hog", "Ram", "Ves", "Fau", "Vik", "Arh", "Ovs")))
 
 community <- community %>%
   left_join(systematics_species, by = c("species"="Species"))
