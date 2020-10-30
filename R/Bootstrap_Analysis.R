@@ -18,23 +18,59 @@ source("R/Cleaning.R")
 # library(textshape)
 library(traitstrap)
 library(vegan)
-#library(ggvegan)
+library(ggvegan)
 
 set.seed(47)
 
 #### Making data ready for traitstrap ####
 
 community2009 <- community %>% 
-  filter(!is.na(cover9))
+  filter(year == "2009")
+
+community2011 <- community %>% 
+  filter(year == "2011")
+
+community2012 <- community %>% 
+  filter(year == "2012")
+
+community2013 <- community %>% 
+  filter(year == "2013")
+
+community2015 <- community %>% 
+  filter(year == "2015")
+
+community2016 <- community %>% 
+  filter(year == "2016")
 
 community2017 <- community %>% 
-  filter(!is.na(cover17))
+  filter(year == "2017")
 
 traitdata_2 <- traitdata_1 %>% 
   mutate(blockID = "",
          turfID = "")
 
 #### Trait impute ####
+
+Trait_impute_per_year <- function(com_dat, trait_dat){
+  
+  SeedClim_traits <- trait_impute(comm = com_dat,
+                                       traits = trait_dat, 
+                                       scale_hierarchy = c("Site", "blockID", "turfID"),
+                                       global = FALSE,
+                                       taxon_col = c("Full_name", "Genus", "Family"),
+                                       trait_col = "Trait_trans",
+                                       value_col = "Value",
+                                       abundance_col = "cover")
+  
+  return(SeedClim_traits)
+}
+
+com_dat <- community2009
+trait_dat <- traitdata_2
+
+Trait_impute_per_year(com_dat = community2009, trait_dat = traitdata_2)
+
+
 
 SeedClim_traits_2009 <- trait_impute(comm = community2009,
                                 traits = traitdata_2, 
