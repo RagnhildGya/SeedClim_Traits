@@ -142,25 +142,24 @@ summarised_boot_moments_climate_2017 = bind_rows(
     left_join(env, by = c("Site" = "Site")))
 
 
+Moments_env_long <- function(moments, env){
+  
+  SC_moments_clim_long = bind_rows(
+    moments %>% 
+      left_join(env, by = c("Site" = "Site"))) %>% 
+    pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value")
+  
+  return(SC_moments_clim_long)
+}
 
-SC_moments_2009_clim_long = bind_rows(
-  SC_moments_2009 %>% 
-    left_join(env, by = c("Site" = "Site"))) %>% 
-  pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value")
+SC_moments_2009_clim_long <- Moments_env_long(SC_moments_2009, env)
+SC_moments_2011_clim_long <- Moments_env_long(SC_moments_2011, env)
+SC_moments_2012_clim_long <- Moments_env_long(SC_moments_2012, env)
+SC_moments_2013_clim_long <- Moments_env_long(SC_moments_2013, env)
+SC_moments_2015_clim_long <- Moments_env_long(SC_moments_2015, env)
+SC_moments_2016_clim_long <- Moments_env_long(SC_moments_2016, env)
+SC_moments_2017_clim_long <- Moments_env_long(SC_moments_2017, env)
 
-summarised_boot_moments_climate_2009 = bind_rows(
-  sum_SC_moments_2009 %>% 
-    left_join(env, by = c("Site" = "Site")))
-
-
-SC_moments_2017_clim_long = bind_rows(
-  SC_moments_2017 %>% 
-    left_join(env, by = c("Site" = "Site"))) %>% 
-  pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value")
-
-summarised_boot_moments_climate_2017 = bind_rows(
-  sum_SC_moments_2017 %>% 
-    left_join(env, by = c("Site" = "Site")))
 
 #### Mixed effect model testing ####
 
