@@ -174,40 +174,56 @@ predict_without_random<-function(model) {
 
 # Making  dataset ready for model 
 
-SC_moments_2009_clim_long <- SC_moments_2009_clim_long %>% 
-  select(Trait_trans, moments, Site, turfID, Temp, Precip, value) %>% 
-  group_by(Trait_trans, moments, turfID) %>% 
-  mutate(n = 1:n()) %>% 
-  ungroup() %>%
-  select(-turfID) %>% 
-  group_by(Trait_trans, moments, n) %>% 
-  nest()
+memodel_data <-function(dat) {
+  dat2 <- dat %>% 
+    select(Trait_trans, moments, Site,, blockID, turfID, Temp, Precip, value) %>% 
+    group_by(Trait_trans, moments, turfID) %>% 
+    mutate(n = 1:n()) %>% 
+    ungroup() %>%
+    select(-turfID) %>% 
+    group_by(Trait_trans, moments, n) %>% 
+    nest()
+  return(dat2)
+}
 
-SC_moments_2017_clim_long <- SC_moments_2017_clim_long %>% 
-  select(Trait_trans, moments, Site, turfID, Temp, Precip, value) %>% 
-  group_by(Trait_trans, moments, turfID) %>% 
-  mutate(n = 1:n()) %>% 
-  ungroup() %>%
-  select(-turfID) %>% 
-  group_by(Trait_trans, moments, n) %>% 
-  nest()
+memodel_data_2009 <- memodel_data(dat = SC_moments_2009_clim_long) 
+memodel_data_2011 <- memodel_data(dat = SC_moments_2011_clim_long)
+memodel_data_2012 <- memodel_data(dat = SC_moments_2012_clim_long) 
+memodel_data_2013 <- memodel_data(dat = SC_moments_2013_clim_long)
+memodel_data_2015 <- memodel_data(dat = SC_moments_2015_clim_long) 
+memodel_data_2016 <- memodel_data(dat = SC_moments_2016_clim_long) 
+memodel_data_2017 <- memodel_data(dat = SC_moments_2017_clim_long) 
 
 #### Testing with mixed effect model - TIME CONSUMING ####
 
-results_09 <- SC_moments_2009_clim_long %>%
+mem_results_2009 <- memodel_data_2009 %>%
   mutate(model = map(data, mixed_model_temp_precip))
-
-results_17 <- SC_moments_2017_clim_long %>%
+# mem_results_2011 <- memodel_data_2011 %>%
+#   mutate(model = map(data, mixed_model_temp_precip))
+# mem_results_2012 <- memodel_data_2012 %>%
+#   mutate(model = map(data, mixed_model_temp_precip))
+mem_results_2013 <- memodel_data_2013 %>%
+  mutate(model = map(data, mixed_model_temp_precip))
+# mem_results_2015 <- memodel_data_2015 %>%
+#   mutate(model = map(data, mixed_model_temp_precip))
+# mem_results_2016 <- memodel_data_2016 %>%
+#   mutate(model = map(data, mixed_model_temp_precip))
+mem_results_2017 <- memodel_data_2017 %>%
   mutate(model = map(data, mixed_model_temp_precip))
 
 # Tidying the model, giving the model output in a nice format. Making predicted values for each of the trait:moment combination along the climatic gradients. Calculating pseudo R squared values based on the method in paper Nakagawa et al 2017.
 
-tidy_model_predicted_09 <- results_09 %>%
+tidy_model_predicted_09 <- mem_results_2009 %>%
   mutate(model_output = map(model, tidy)) %>%
   mutate(predicted = map(model, predict_without_random)) %>% 
   mutate(R_squared = map(model, rsquared))
 
-tidy_model_predicted_17 <- results_17 %>%
+tidy_model_predicted_13 <- mem_results_2013 %>%
+  mutate(model_output = map(model, tidy)) %>%
+  mutate(predicted = map(model, predict_without_random)) %>% 
+  mutate(R_squared = map(model, rsquared))
+
+tidy_model_predicted_17 <- mem_results_2017 %>%
   mutate(model_output = map(model, tidy)) %>%
   mutate(predicted = map(model, predict_without_random)) %>% 
   mutate(R_squared = map(model, rsquared))
