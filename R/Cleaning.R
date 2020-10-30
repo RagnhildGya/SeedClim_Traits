@@ -153,6 +153,11 @@ traitdata_1 <- traitdata_1 %>%
 community <-read.csv2("Data/comdat_TTC.csv", header=TRUE, sep=",", stringsAsFactors = FALSE)
 
 community <- community %>%
+  mutate(latitude = as.numeric(latitude),
+         longitude = as.numeric(longitude),
+         annualPrecipitation_gridded = as.numeric(annualPrecipitation_gridded),
+         summerTemperature_gridded = as.numeric(summerTemperature_gridded),
+         cover = as.numeric(cover)) %>% 
   mutate(Site= substr(siteID, 1,3)) %>% 
   select(-X) %>% 
   mutate(Site = as.character(Site, levels = c("Ulv", "Lav", "Gud", "Skj", "Alr", "Hog", "Ram", "Ves", "Fau", "Vik", "Arh", "Ovs")))
