@@ -10,7 +10,7 @@ source("R/Cleaning.R")
  library(broom.mixed)
  library(lme4)
 # library(lmerTest)
-# library(purrr)
+ library(purrr)
  library(piecewiseSEM)
  library(factoextra)
 # library(GGally)
@@ -19,6 +19,7 @@ source("R/Cleaning.R")
 library(traitstrap)
 library(vegan)
 library(ggvegan)
+library(drake)
 
 set.seed(47)
 
@@ -49,6 +50,22 @@ traitdata_2 <- traitdata_1 %>%
   mutate(blockID = "",
          turfID = "")
 
+## Make a drake plan DOES NOT WORK YET ##
+
+# ComYearList <- drake_plan(
+#   
+#   # make a list with all years data
+# YearList = list(com2009 = community2009,
+#                 com2011 = community2011,
+#                 com2012 = community2012,
+#                 com2013 = community2013,
+#                 com2015 = community2015,
+#                 com2016 = community2016,
+#                 com2017 = community2017) %>% 
+# map(Trait_impute_per_year(trait_dat = traitdata_2, com_dat = .)),
+# 
+# ) 
+
 #### Trait impute ####
 
 Trait_impute_per_year <- function(com_dat, trait_dat){
@@ -65,41 +82,66 @@ Trait_impute_per_year <- function(com_dat, trait_dat){
   return(SeedClim_traits)
 }
 
-com_dat <- community2009
-trait_dat <- traitdata_2
 
-Trait_impute_per_year(com_dat = community2009, trait_dat = traitdata_2)
+SeedClim_traits_2009 <- Trait_impute_per_year(com_dat = community2009, trait_dat = traitdata_2)
+SeedClim_traits_2011 <- Trait_impute_per_year(com_dat = community2011, trait_dat = traitdata_2)
+SeedClim_traits_2012 <- Trait_impute_per_year(com_dat = community2012, trait_dat = traitdata_2)
+SeedClim_traits_2013 <- Trait_impute_per_year(com_dat = community2013, trait_dat = traitdata_2)
+SeedClim_traits_2015 <- Trait_impute_per_year(com_dat = community2015, trait_dat = traitdata_2)
+SeedClim_traits_2016 <- Trait_impute_per_year(com_dat = community2016, trait_dat = traitdata_2)
+SeedClim_traits_2017 <- Trait_impute_per_year(com_dat = community2017, trait_dat = traitdata_2)
 
-
-
-SeedClim_traits_2009 <- trait_impute(comm = community2009,
-                                traits = traitdata_2, 
-                                scale_hierarchy = c("Site", "blockID", "turfID"),
-                                global = FALSE,
-                                taxon_col = c("Full_name", "Genus", "Family"),
-                                trait_col = "Trait_trans",
-                                value_col = "Value",
-                                abundance_col = "cover9")
-
-SeedClim_traits_2017 <- trait_impute(comm = community2017,
-                                     traits = traitdata_2, 
-                                     scale_hierarchy = c("Site", "blockID", "turfID"),
-                                     global = FALSE,
-                                     taxon_col = c("Full_name", "Genus", "Family"),
-                                     trait_col = "Trait_trans",
-                                     value_col = "Value",
-                                     abundance_col = "cover17")
 
 #### Bootstraping community weighted means and making summarised moments of the distributions ####
 
 SC_moments_2009 <- trait_np_bootstrap(imputed_traits = SeedClim_traits_2009, nrep = 100)
+SC_moments_2011 <- trait_np_bootstrap(imputed_traits = SeedClim_traits_2011, nrep = 100)
+SC_moments_2012 <- trait_np_bootstrap(imputed_traits = SeedClim_traits_2012, nrep = 100)
+SC_moments_2013 <- trait_np_bootstrap(imputed_traits = SeedClim_traits_2013, nrep = 100)
+SC_moments_2015 <- trait_np_bootstrap(imputed_traits = SeedClim_traits_2015, nrep = 100)
+SC_moments_2016 <- trait_np_bootstrap(imputed_traits = SeedClim_traits_2016, nrep = 100)
 SC_moments_2017 <- trait_np_bootstrap(imputed_traits = SeedClim_traits_2017, nrep = 100)
 
-sum_SC_moments_2009 = trait_summarise_boot_moments(SC_moments_2009)
-sum_SC_moments_2017 = trait_summarise_boot_moments(SC_moments_2017)
+sum_SC_moments_2009 <- trait_summarise_boot_moments(SC_moments_2009)
+sum_SC_moments_2011 <- trait_summarise_boot_moments(SC_moments_2011)
+sum_SC_moments_2012 <- trait_summarise_boot_moments(SC_moments_2012)
+sum_SC_moments_2013 <- trait_summarise_boot_moments(SC_moments_2013)
+sum_SC_moments_2015 <- trait_summarise_boot_moments(SC_moments_2015)
+sum_SC_moments_2016 <- trait_summarise_boot_moments(SC_moments_2016)
+sum_SC_moments_2017 <- trait_summarise_boot_moments(SC_moments_2017)
 
 
 #### Adding climate info & pivoting longer ####
+
+summarised_boot_moments_climate_2009 = bind_rows(
+  sum_SC_moments_2009 %>% 
+    left_join(env, by = c("Site" = "Site")))
+
+summarised_boot_moments_climate_2011 = bind_rows(
+  sum_SC_moments_2011 %>% 
+    left_join(env, by = c("Site" = "Site")))
+
+summarised_boot_moments_climate_2012 = bind_rows(
+  sum_SC_moments_2012 %>% 
+    left_join(env, by = c("Site" = "Site")))
+
+summarised_boot_moments_climate_2013 = bind_rows(
+  sum_SC_moments_2013 %>% 
+    left_join(env, by = c("Site" = "Site")))
+
+summarised_boot_moments_climate_2015 = bind_rows(
+  sum_SC_moments_2015 %>% 
+    left_join(env, by = c("Site" = "Site")))
+
+summarised_boot_moments_climate_2016 = bind_rows(
+  sum_SC_moments_2016 %>% 
+    left_join(env, by = c("Site" = "Site")))
+
+summarised_boot_moments_climate_2017 = bind_rows(
+  sum_SC_moments_2017 %>% 
+    left_join(env, by = c("Site" = "Site")))
+
+
 
 SC_moments_2009_clim_long = bind_rows(
   SC_moments_2009 %>% 
