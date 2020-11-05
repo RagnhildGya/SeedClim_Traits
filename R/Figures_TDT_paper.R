@@ -2,8 +2,34 @@
 
 ## Libraries ##
 library(ggpubr)
+library(ggridges)
 
 ## Plotting trait distributions ##
+set.seed(47)
+
+T_names <- c(
+  "6.5" = "Alpine", 
+  "8.5" = "Sub-alpine",
+  "10.5" = "Boreal")
+
+slice_sample(SeedClim_traits_allYears, n = 200,  
+             replace = TRUE, weight_by = weight) %>% 
+  left_join(env, by = c("Site" = "Site")) %>% 
+  filter(Trait_trans == "SLA_cm2_g") %>% 
+  filter(!year == "2010") %>% 
+  mutate(year = as.factor(year)) %>% 
+  ggplot(aes(x = Value, y = fct_rev(year), fill = as.factor(T_level))) +
+  stat_density_ridges(quantile_lines = TRUE) +
+  facet_wrap(~T_level, scales = "free", nrow = 1, labeller = labeller(T_level = T_names)) +
+  theme_minimal(base_size = 15) +
+  scale_fill_brewer(palette = "RdYlBu", direction = -1) +
+  guides(fill=FALSE) +
+  labs(x = "Specific leaf area (cm2/g) distribution", y = "Year")
+
+ggsave("SLA_distributions_over_time_with_quantilles.jpg", width = 30 , height = 20, units = "cm")
+
+## Probability distribution of community weighted mean SLA  in 2009 ##
+
 
 trait_distribution_plot <- function(dat, year, trait){
   
@@ -34,6 +60,17 @@ SLA_distributions <- ggarrange(plot1, plot2, plot3, plot4, plot5, plot6,
 annotate_figure(SLA_distributions, top = text_grob("SLA over time", face = "bold", size = 14))
 
 ggsave("SLA_distributions_over_time.jpg", width = 30 , height = 20, units = "cm")
+
+SC_moments_clim_allYears %>% 
+  filter(Trait_trans == "SLA_cm2_g") %>% 
+  mutate(year = as.factor(year)) %>% 
+  ggplot(aes(x = value, y = year, group = year))+
+  geom_density_ridges() +
+  facet_grid(~moments, scales = "free") +
+  theme_ridges() + 
+  theme(legend.position = "none") +
+  labs(x = "SLA (cm2/g)", title = "Probability distribution of moments of SLA distribuion")+
+  theme_bw(base_size = 12)
 
 ## Variance, skewness, kurtosis ##
 
