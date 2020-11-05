@@ -82,7 +82,7 @@ Trait_impute_per_year <- function(com_dat, trait_dat){
   return(SeedClim_traits)
 }
 
-
+SeedClim_traits_allYears <- Trait_impute_per_year(com_dat = community, trait_dat = traitdata_2)
 SeedClim_traits_2009 <- Trait_impute_per_year(com_dat = community2009, trait_dat = traitdata_2)
 SeedClim_traits_2011 <- Trait_impute_per_year(com_dat = community2011, trait_dat = traitdata_2)
 SeedClim_traits_2012 <- Trait_impute_per_year(com_dat = community2012, trait_dat = traitdata_2)
@@ -195,19 +195,21 @@ mixed_model_temp_precip<-function(df) {
 }
 
 mixed_model_clim_year<-function(df) {
-  lmer(value ~ Temp * scale(Precip) * year + (1 | Site), data = df)
+  lmer(value ~ year + (1 | Site), data = df)
 }
 
 predict_without_random<-function(model) {
   predict(object = model, re.form=NA)
 }
 
-
+predict_with_random<-function(model) {
+  predict(object = model, re.form=NULL)
+}
 # Making  dataset ready for model 
 
 memodel_data <-function(dat) {
   dat2 <- dat %>% 
-    select(Trait_trans, moments, Site,, blockID, turfID, Temp, Precip, value) %>% 
+    select(Trait_trans, moments, Site, blockID, turfID, Temp, Precip, value) %>% 
     group_by(Trait_trans, moments, turfID) %>% 
     mutate(n = 1:n()) %>% 
     ungroup() %>%
@@ -261,6 +263,11 @@ mem_results_2017 <- memodel_data_2017 %>%
 
 # Tidying the model, giving the model output in a nice format. Making predicted values for each of the trait:moment combination along the climatic gradients. Calculating pseudo R squared values based on the method in paper Nakagawa et al 2017.
 
+tidy_year_model_predicted <- mem_results_clim_year %>%
+  mutate(model_output = map(model, tidy)) %>%
+  mutate(predicted = map(model, predict_with_random)) %>% 
+  mutate(R_squared = map(model, rsquared))
+
 tidy_model_predicted_09 <- mem_results_2009 %>%
   mutate(model_output = map(model, tidy)) %>%
   mutate(predicted = map(model, predict_without_random)) %>% 
@@ -277,6 +284,14 @@ tidy_model_predicted_17 <- mem_results_2017 %>%
   mutate(R_squared = map(model, rsquared))
 
 # Making a dataset with only the predicted values. Unnesting the list of the predicted values.
+
+predicted_values_allyear <- tidy_year_model_predicted %>%
+  #filter(!(Trait_trans == "C_percent" & moments == "kurtosis" & n == 79)) %>% 
+  #filter(!(Trait_trans == "Leaf_area_cm2_log" & moments == "variance" & n == 23)) %>%
+  ungroup() %>%
+  select(Trait_trans, moments, data, predicted) %>%
+  unnest(c(data, predicted)) %>%
+  rename(modeled = predicted, measured = value)
 
 predicted_values_09 <- tidy_model_predicted_09 %>%
   ungroup() %>%
