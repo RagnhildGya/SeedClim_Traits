@@ -146,8 +146,7 @@ Moments_env_long <- function(moments, env){
   
   SC_moments_clim_long = bind_rows(
     moments %>% 
-      left_join(env, by = c("Site" = "Site"))) %>% 
-    pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value")
+    pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value"))
   
   return(SC_moments_clim_long)
 }
@@ -161,10 +160,42 @@ SC_moments_2016_clim_long <- Moments_env_long(SC_moments_2016, env)
 SC_moments_2017_clim_long <- Moments_env_long(SC_moments_2017, env)
 
 
+#### Adding all the years together ####
+
+dict_year <- read.table(header = TRUE, stringsAsFactors = FALSE, text = 
+                          "old new
+  value2009 2009
+  value2011 2011
+  value2012 2012
+  value2013 2013
+  value2015 2015
+  value2016 2016
+  value2017 2017")
+
+SC_moments_clim_allYears <- SC_moments_2009_clim_long %>% 
+  left_join(SC_moments_2011_clim_long, by = c("n", "Site", "blockID", "turfID", "Trait_trans", "moments"), suffix = c("2009", "2011")) %>% 
+  left_join(SC_moments_2012_clim_long, by = c("n", "Site", "blockID", "turfID", "Trait_trans", "moments")) %>% 
+  left_join(SC_moments_2013_clim_long, by = c("n", "Site", "blockID", "turfID", "Trait_trans", "moments"), suffix = c("2012", "2013")) %>% 
+  left_join(SC_moments_2015_clim_long, by = c("n", "Site", "blockID", "turfID", "Trait_trans", "moments")) %>% 
+  left_join(SC_moments_2016_clim_long, by = c("n", "Site", "blockID", "turfID", "Trait_trans", "moments"), suffix = c("2015", "2016")) %>% 
+  left_join(SC_moments_2017_clim_long, by = c("n", "Site", "blockID", "turfID", "Trait_trans", "moments")) %>% 
+  mutate(value2017 = value) %>% 
+  select(-value) %>% 
+  left_join(env, by = c("Site" = "Site")) %>% 
+  pivot_longer(c("value2009", "value2011", "value2012", "value2013", "value2015", "value2016", "value2017"), names_to = "year", values_to = "value") %>% 
+  mutate(year = plyr::mapvalues(year, from = dict_year$old, to = dict_year$new)) %>% 
+  mutate(year = as.numeric(year))
+  
+
+
 #### Mixed effect model testing ####
 
 mixed_model_temp_precip<-function(df) {
   lmer(value ~ Temp * scale(Precip) + (1 | Site), data = df)
+}
+
+mixed_model_clim_year<-function(df) {
+  lmer(value ~ Temp * scale(Precip) * year + (1 | Site), data = df)
 }
 
 predict_without_random<-function(model) {
@@ -186,6 +217,20 @@ memodel_data <-function(dat) {
   return(dat2)
 }
 
+me_year_model_data <-function(dat) {
+  dat2 <- dat %>% 
+    ungroup() %>% 
+    select(Trait_trans, moments, Site, turfID, n, Temp, Precip, value, year) %>% 
+    # group_by(Trait_trans, moments, turfID) %>% 
+    # mutate(n = 1:n()) %>% 
+    # select(-turfID) %>% 
+    group_by(Trait_trans, moments, n) %>% 
+    nest()
+  return(dat2)
+}
+
+me_year_model_data <- me_year_model_data(dat = SC_moments_clim_allYears) 
+
 memodel_data_2009 <- memodel_data(dat = SC_moments_2009_clim_long) 
 memodel_data_2011 <- memodel_data(dat = SC_moments_2011_clim_long)
 memodel_data_2012 <- memodel_data(dat = SC_moments_2012_clim_long) 
@@ -195,6 +240,9 @@ memodel_data_2016 <- memodel_data(dat = SC_moments_2016_clim_long)
 memodel_data_2017 <- memodel_data(dat = SC_moments_2017_clim_long) 
 
 #### Testing with mixed effect model - TIME CONSUMING ####
+
+mem_results_clim_year <- me_year_model_data %>%
+  mutate(model = map(data, mixed_model_clim_year))
 
 mem_results_2009 <- memodel_data_2009 %>%
   mutate(model = map(data, mixed_model_temp_precip))
@@ -236,6 +284,12 @@ predicted_values_09 <- tidy_model_predicted_09 %>%
   unnest(c(data, predicted)) %>%
   rename(modeled = predicted, measured = value)
 
+predicted_values_13 <- tidy_model_predicted_13 %>%
+  ungroup() %>%
+  select(Trait_trans, moments, data, predicted) %>%
+  unnest(c(data, predicted)) %>%
+  rename(modeled = predicted, measured = value)
+
 predicted_values_17 <- tidy_model_predicted_17 %>%
   ungroup() %>%
   select(Trait_trans, moments, data, predicted) %>%
@@ -244,37 +298,34 @@ predicted_values_17 <- tidy_model_predicted_17 %>%
 
 # Making a dataset with the model output and the test-statistics (R squared), and summarizing them.
 
-model_output_09 <- tidy_model_predicted_09 %>% 
-  select(Trait_trans, moments, n, model_output, R_squared) %>% 
-  unnest(c(model_output, R_squared)) %>% 
-  filter(term %in% c("Temp", "scale(Precip)")) %>% 
-  select(Trait_trans, moments, term, n, estimate, Marginal, Conditional) %>% 
-  ungroup() %>% 
-  group_by(Trait_trans, moments, term) %>% 
-  summarize(effect = mean(estimate),
-            R2_marginal = mean(Marginal),
-            R2_conditional = mean(Conditional),
-            CIlow.fit = effect - sd(estimate),
-            CIhigh.fit = effect + sd(estimate)) %>% 
-  mutate(Significant = case_when(CIlow.fit < 0 & CIhigh.fit < 0 ~ "Negative",
-                                 CIlow.fit > 0 & CIhigh.fit > 0 ~ "Positive",
-                                 CIlow.fit < 0 & CIhigh.fit > 0 ~ "No"))
+model_output <-function(dat) {
+  
+  model_output <- dat %>% 
+    select(Trait_trans, moments, n, model_output, R_squared) %>% 
+    unnest(c(model_output, R_squared)) %>% 
+    filter(term %in% c("Temp", "scale(Precip)", "Temp:scale(Precip)")) %>% 
+    select(Trait_trans, moments, term, n, estimate, Marginal, Conditional) %>% 
+    ungroup() %>% 
+    group_by(Trait_trans, moments, term) %>% 
+    summarize(effect = mean(estimate),
+              R2_marginal = mean(Marginal),
+              R2_conditional = mean(Conditional),
+              CIlow.fit = effect - sd(estimate),
+              CIhigh.fit = effect + sd(estimate)) %>% 
+    mutate(Significant = case_when(CIlow.fit < 0 & CIhigh.fit < 0 ~ "Negative",
+                                   CIlow.fit > 0 & CIhigh.fit > 0 ~ "Positive",
+                                   CIlow.fit < 0 & CIhigh.fit > 0 ~ "No"))
+  return(model_output)
+}
 
-model_output_17 <- tidy_model_predicted_17 %>% 
-  select(Trait_trans, moments, n, model_output, R_squared) %>% 
-  unnest(c(model_output, R_squared)) %>% 
-  filter(term %in% c("Temp", "scale(Precip)")) %>% 
-  select(Trait_trans, moments, term, n, estimate, Marginal, Conditional) %>% 
-  ungroup() %>% 
-  group_by(Trait_trans, moments, term) %>% 
-  summarize(effect = mean(estimate),
-            R2_marginal = mean(Marginal),
-            R2_conditional = mean(Conditional),
-            CIlow.fit = effect - sd(estimate),
-            CIhigh.fit = effect + sd(estimate)) %>% 
-  mutate(Significant = case_when(CIlow.fit < 0 & CIhigh.fit < 0 ~ "Negative",
-                                 CIlow.fit > 0 & CIhigh.fit > 0 ~ "Positive",
-                                 CIlow.fit < 0 & CIhigh.fit > 0 ~ "No"))
+model_output_09 <- model_output(tidy_model_predicted_09)
+model_output_13 <- model_output(tidy_model_predicted_13)
+model_output_17 <- model_output(tidy_model_predicted_17)
+
+write.table(x = model_output_09, file = "model_output_09.csv")
+write.table(x = model_output_13, file = "model_output_13.csv") 
+write.table(x = model_output_17, file = "model_output_17.csv") 
+
 
 #### Correlation ####
 
