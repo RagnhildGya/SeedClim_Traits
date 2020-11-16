@@ -68,6 +68,9 @@ traitdata_2 <- traitdata_1 %>%
 
 #### Trait impute ####
 
+##Fix species with missing taxonomy
+##Fix Car_sp, Alc_sp problems
+
 Trait_impute_per_year <- function(com_dat, trait_dat){
   
   SeedClim_traits <- trait_impute(comm = com_dat,
