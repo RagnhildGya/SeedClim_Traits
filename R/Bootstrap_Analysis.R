@@ -119,9 +119,9 @@ sum_SC_moments_allYears <- trait_summarise_boot_moments(SC_moments_allYears) #Ne
 
 #### Adding climate info & pivoting longer ####
 
-# summarised_boot_moments_climate_2009 = bind_rows(
-#   sum_SC_moments_2009 %>% 
-#     left_join(env, by = c("Site" = "Site")))
+ summarised_boot_moments_climate_2009 = bind_rows(
+   sum_SC_moments_2009 %>% 
+     left_join(env, by = c("Site" = "Site")))
 # 
 # summarised_boot_moments_climate_2011 = bind_rows(
 #   sum_SC_moments_2011 %>% 
@@ -148,14 +148,14 @@ sum_SC_moments_allYears <- trait_summarise_boot_moments(SC_moments_allYears) #Ne
 #     left_join(env, by = c("Site" = "Site")))
 
 
-# Moments_env_long <- function(moments, env){
-#   
-#   SC_moments_clim_long = bind_rows(
-#     moments %>% 
-#     pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value"))
-#   
-#   return(SC_moments_clim_long)
-# }
+ Moments_env_long <- function(moments, env){
+   
+   SC_moments_clim_long = bind_rows(
+     moments %>% 
+     pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value"))
+   
+   return(SC_moments_clim_long)
+ }
 
 SC_moments_clim_long <- SC_moments_allYears %>% 
   pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
@@ -169,6 +169,8 @@ SC_moments_clim_long <- SC_moments_allYears %>%
 # SC_moments_2016_clim_long <- Moments_env_long(SC_moments_2016, env)
 # SC_moments_2017_clim_long <- Moments_env_long(SC_moments_2017, env)
 
+# SC_moments_2009_clim_long <- SC_moments_2009_clim_long %>% 
+# left_join(env, by = "Site")
 
 #### Adding all the years together ####
 
@@ -201,7 +203,7 @@ SC_moments_clim_long <- SC_moments_allYears %>%
 #### Mixed effect model testing ####
 
 mixed_model_temp_precip<-function(df) {
-  lmer(value ~ Temp * scale(Precip) + (1 | Site), data = df)
+  lmer(value ~ Temp * scale(Precip) +  (1 | Site), data = df)
 }
 
 mixed_model_clim_year<-function(df) {
@@ -241,6 +243,9 @@ me_year_model_data <-function(dat) {
   return(dat2)
 }
 
+
+
+
 me_year_model_data <- me_year_model_data(dat = SC_moments_clim_allYears) 
 
 memodel_data_2009 <- memodel_data(dat = SC_moments_2009_clim_long) 
@@ -250,6 +255,64 @@ memodel_data_2013 <- memodel_data(dat = SC_moments_2013_clim_long)
 memodel_data_2015 <- memodel_data(dat = SC_moments_2015_clim_long) 
 memodel_data_2016 <- memodel_data(dat = SC_moments_2016_clim_long) 
 memodel_data_2017 <- memodel_data(dat = SC_moments_2017_clim_long) 
+
+
+memodel_data_allYears <- SC_moments_clim_long %>% 
+  ungroup() %>%
+  select(Trait_trans, moments, Site, turfID, Temp, Precip, value, year, n) %>% 
+  group_by(Trait_trans, moments, n) %>% 
+  nest()
+
+mixed_model_temp_precip<-function(df) {
+  lmer(value ~ year + Temp * scale(Precip)+ (1 | Site/turfID), data = df)
+}
+
+predict_without_random<-function(model) {
+  predict(object = model, re.form=NA)
+}
+
+predict_with_random<-function(model) {
+  predict(object = model, re.form=NULL)
+}
+
+mem_results <- memodel_data_allYears%>%
+  mutate(model = map(data, mixed_model_temp_precip))
+
+tidy_year_model_predicted <- mem_results %>%
+  mutate(model_output = map(model, tidy)) %>%
+  mutate(predicted = map(model, predict_with_random)) %>% 
+  mutate(R_squared = map(model, rsquared))
+
+predicted_values_allyear <- tidy_year_model_predicted %>%
+  ungroup() %>%
+  select(Trait_trans, moments, data, predicted) %>%
+  unnest(c(data, predicted)) %>%
+  rename(modeled = predicted, measured = value)
+
+
+model_output <-function(dat) {
+  
+  model_output <- dat %>% 
+    select(Trait_trans, moments, n, model_output, R_squared) %>% 
+    unnest(c(model_output, R_squared)) %>% 
+    filter(term %in% c("Temp", "scale(Precip)", "Temp:scale(Precip)", "year")) %>% 
+    select(Trait_trans, moments, term, n, estimate, Marginal, Conditional) %>% 
+    ungroup() %>% 
+    group_by(Trait_trans, moments, term) %>% 
+    summarize(effect = mean(estimate),
+              R2_marginal = mean(Marginal),
+              R2_conditional = mean(Conditional),
+              CIlow.fit = effect - sd(estimate),
+              CIhigh.fit = effect + sd(estimate)) %>% 
+    mutate(Significant = case_when(CIlow.fit < 0 & CIhigh.fit < 0 ~ "Negative",
+                                   CIlow.fit > 0 & CIhigh.fit > 0 ~ "Positive",
+                                   CIlow.fit < 0 & CIhigh.fit > 0 ~ "No"))
+  return(model_output)
+}
+
+model_output <- model_output(tidy_year_model_predicted)
+
+write.table(x = model_output, file = "model_output_TDT.csv")
 
 #### Testing with mixed effect model - TIME CONSUMING ####
 
