@@ -26,7 +26,7 @@ slice_sample(SeedClim_traits_allYears, n = 200,
   guides(fill=FALSE) +
   labs(x = "Specific leaf area (cm2/g)", y = "Year")
 
-ggsave("SLA_distributions_over_time.jpg", width = 30 , height = 20, units = "cm")
+# ggsave("SLA_distributions_over_time.jpg", width = 30 , height = 20, units = "cm")
 
 ## Probability distribution of community weighted mean SLA  in 2009 ##
 
@@ -105,6 +105,16 @@ summarised_boot_moments_climate_2017 %>%
   scale_fill_brewer(palette = "YlOrRd")
 
 #### Ordination ####
+
+Ord_boot_traits <- SC_moments_clim_long %>% 
+  ungroup() %>% 
+  filter(!Trait_trans == "Wet_Mass_g_log") %>% 
+  select(turfID, Trait_trans, T_level, P_level, mean) %>% 
+  #gather(Moment, Value, -(turfID:P_cat)) %>% 
+  #unite(temp, Trait, Moment) %>% 
+  spread(key = Trait_trans, value = mean) %>% 
+  column_to_rownames("turfID")
+
 
 #Visualize the results for variables (traits) with the cos2 values (contribution to the PC)
 

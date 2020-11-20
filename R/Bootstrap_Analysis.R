@@ -25,26 +25,26 @@ set.seed(47)
 
 #### Making data ready for traitstrap ####
 
-community2009 <- community %>% 
-  filter(year == "2009")
-
-community2011 <- community %>% 
-  filter(year == "2011")
-
-community2012 <- community %>% 
-  filter(year == "2012")
-
-community2013 <- community %>% 
-  filter(year == "2013")
-
-community2015 <- community %>% 
-  filter(year == "2015")
-
-community2016 <- community %>% 
-  filter(year == "2016")
-
-community2017 <- community %>% 
-  filter(year == "2017")
+# community2009 <- community %>% 
+#   filter(year == "2009")
+# 
+# community2011 <- community %>% 
+#   filter(year == "2011")
+# 
+# community2012 <- community %>% 
+#   filter(year == "2012")
+# 
+# community2013 <- community %>% 
+#   filter(year == "2013")
+# 
+# community2015 <- community %>% 
+#   filter(year == "2015")
+# 
+# community2016 <- community %>% 
+#   filter(year == "2016")
+# 
+# community2017 <- community %>% 
+#   filter(year == "2017")
 
 traitdata_2 <- traitdata_1 %>% 
   mutate(blockID = "",
@@ -80,13 +80,25 @@ Trait_impute_per_year <- function(com_dat, trait_dat){
                                        taxon_col = c("Full_name", "Genus", "Family"),
                                        trait_col = "Trait_trans",
                                        value_col = "Value",
+                                  other_col = "year",
                                        abundance_col = "cover")
   
   return(SeedClim_traits)
 }
 
-SeedClim_traits_allYears <- Trait_impute_per_year(com_dat = community, trait_dat = traitdata_2) %>% 
+SeedClim_traits_allYears <- trait_impute(comm = community,
+             traits = traitdata_2, 
+             scale_hierarchy = c("Site", "blockID", "turfID"),
+             global = FALSE,
+             taxon_col = c("Full_name", "Genus", "Family"),
+             trait_col = "Trait_trans",
+             value_col = "Value",
+             other_col = "year",
+             abundance_col = "cover") %>% 
   group_by(year, Site, blockID, turfID, Trait_trans)
+
+
+
 # SeedClim_traits_2009 <- Trait_impute_per_year(com_dat = community2009, trait_dat = traitdata_2)
 # SeedClim_traits_2011 <- Trait_impute_per_year(com_dat = community2011, trait_dat = traitdata_2)
 # SeedClim_traits_2012 <- Trait_impute_per_year(com_dat = community2012, trait_dat = traitdata_2)
@@ -107,7 +119,7 @@ SC_moments_allYears <- trait_np_bootstrap(imputed_traits = SeedClim_traits_allYe
 # SC_moments_2016 <- trait_np_bootstrap(imputed_traits = SeedClim_traits_2016, nrep = 100)
 # SC_moments_2017 <- trait_np_bootstrap(imputed_traits = SeedClim_traits_2017, nrep = 100)
 
-sum_SC_moments_allYears <- trait_summarise_boot_moments(SC_moments_allYears) #Need to fix this, now it summarizes across years
+sum_SC_moments_allYears <- trait_summarise_boot_moments(SC_moments_allYears)
 # sum_SC_moments_2009 <- trait_summarise_boot_moments(SC_moments_2009)
 # sum_SC_moments_2011 <- trait_summarise_boot_moments(SC_moments_2011)
 # sum_SC_moments_2012 <- trait_summarise_boot_moments(SC_moments_2012)
