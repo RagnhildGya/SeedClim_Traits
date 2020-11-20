@@ -3,6 +3,23 @@
 ## Libraries ##
 library(ggpubr)
 library(ggridges)
+library(ggfortify)
+
+## Climate figure ##
+
+ggplot(aes(x = Precip_decade, y = Temp_decade,
+           color = Precip_level, shape = Temp_level), data = env) +
+  #geom_point() +
+  geom_point(aes(x = Precip_60_90, y = Temp_60_90)) +
+  geom_pointrange(aes(ymin = Temp_decade-Temp_se, ymax = Temp_decade+Temp_se)) +
+  geom_errorbarh(aes(xmin = Precip_decade-Precip_se, xmax = Precip_decade+Precip_se)) +
+  labs(x = "Annual precipitation in mm", y = "Tetraterm temperature in °C") +
+  scale_color_brewer(name = "Precipitation level", palette = "Blues") + 
+  scale_shape_manual(name = "Temperature level", values = c(25, 21, 24)) +
+  guides(fill = "none", size = guide_legend(override.aes = list(shape = c(1, 16)))) +
+  theme_minimal(base_size = 20)
+
+
 
 ## Plotting trait distributions ##
 set.seed(47)
@@ -106,30 +123,86 @@ summarised_boot_moments_climate_2017 %>%
 
 #### Ordination ####
 
-Ord_boot_traits <- SC_moments_clim_long %>% 
+Ord_boot_traits <- SC_moments_allYears %>% 
+  left_join(env, by = "Site") %>% 
   ungroup() %>% 
+  mutate(uniqueID = paste0(turfID,"_", year, "_", Site)) %>% 
+  group_by(uniqueID, Trait_trans) %>% 
+  mutate(mean_mean = mean(mean)) %>% 
   filter(!Trait_trans == "Wet_Mass_g_log") %>% 
-  select(turfID, Trait_trans, T_level, P_level, mean) %>% 
+  select(uniqueID, Site, year, turfID, Trait_trans, T_level, P_level, mean_mean) %>%
+  unique() %>% 
   #gather(Moment, Value, -(turfID:P_cat)) %>% 
   #unite(temp, Trait, Moment) %>% 
-  spread(key = Trait_trans, value = mean) %>% 
-  column_to_rownames("turfID")
+  pivot_wider(names_from = Trait_trans, values_from = mean_mean) %>% 
+  column_to_rownames("uniqueID") %>% 
+  mutate(T_level = as.factor(T_level),
+         P_level = as.factor(P_level))
 
 
 #Visualize the results for variables (traits) with the cos2 values (contribution to the PC)
 
-fviz_eig(res.pca_09, addlabels = TRUE) #Visualize eigenvalues/scree plot
+res.pca <- prcomp(Ord_boot_traits[, -(1:5)], scale = TRUE)
 
-fviz_pca_var(res.pca_09,
+fviz_eig(res.pca, addlabels = TRUE) #Visualize eigenvalues/scree plot
+
+fviz_pca_var(res.pca,
              col.var = "contrib", # Color by contributions to the PC
              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
              repel = TRUE     # Avoid text overlapping
 )
 
-fviz_pca_biplot(res.pca_09, repel = TRUE,
+fviz_pca_biplot(res.pca, repel = TRUE,
                 col.var = "#2E9FDF", # Variables color
                 col.ind = "#696969",  # Individuals color
                 label = "var",
                 labelsize = 5) +
   theme_minimal(base_size = 20)
+
+
+
+autoplot(res.pca, data = Ord_boot_traits, colour = "T_level")
+
+
+fviz_pca_biplot(pca.Alr, repel = TRUE,
+                col.var = "#2E9FDF", # Variables color
+                col.ind = "#696969",  # Individuals color
+                label = "var",
+                labelsize = 5) +
+  theme_minimal(base_size = 20)
+
+autoplot(res.pca, loadings = TRUE, loadings.label = TRUE, data = Ord_boot_traits, colour = 'T_level')
+
+eigencorplot(res.pca)
+
+
+'### Constrained ordination ###
+
+RDA <- rda(Ord_boot_traits[, -(1:3)]~ T_level+P_level, scale = TRUE, data = Ord_boot_traits)
+
+autoplot(RDA) +
+  theme_bw()
+
+autoplot(RDA, arrows = TRUE, data = PCA_boot_traits) +
+  scale_x_continuous(expand = c(0.22, 0)) +
+  geom_point(data = RDA, aes(RDA1, RDA2), size=2) +
+  geom_abline(intercept = 0,slope = 0,linetype="dashed", size=0.8) +
+  geom_vline(aes(xintercept=0), linetype="dashed", size=0.8) + labs(x = "Axis 1", y="Axis 2") + 
+  theme_bw()
+
+RDA_fort <- fortify(RDA)
+
+ggplot(RDA_fort, aes(x = RDA1, y = RDA2)) +
+  geom_point(show.legend = FALSE) +
+  scale_size(range = 2) +
+  coord_equal()
+
+plot(RDA)
+screeplot(RDA)
+
+coef(RDA)
+
+RsquareAdj(RDA)$adj.r.squared
+
+
 
