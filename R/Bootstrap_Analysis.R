@@ -23,11 +23,17 @@ library(drake)
 
 set.seed(47)
 
-#### Making data ready for traitstrap ####
+#### Making data ready for traitstrap and merging ####
+
+community <- community %>% 
+  filter(!year %in% c("2010", "2016"))
 
 traitdata_2 <- traitdata_1 %>% 
   mutate(blockID = "",
          turfID = "")
+
+env <- env %>% 
+  select(-Temp_se, -Precip_se)
 
 ## Make a drake plan DOES NOT WORK YET ##
 
@@ -73,7 +79,7 @@ sum_SC_moments_allYears <- trait_summarise_boot_moments(SC_moments_allYears)
 
 #### Adding climate info & pivoting longer ####
 
- summarised_boot_moments_climate = bind_rows(
+summarised_boot_moments_climate = bind_rows(
    sum_SC_moments_allYears %>% 
      left_join(env, by = c("Site" = "Site", "year" = "Year")))
 
@@ -84,69 +90,60 @@ SC_moments_clim_long <- SC_moments_allYears %>%
 
 #### Mixed effect model testing ####
 
-mixed_model_temp_precip<-function(df) {
-  lmer(value ~ Temp * scale(Precip) +  (1 | Site), data = df)
-}
-
-mixed_model_clim_year<-function(df) {
-  lmer(value ~ year + (1 | Site), data = df)
-}
-
-predict_without_random<-function(model) {
-  predict(object = model, re.form=NA)
-}
-
-predict_with_random<-function(model) {
-  predict(object = model, re.form=NULL)
-}
+# mixed_model_temp_precip<-function(df) {
+#   lmer(value ~ Temp * scale(Precip) +  (1 | Site), data = df)
+# }
+# 
+# mixed_model_clim_year<-function(df) {
+#   lmer(value ~ year + (1 | Site), data = df)
+# }
+# 
+# mixed_model_clim_year<-function(df) {
+#   lmer(value ~ year + (1 | Site), data = df)
+# }
+# 
+# predict_without_random<-function(model) {
+#   predict(object = model, re.form=NA)
+# }
+# 
+# predict_with_random<-function(model) {
+#   predict(object = model, re.form=NULL)
+# }
 # Making  dataset ready for model 
 
-memodel_data <-function(dat) {
-  dat2 <- dat %>% 
-    select(Trait_trans, moments, Site, blockID, turfID, Temp, Precip, value) %>% 
-    group_by(Trait_trans, moments, turfID) %>% 
-    mutate(n = 1:n()) %>% 
-    ungroup() %>%
-    select(-turfID) %>% 
-    group_by(Trait_trans, moments, n) %>% 
-    nest()
-  return(dat2)
-}
-
-me_year_model_data <-function(dat) {
-  dat2 <- dat %>% 
-    ungroup() %>% 
-    select(Trait_trans, moments, Site, turfID, n, Temp, Precip, value, year) %>% 
-    # group_by(Trait_trans, moments, turfID) %>% 
-    # mutate(n = 1:n()) %>% 
-    # select(-turfID) %>% 
-    group_by(Trait_trans, moments, n) %>% 
-    nest()
-  return(dat2)
-}
-
-
-
-
-me_year_model_data <- me_year_model_data(dat = SC_moments_clim_allYears) 
-
-memodel_data_2009 <- memodel_data(dat = SC_moments_2009_clim_long) 
-memodel_data_2011 <- memodel_data(dat = SC_moments_2011_clim_long)
-memodel_data_2012 <- memodel_data(dat = SC_moments_2012_clim_long) 
-memodel_data_2013 <- memodel_data(dat = SC_moments_2013_clim_long)
-memodel_data_2015 <- memodel_data(dat = SC_moments_2015_clim_long) 
-memodel_data_2016 <- memodel_data(dat = SC_moments_2016_clim_long) 
-memodel_data_2017 <- memodel_data(dat = SC_moments_2017_clim_long) 
+# memodel_data <-function(dat) {
+#   dat2 <- dat %>% 
+#     select(Trait_trans, moments, Site, blockID, turfID, Temp, Precip, value) %>% 
+#     group_by(Trait_trans, moments, turfID) %>% 
+#     mutate(n = 1:n()) %>% 
+#     ungroup() %>%
+#     select(-turfID) %>% 
+#     group_by(Trait_trans, moments, n) %>% 
+#     nest()
+#   return(dat2)
+# }
+# 
+# me_year_model_data <-function(dat) {
+#   dat2 <- dat %>% 
+#     ungroup() %>% 
+#     select(Trait_trans, moments, Site, turfID, n, Temp, Precip, value, year) %>% 
+#     # group_by(Trait_trans, moments, turfID) %>% 
+#     # mutate(n = 1:n()) %>% 
+#     # select(-turfID) %>% 
+#     group_by(Trait_trans, moments, n) %>% 
+#     nest()
+#   return(dat2)
+# }
 
 
 memodel_data_allYears <- SC_moments_clim_long %>% 
   ungroup() %>%
-  select(Trait_trans, moments, Site, turfID, Temp, Precip, value, year, n) %>% 
+  select(Trait_trans, moments, Site, turfID, Temp_yearly, Precip_yearly, value, year, n) %>% 
   group_by(Trait_trans, moments, n) %>% 
   nest()
 
 mixed_model_temp_precip<-function(df) {
-  lmer(value ~ year + Temp * scale(Precip)+ (1 | Site/turfID), data = df)
+  lmer(value ~Temp_yearly * scale(Precip_yearly)+ (1 | Site/turfID), data = df)
 }
 
 predict_without_random<-function(model) {
@@ -177,7 +174,7 @@ model_output <-function(dat) {
   model_output <- dat %>% 
     select(Trait_trans, moments, n, model_output, R_squared) %>% 
     unnest(c(model_output, R_squared)) %>% 
-    filter(term %in% c("Temp", "scale(Precip)", "Temp:scale(Precip)", "year")) %>% 
+    filter(term %in% c("Temp_yearly", "scale(Precip_yearly)", "Temp_yearly:scale(Precip_yearly)", "year")) %>% 
     select(Trait_trans, moments, term, n, estimate, Marginal, Conditional) %>% 
     ungroup() %>% 
     group_by(Trait_trans, moments, term) %>% 
