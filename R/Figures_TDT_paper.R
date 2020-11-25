@@ -8,18 +8,20 @@ library(ggfortify)
 ## Climate figure ##
 
 ggplot(aes(x = Precip_decade, y = Temp_decade,
-           color = Precip_level, shape = Temp_level), data = env) +
+           color = Precip_level, fill = Precip_level, shape = Temp_level), data = env) +
   #geom_point() +
-  geom_point(aes(x = Precip_60_90, y = Temp_60_90)) +
+  geom_point(aes(x = Precip_60_90, y = Temp_60_90, size = 2)) +
   geom_pointrange(aes(ymin = Temp_decade-Temp_se, ymax = Temp_decade+Temp_se)) +
   geom_errorbarh(aes(xmin = Precip_decade-Precip_se, xmax = Precip_decade+Precip_se)) +
   labs(x = "Annual precipitation in mm", y = "Tetraterm temperature in °C") +
-  scale_color_brewer(name = "Precipitation level", palette = "Blues") + 
+  scale_color_manual(name = "Precipitation level", values = c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")) +
+  scale_fill_manual(name = "Precipitation level", values = c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")) +
+  #scale_color_brewer(name = "Precipitation level", palette = "Blues") + 
   scale_shape_manual(name = "Temperature level", values = c(25, 21, 24)) +
-  guides(fill = "none", size = guide_legend(override.aes = list(shape = c(1, 16)))) +
+  guides(fill = "none", size = "none") +
   theme_minimal(base_size = 20)
 
-
+ggsave("SeedClim_climate_over_time.jpg", width = 22 , height = 14, units = "cm")
 
 ## Plotting trait distributions ##
 set.seed(47)
