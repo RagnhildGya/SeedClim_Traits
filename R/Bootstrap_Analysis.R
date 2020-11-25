@@ -25,27 +25,6 @@ set.seed(47)
 
 #### Making data ready for traitstrap ####
 
-# community2009 <- community %>% 
-#   filter(year == "2009")
-# 
-# community2011 <- community %>% 
-#   filter(year == "2011")
-# 
-# community2012 <- community %>% 
-#   filter(year == "2012")
-# 
-# community2013 <- community %>% 
-#   filter(year == "2013")
-# 
-# community2015 <- community %>% 
-#   filter(year == "2015")
-# 
-# community2016 <- community %>% 
-#   filter(year == "2016")
-# 
-# community2017 <- community %>% 
-#   filter(year == "2017")
-
 traitdata_2 <- traitdata_1 %>% 
   mutate(blockID = "",
          turfID = "")
@@ -69,22 +48,8 @@ traitdata_2 <- traitdata_1 %>%
 #### Trait impute ####
 
 ##Fix species with missing taxonomy
-##Fix Car_sp, Alc_sp problems
+##Check that Car_sp, Alc_sp have a taxonomy
 
-Trait_impute_per_year <- function(com_dat, trait_dat){
-  
-  SeedClim_traits <- trait_impute(comm = com_dat,
-                                       traits = trait_dat, 
-                                       scale_hierarchy = c("Site", "blockID", "turfID"),
-                                       global = FALSE,
-                                       taxon_col = c("Full_name", "Genus", "Family"),
-                                       trait_col = "Trait_trans",
-                                       value_col = "Value",
-                                  other_col = "year",
-                                       abundance_col = "cover")
-  
-  return(SeedClim_traits)
-}
 
 SeedClim_traits_allYears <- trait_impute(comm = community,
              traits = traitdata_2, 
@@ -99,117 +64,22 @@ SeedClim_traits_allYears <- trait_impute(comm = community,
 
 
 
-# SeedClim_traits_2009 <- Trait_impute_per_year(com_dat = community2009, trait_dat = traitdata_2)
-# SeedClim_traits_2011 <- Trait_impute_per_year(com_dat = community2011, trait_dat = traitdata_2)
-# SeedClim_traits_2012 <- Trait_impute_per_year(com_dat = community2012, trait_dat = traitdata_2)
-# SeedClim_traits_2013 <- Trait_impute_per_year(com_dat = community2013, trait_dat = traitdata_2)
-# SeedClim_traits_2015 <- Trait_impute_per_year(com_dat = community2015, trait_dat = traitdata_2)
-# SeedClim_traits_2016 <- Trait_impute_per_year(com_dat = community2016, trait_dat = traitdata_2)
-# SeedClim_traits_2017 <- Trait_impute_per_year(com_dat = community2017, trait_dat = traitdata_2)
-
-
 #### Bootstraping community weighted means and making summarised moments of the distributions ####
 
 SC_moments_allYears <- trait_np_bootstrap(imputed_traits = SeedClim_traits_allYears, nrep = 100)
-# SC_moments_2009 <- trait_np_bootstrap(imputed_traits = SeedClim_traits_2009, nrep = 100)
-# SC_moments_2011 <- trait_np_bootstrap(imputed_traits = SeedClim_traits_2011, nrep = 100)
-# SC_moments_2012 <- trait_np_bootstrap(imputed_traits = SeedClim_traits_2012, nrep = 100)
-# SC_moments_2013 <- trait_np_bootstrap(imputed_traits = SeedClim_traits_2013, nrep = 100)
-# SC_moments_2015 <- trait_np_bootstrap(imputed_traits = SeedClim_traits_2015, nrep = 100)
-# SC_moments_2016 <- trait_np_bootstrap(imputed_traits = SeedClim_traits_2016, nrep = 100)
-# SC_moments_2017 <- trait_np_bootstrap(imputed_traits = SeedClim_traits_2017, nrep = 100)
 
 sum_SC_moments_allYears <- trait_summarise_boot_moments(SC_moments_allYears)
-# sum_SC_moments_2009 <- trait_summarise_boot_moments(SC_moments_2009)
-# sum_SC_moments_2011 <- trait_summarise_boot_moments(SC_moments_2011)
-# sum_SC_moments_2012 <- trait_summarise_boot_moments(SC_moments_2012)
-# sum_SC_moments_2013 <- trait_summarise_boot_moments(SC_moments_2013)
-# sum_SC_moments_2015 <- trait_summarise_boot_moments(SC_moments_2015)
-# sum_SC_moments_2016 <- trait_summarise_boot_moments(SC_moments_2016)
-# sum_SC_moments_2017 <- trait_summarise_boot_moments(SC_moments_2017)
 
 
 #### Adding climate info & pivoting longer ####
 
- summarised_boot_moments_climate_2009 = bind_rows(
-   sum_SC_moments_2009 %>% 
-     left_join(env, by = c("Site" = "Site")))
-# 
-# summarised_boot_moments_climate_2011 = bind_rows(
-#   sum_SC_moments_2011 %>% 
-#     left_join(env, by = c("Site" = "Site")))
-# 
-# summarised_boot_moments_climate_2012 = bind_rows(
-#   sum_SC_moments_2012 %>% 
-#     left_join(env, by = c("Site" = "Site")))
-# 
-# summarised_boot_moments_climate_2013 = bind_rows(
-#   sum_SC_moments_2013 %>% 
-#     left_join(env, by = c("Site" = "Site")))
-# 
-# summarised_boot_moments_climate_2015 = bind_rows(
-#   sum_SC_moments_2015 %>% 
-#     left_join(env, by = c("Site" = "Site")))
-# 
-# summarised_boot_moments_climate_2016 = bind_rows(
-#   sum_SC_moments_2016 %>% 
-#     left_join(env, by = c("Site" = "Site")))
-# 
-# summarised_boot_moments_climate_2017 = bind_rows(
-#   sum_SC_moments_2017 %>% 
-#     left_join(env, by = c("Site" = "Site")))
-
-
- Moments_env_long <- function(moments, env){
-   
-   SC_moments_clim_long = bind_rows(
-     moments %>% 
-     pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value"))
-   
-   return(SC_moments_clim_long)
- }
+ summarised_boot_moments_climate = bind_rows(
+   sum_SC_moments_allYears %>% 
+     left_join(env, by = c("Site" = "Site", "year" = "Year")))
 
 SC_moments_clim_long <- SC_moments_allYears %>% 
   pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
-  left_join(env, by = "Site")
-
-# SC_moments_2009_clim_long <- Moments_env_long(SC_moments_2009, env)
-# SC_moments_2011_clim_long <- Moments_env_long(SC_moments_2011, env)
-# SC_moments_2012_clim_long <- Moments_env_long(SC_moments_2012, env)
-# SC_moments_2013_clim_long <- Moments_env_long(SC_moments_2013, env)
-# SC_moments_2015_clim_long <- Moments_env_long(SC_moments_2015, env)
-# SC_moments_2016_clim_long <- Moments_env_long(SC_moments_2016, env)
-# SC_moments_2017_clim_long <- Moments_env_long(SC_moments_2017, env)
-
-# SC_moments_2009_clim_long <- SC_moments_2009_clim_long %>% 
-# left_join(env, by = "Site")
-
-#### Adding all the years together ####
-
-# dict_year <- read.table(header = TRUE, stringsAsFactors = FALSE, text = 
-#                           "old new
-#   value2009 2009
-#   value2011 2011
-#   value2012 2012
-#   value2013 2013
-#   value2015 2015
-#   value2016 2016
-#   value2017 2017")
-# 
-# SC_moments_clim_allYears <- SC_moments_2009_clim_long %>% 
-#   left_join(SC_moments_2011_clim_long, by = c("n", "Site", "blockID", "turfID", "Trait_trans", "moments"), suffix = c("2009", "2011")) %>% 
-#   left_join(SC_moments_2012_clim_long, by = c("n", "Site", "blockID", "turfID", "Trait_trans", "moments")) %>% 
-#   left_join(SC_moments_2013_clim_long, by = c("n", "Site", "blockID", "turfID", "Trait_trans", "moments"), suffix = c("2012", "2013")) %>% 
-#   left_join(SC_moments_2015_clim_long, by = c("n", "Site", "blockID", "turfID", "Trait_trans", "moments")) %>% 
-#   left_join(SC_moments_2016_clim_long, by = c("n", "Site", "blockID", "turfID", "Trait_trans", "moments"), suffix = c("2015", "2016")) %>% 
-#   left_join(SC_moments_2017_clim_long, by = c("n", "Site", "blockID", "turfID", "Trait_trans", "moments")) %>% 
-#   mutate(value2017 = value) %>% 
-#   select(-value) %>% 
-#   left_join(env, by = c("Site" = "Site")) %>% 
-#   pivot_longer(c("value2009", "value2011", "value2012", "value2013", "value2015", "value2016", "value2017"), names_to = "year", values_to = "value") %>% 
-#   mutate(year = plyr::mapvalues(year, from = dict_year$old, to = dict_year$new)) %>% 
-#   mutate(year = as.numeric(year))
-  
+  left_join(env, by = c("Site" = "Site", "year" = "Year"))
 
 
 #### Mixed effect model testing ####
