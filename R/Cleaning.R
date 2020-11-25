@@ -171,8 +171,8 @@ community <- community %>%
    select(siteID, annualPrecipitation_gridded, summerTemperature_gridded) %>% 
    mutate(Site = substr(siteID, 1,3)) %>%
    distinct() %>% 
-   mutate(Temp_60_90 = summerTemperature_gridded,
-          Precip_60_90 = annualPrecipitation_gridded,
+   mutate(Temp_century = summerTemperature_gridded,
+          Precip_century = annualPrecipitation_gridded,
           Temp_level = as.factor(recode(Site, Ulv = 6.5, Lav = 6.5,  Gud = 6.5, Skj = 6.5, Alr = 8.5, Hog = 8.5, Ram = 8.5, Ves = 8.5, Fau = 10.5, Vik = 10.5, Arh = 10.5, Ovs = 10.5)),
           Precip_level = as.factor(recode(Site, Ulv = 600, Alr = 600, Fau = 600, Lav = 1200, Hog = 1200, Vik = 1200, Gud = 2000, Ram = 2000, Arh = 2000, Skj = 2700, Ves = 2700, Ovs = 2700))) %>% 
    select(Site, Temp_60_90, Precip_60_90, Temp_level, Precip_level)
@@ -192,8 +192,9 @@ community <- community %>%
           Temp_se = (sd(Temp_yearly) / sqrt(length(Temp_yearly))),
           Precip_decade = mean(Precip_yearly),
           Precip_se = (sd(Precip_yearly) / sqrt(length(Precip_yearly)))) %>% 
-   left_join(y = env_old, by = "Site")
- 
+   mutate(Temp_deviation_decade = Temp_yearly - Temp_decade,
+          Precip_deviation_decade = Precip_yearly - Precip_decade) %>% 
+   left_join(y = env_old, by = "Site") 
 
 ####################  Old code #####################
 ### Code to calculate community weighted means.  ###
