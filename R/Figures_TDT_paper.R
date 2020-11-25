@@ -23,6 +23,16 @@ ggplot(aes(x = Precip_decade, y = Temp_decade,
 
 ggsave("SeedClim_climate_over_time.jpg", width = 22 , height = 14, units = "cm")
 
+
+ggplot(aes(x = Precip_deviation_decade, y = Temp_deviation_decade, color = as.factor(Year)), data = env) +
+  geom_point() +
+  geom_vline(xintercept =  0) +
+  geom_hline(yintercept =  0) +
+  labs(x = "Deviation from the decade mean annual precipitation (mm)", y = "Deviation from the devade mean tetraterm temperature (°C)", color = "Year") +
+  theme_minimal(base_size = 15)
+
+ggsave("SeedClim_climate_deviation.jpg", width = 18 , height = 18, units = "cm")
+
 ## Plotting trait distributions ##
 set.seed(47)
 
