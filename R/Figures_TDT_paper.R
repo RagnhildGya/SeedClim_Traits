@@ -21,7 +21,7 @@ ggplot(aes(x = Precip_decade, y = Temp_decade,
   guides(fill = "none", size = "none") +
   theme_minimal(base_size = 20)
 
-ggsave("SeedClim_climate_over_time.jpg", width = 22 , height = 14, units = "cm")
+#ggsave("SeedClim_climate_over_time.jpg", width = 22 , height = 14, units = "cm")
 
 
 ggplot(aes(x = Precip_deviation_decade, y = Temp_deviation_decade, color = as.factor(Year)), data = env) +
@@ -31,7 +31,7 @@ ggplot(aes(x = Precip_deviation_decade, y = Temp_deviation_decade, color = as.fa
   labs(x = "Deviation from the decade mean annual precipitation (mm)", y = "Deviation from the devade mean tetraterm temperature (°C)", color = "Year") +
   theme_minimal(base_size = 15)
 
-ggsave("SeedClim_climate_deviation.jpg", width = 18 , height = 18, units = "cm")
+#ggsave("SeedClim_climate_deviation.jpg", width = 18 , height = 18, units = "cm")
 
 ## Plotting trait distributions ##
 set.seed(47)
@@ -45,11 +45,10 @@ slice_sample(SeedClim_traits_allYears, n = 200,
              replace = TRUE, weight_by = weight) %>% 
   left_join(env, by = c("Site" = "Site")) %>% 
   filter(Trait_trans == "SLA_cm2_g") %>% 
-  filter(!year == "2010") %>% 
   mutate(year = as.factor(year)) %>% 
-  ggplot(aes(x = Value, y = fct_rev(year), fill = as.factor(T_level))) +
+  ggplot(aes(x = Value, y = fct_rev(year), fill = as.factor(Temp_level))) +
   geom_density_ridges() +
-  facet_wrap(~T_level, nrow = 1, labeller = labeller(T_level = T_names)) +
+  facet_wrap(~Temp_level, nrow = 1, labeller = labeller(Temp_level = T_names)) +
   theme_minimal(base_size = 15) +
   scale_fill_brewer(palette = "RdYlBu", direction = -1) +
   guides(fill=FALSE) +
@@ -136,56 +135,93 @@ summarised_boot_moments_climate_2017 %>%
 #### Ordination ####
 
 Ord_boot_traits <- SC_moments_allYears %>% 
-  left_join(env, by = "Site") %>% 
+  left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
   ungroup() %>% 
   mutate(uniqueID = paste0(turfID,"_", year, "_", Site)) %>% 
   group_by(uniqueID, Trait_trans) %>% 
   mutate(mean_mean = mean(mean)) %>% 
   filter(!Trait_trans == "Wet_Mass_g_log") %>% 
-  select(uniqueID, Site, year, turfID, Trait_trans, T_level, P_level, mean_mean) %>%
+  select(uniqueID, Site, year, turfID, Trait_trans, Temp_level, Precip_level, mean_mean) %>%
   unique() %>% 
   #gather(Moment, Value, -(turfID:P_cat)) %>% 
   #unite(temp, Trait, Moment) %>% 
   pivot_wider(names_from = Trait_trans, values_from = mean_mean) %>% 
-  column_to_rownames("uniqueID") %>% 
-  mutate(T_level = as.factor(T_level),
-         P_level = as.factor(P_level))
+  column_to_rownames("uniqueID")
 
+Ord_boot_LeafEconomic <- SC_moments_allYears %>% 
+  left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
+  ungroup() %>% 
+  mutate(uniqueID = paste0(turfID,"_", year, "_", Site)) %>% 
+  group_by(uniqueID, Trait_trans) %>% 
+  mutate(mean_mean = mean(mean)) %>% 
+  filter(Trait_trans %in% c("SLA_cm2_g", "N_percent", "Leaf_Thickness_Ave_mm", "CN_ratio", "LDMC")) %>%  #Filter so that only leaf economic traits are in
+  select(uniqueID, Site, year, turfID, Trait_trans, Temp_level, Precip_level, mean_mean) %>%
+  unique() %>% 
+  #gather(Moment, Value, -(turfID:P_cat)) %>% 
+  #unite(temp, Trait, Moment) %>% 
+  pivot_wider(names_from = Trait_trans, values_from = mean_mean) %>% 
+  column_to_rownames("uniqueID")
+
+Ord_boot_Size <- SC_moments_allYears %>% 
+  left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
+  ungroup() %>% 
+  mutate(uniqueID = paste0(turfID,"_", year, "_", Site)) %>% 
+  group_by(uniqueID, Trait_trans) %>% 
+  mutate(mean_mean = mean(mean)) %>% 
+  filter(Trait_trans %in% c("Plant_Height_mm_log", "Leaf_Area_cm2_log", "Dry_Mass_g_log", "C_percent")) %>%  #Filter so that only lsize traits are in
+  select(uniqueID, Site, year, turfID, Trait_trans, Temp_level, Precip_level, mean_mean) %>%
+  unique() %>% 
+  #gather(Moment, Value, -(turfID:P_cat)) %>% 
+  #unite(temp, Trait, Moment) %>% 
+  pivot_wider(names_from = Trait_trans, values_from = mean_mean) %>% 
+  column_to_rownames("uniqueID")
 
 #Visualize the results for variables (traits) with the cos2 values (contribution to the PC)
 
-res.pca <- prcomp(Ord_boot_traits[, -(1:5)], scale = TRUE)
+trait_pca <- prcomp(Ord_boot_traits[, -(1:5)], scale = TRUE)
+leaf_economic_pca <- prcomp(Ord_boot_LeafEconomic[, -(1:5)], scale = TRUE)
+size_pca <- prcomp(Ord_boot_Size[, -(1:5)], scale = TRUE)
 
-fviz_eig(res.pca, addlabels = TRUE) #Visualize eigenvalues/scree plot
+fviz_eig(trait_pca, addlabels = TRUE) #Visualize eigenvalues/scree plot
+fviz_eig(leaf_economic_pca, addlabels = TRUE)
+fviz_eig(size_pca, addlabels = TRUE)
 
-fviz_pca_var(res.pca,
-             col.var = "contrib", # Color by contributions to the PC
-             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-             repel = TRUE     # Avoid text overlapping
-)
+# fviz_pca_var(trait_pca,
+#              col.var = "contrib", # Color by contributions to the PC
+#              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+#              repel = TRUE     # Avoid text overlapping
+# )
 
-fviz_pca_biplot(res.pca, repel = TRUE,
+
+fviz_pca_biplot(trait_pca, repel = TRUE,
                 col.var = "#2E9FDF", # Variables color
                 col.ind = "#696969",  # Individuals color
                 label = "var",
-                labelsize = 5) +
+                labelsize = 5, 
+                habillage = Ord_boot_traits$Temp_level,
+                addEllipses = TRUE,
+                ellipse.level = 0.95) +
   theme_minimal(base_size = 20)
 
-
-
-autoplot(res.pca, data = Ord_boot_traits, colour = "T_level")
-
-
-fviz_pca_biplot(pca.Alr, repel = TRUE,
+fviz_pca_biplot(leaf_economic_pca, repel = TRUE,
                 col.var = "#2E9FDF", # Variables color
                 col.ind = "#696969",  # Individuals color
                 label = "var",
-                labelsize = 5) +
+                labelsize = 5,
+                habillage = Ord_boot_traits$Temp_level,
+                addEllipses = TRUE,
+                ellipse.level = 0.95) +
   theme_minimal(base_size = 20)
 
-autoplot(res.pca, loadings = TRUE, loadings.label = TRUE, data = Ord_boot_traits, colour = 'T_level')
-
-eigencorplot(res.pca)
+fviz_pca_biplot(size_pca, repel = TRUE,
+                col.var = "#2E9FDF", # Variables color
+                col.ind = "#696969",  # Individuals color
+                label = "var",
+                labelsize = 5,
+                habillage = Ord_boot_traits$Temp_level,
+                addEllipses = TRUE,
+                ellipse.level = 0.95) +
+  theme_minimal(base_size = 20)
 
 
 '### Constrained ordination ###
