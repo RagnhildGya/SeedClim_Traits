@@ -175,7 +175,7 @@ community <- community %>%
           Precip_century = annualPrecipitation_gridded,
           Temp_level = as.factor(recode(Site, Ulv = 6.5, Lav = 6.5,  Gud = 6.5, Skj = 6.5, Alr = 8.5, Hog = 8.5, Ram = 8.5, Ves = 8.5, Fau = 10.5, Vik = 10.5, Arh = 10.5, Ovs = 10.5)),
           Precip_level = as.factor(recode(Site, Ulv = 600, Alr = 600, Fau = 600, Lav = 1200, Hog = 1200, Vik = 1200, Gud = 2000, Ram = 2000, Arh = 2000, Skj = 2700, Ves = 2700, Ovs = 2700))) %>% 
-   select(Site, Temp_60_90, Precip_60_90, Temp_level, Precip_level)
+   select(Site, Temp_century, Precip_century, Temp_level, Precip_level)
 
  env <-read.csv("Data/GriddedDailyClimateData2009-2019.csv", header=TRUE, sep = ",", stringsAsFactors = FALSE)
  
