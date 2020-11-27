@@ -32,8 +32,8 @@ traitdata_2 <- traitdata_1 %>%
   mutate(blockID = "",
          turfID = "")
 
-env <- env %>% 
-  select(-Temp_se, -Precip_se)
+# env <- env %>% 
+#   select(-Temp_se, -Precip_se)
 
 ## Make a drake plan DOES NOT WORK YET ##
 
@@ -55,6 +55,22 @@ env <- env %>%
 
 ##Fix species with missing taxonomy
 ##Check that Car_sp, Alc_sp have a taxonomy
+
+# Trait_impute_per_year <- function(com_dat, trait_dat){
+#   
+#   SeedClim_traits <- trait_impute(comm = com_dat,
+#                                   traits = trait_dat, 
+#                                   scale_hierarchy = c("Site", "blockID", "turfID"),
+#                                   global = FALSE,
+#                                   taxon_col = c("Full_name", "Genus", "Family"),
+#                                   trait_col = "Trait_trans",
+#                                   value_col = "Value",
+#                                   abundance_col = "cover")
+#   
+#   return(SeedClim_traits)
+# }
+# SeedClim_traits_allYears <- Trait_impute_per_year(com_dat = community, trait_dat = traitdata_2)
+#   #group_by(year, Site, blockID, turfID, Trait_trans)
 
 
 SeedClim_traits_allYears <- trait_impute(comm = community,
@@ -135,15 +151,33 @@ SC_moments_clim_long <- SC_moments_allYears %>%
 #   return(dat2)
 # }
 
-
+### Making dataset for models ###
 memodel_data_allYears <- SC_moments_clim_long %>% 
   ungroup() %>%
-  select(Trait_trans, moments, Site, turfID, Temp_yearly, Precip_yearly, value, year, n) %>% 
+  select(Trait_trans, moments, Site, turfID, Temp_yearly, Precip_yearly, Temp_deviation_decade, Precip_deviation_decade, value, year, n) %>% 
   group_by(Trait_trans, moments, n) %>% 
   nest()
 
-mixed_model_temp_precip<-function(df) {
-  lmer(value ~Temp_yearly * scale(Precip_yearly)+ (1 | Site/turfID), data = df)
+### Funcitons for different models and model predictions later ###
+
+model_null <-function(df) {
+  lmer(value ~ (1 | Site/turfID), data = df)
+}
+
+model_temp <-function(df) {
+  lmer(value ~ Temp_yearly + Temp_deviation_decade + (1 | Site/turfID), data = df)
+}
+
+model_precip <-function(df) {
+  lmer(value ~ Precip_yearly + Precip_deviation_decade + (1 | Site/turfID), data = df)
+}
+
+model_tempAddprecip<-function(df) {
+  lmer(value ~Temp_yearly + Temp_deviation_decade + scale(Precip_yearly) + scale(Precip_deviation_decade) + (1 | Site/turfID), data = df)
+}
+
+model_tempMulprecip<-function(df) {
+  lmer(value ~Temp_yearly * scale(Precip_yearly) + Temp_deviation_decade*scale(Precip_deviation_decade) + (1 | Site/turfID), data = df)
 }
 
 predict_without_random<-function(model) {
@@ -154,123 +188,131 @@ predict_with_random<-function(model) {
   predict(object = model, re.form=NULL)
 }
 
-mem_results <- memodel_data_allYears%>%
-  mutate(model = map(data, mixed_model_temp_precip))
 
-tidy_year_model_predicted <- mem_results %>%
+#### Running models (time consuming), 3 steps ####
+
+# 1) Testing with mixed effect model
+# 2) Tidying the model, giving the model output in a nice format. Making predicted values for each of the trait:moment combination along the climatic gradients. Calculating pseudo R squared values based on the method in paper Nakagawa et al 2017.
+# 3) Making a dataset with only the predicted values. Unnesting the list of the predicted values.
+
+## Null model ##
+mem_results_null <- memodel_data_allYears%>%
+  mutate(model = map(data, model_null))
+
+tidy_null_model_predicted <- mem_results_null %>%
   mutate(model_output = map(model, tidy)) %>%
   mutate(predicted = map(model, predict_with_random)) %>% 
   mutate(R_squared = map(model, rsquared))
 
-predicted_values_allyear <- tidy_year_model_predicted %>%
+predicted_values_null <- tidy_null_model_predicted %>%
   ungroup() %>%
   select(Trait_trans, moments, data, predicted) %>%
   unnest(c(data, predicted)) %>%
   rename(modeled = predicted, measured = value)
 
 
-model_output <-function(dat) {
+
+## Temp ##
+mem_results_temp <- memodel_data_allYears%>%
+  mutate(model = map(data, model_temp))
+
+tidy_temp_model_predicted <- mem_results_temp %>%
+  mutate(model_output = map(model, tidy)) %>%
+  mutate(predicted = map(model, predict_with_random)) %>% 
+  mutate(R_squared = map(model, rsquared))
+
+predicted_values_temp <- tidy_temp_model_predicted %>%
+  ungroup() %>%
+  select(Trait_trans, moments, data, predicted) %>%
+  unnest(c(data, predicted)) %>%
+  rename(modeled = predicted, measured = value)
+
+
+## Precipitation ##
+mem_results_precip <- memodel_data_allYears%>%
+  mutate(model = map(data, model_precip))
+
+tidy_precip_model_predicted <- mem_results_precip %>%
+  mutate(model_output = map(model, tidy)) %>%
+  mutate(predicted = map(model, predict_with_random)) %>% 
+  mutate(R_squared = map(model, rsquared))
+
+predicted_values_temp <- tidy_temp_model_predicted %>%
+  ungroup() %>%
+  select(Trait_trans, moments, data, predicted) %>%
+  unnest(c(data, predicted)) %>%
+  rename(modeled = predicted, measured = value)
+
+## Temperature + Precipitation (additive) ##
+mem_results_tempAddprecip <- memodel_data_allYears%>%
+  mutate(model = map(data, model_tempAddprecip))
+
+tidy_tempAddprecip_model_predicted <- mem_results_tempAddprecip %>%
+  mutate(model_output = map(model, tidy)) %>%
+  mutate(predicted = map(model, predict_with_random)) %>% 
+  mutate(R_squared = map(model, rsquared))
+
+predicted_values_tempAddprecip <- tidy_tempAddprecip_model_predicted %>%
+  ungroup() %>%
+  select(Trait_trans, moments, data, predicted) %>%
+  unnest(c(data, predicted)) %>%
+  rename(modeled = predicted, measured = value)
+
+## Temperature * Precipitation (multiplicative) ##
+mem_results_tempMulprecip <- memodel_data_allYears%>%
+  mutate(model = map(data, model_tempMulprecip))
+
+tidy_tempMulprecip_model_predicted <- mem_results_tempMulprecip %>%
+  mutate(model_output = map(model, tidy)) %>%
+  mutate(predicted = map(model, predict_with_random)) %>% 
+  mutate(R_squared = map(model, rsquared))
+
+predicted_values_tempMulprecip <- tidy_tempMulprecip_model_predicted %>%
+  ungroup() %>%
+  select(Trait_trans, moments, data, predicted) %>%
+  unnest(c(data, predicted)) %>%
+  rename(modeled = predicted, measured = value)
+
+
+# Making a function for AIC tests
+
+AIC_models <-function(dat, model_type) {
   
-  model_output <- dat %>% 
-    select(Trait_trans, moments, n, model_output, R_squared) %>% 
-    unnest(c(model_output, R_squared)) %>% 
-    filter(term %in% c("Temp_yearly", "scale(Precip_yearly)", "Temp_yearly:scale(Precip_yearly)", "year")) %>% 
-    select(Trait_trans, moments, term, n, estimate, Marginal, Conditional) %>% 
+  dat2 <- dat %>% 
+    mutate(AIC = map(model, AIC)) %>% 
+    select(Trait_trans, moments, n, AIC) %>% 
+    unnest(c(AIC)) %>% 
     ungroup() %>% 
-    group_by(Trait_trans, moments, term) %>% 
-    summarize(effect = mean(estimate),
-              R2_marginal = mean(Marginal),
-              R2_conditional = mean(Conditional),
-              CIlow.fit = effect - sd(estimate),
-              CIhigh.fit = effect + sd(estimate)) %>% 
-    mutate(Significant = case_when(CIlow.fit < 0 & CIhigh.fit < 0 ~ "Negative",
-                                   CIlow.fit > 0 & CIhigh.fit > 0 ~ "Positive",
-                                   CIlow.fit < 0 & CIhigh.fit > 0 ~ "No"))
-  return(model_output)
+    group_by(Trait_trans, moments) %>% 
+    mutate(AIC = mean(AIC)) %>% 
+    select(-n) %>% 
+    unique()
+  
+  return(dat2)
 }
 
-model_output <- model_output(tidy_year_model_predicted)
+# Get AIC for all models and compare which is beter
 
-write.table(x = model_output, file = "model_output_TDT.csv")
+AIC_null <- AIC_models(tidy_null_model_predicted, "Temp") %>% rename(Null_AIC = AIC)
+AIC_temp <- AIC_models(tidy_temp_model_predicted, "Temp") %>% rename(Temp_AIC = AIC)
+AIC_precip <- AIC_models(tidy_precip_model_predicted, "Precip") %>% rename(Precip_AIC = AIC)
+AIC_tempAddprecip <- AIC_models(tidy_tempAddprecip_model_predicted, "Precip") %>% rename(TempAddPrecip_AIC = AIC)
+AIC_tempMulprecip <- AIC_models(tidy_tempMulprecip_model_predicted, "Precip") %>% rename(TempMulPrecip_AIC = AIC)
 
-#### Testing with mixed effect model - TIME CONSUMING ####
-
-mem_results_clim_year <- me_year_model_data %>%
-  mutate(model = map(data, mixed_model_clim_year))
-
-mem_results_2009 <- memodel_data_2009 %>%
-  mutate(model = map(data, mixed_model_temp_precip))
-# mem_results_2011 <- memodel_data_2011 %>%
-#   mutate(model = map(data, mixed_model_temp_precip))
-# mem_results_2012 <- memodel_data_2012 %>%
-#   mutate(model = map(data, mixed_model_temp_precip))
-mem_results_2013 <- memodel_data_2013 %>%
-  mutate(model = map(data, mixed_model_temp_precip))
-# mem_results_2015 <- memodel_data_2015 %>%
-#   mutate(model = map(data, mixed_model_temp_precip))
-# mem_results_2016 <- memodel_data_2016 %>%
-#   mutate(model = map(data, mixed_model_temp_precip))
-mem_results_2017 <- memodel_data_2017 %>%
-  mutate(model = map(data, mixed_model_temp_precip))
-
-# Tidying the model, giving the model output in a nice format. Making predicted values for each of the trait:moment combination along the climatic gradients. Calculating pseudo R squared values based on the method in paper Nakagawa et al 2017.
-
-tidy_year_model_predicted <- mem_results_clim_year %>%
-  mutate(model_output = map(model, tidy)) %>%
-  mutate(predicted = map(model, predict_with_random)) %>% 
-  mutate(R_squared = map(model, rsquared))
-
-tidy_model_predicted_09 <- mem_results_2009 %>%
-  mutate(model_output = map(model, tidy)) %>%
-  mutate(predicted = map(model, predict_without_random)) %>% 
-  mutate(R_squared = map(model, rsquared))
-
-tidy_model_predicted_13 <- mem_results_2013 %>%
-  mutate(model_output = map(model, tidy)) %>%
-  mutate(predicted = map(model, predict_without_random)) %>% 
-  mutate(R_squared = map(model, rsquared))
-
-tidy_model_predicted_17 <- mem_results_2017 %>%
-  mutate(model_output = map(model, tidy)) %>%
-  mutate(predicted = map(model, predict_without_random)) %>% 
-  mutate(R_squared = map(model, rsquared))
-
-# Making a dataset with only the predicted values. Unnesting the list of the predicted values.
-
-predicted_values_allyear <- tidy_year_model_predicted %>%
-  #filter(!(Trait_trans == "C_percent" & moments == "kurtosis" & n == 79)) %>% 
-  #filter(!(Trait_trans == "Leaf_area_cm2_log" & moments == "variance" & n == 23)) %>%
-  ungroup() %>%
-  select(Trait_trans, moments, data, predicted) %>%
-  unnest(c(data, predicted)) %>%
-  rename(modeled = predicted, measured = value)
-
-predicted_values_09 <- tidy_model_predicted_09 %>%
-  ungroup() %>%
-  select(Trait_trans, moments, data, predicted) %>%
-  unnest(c(data, predicted)) %>%
-  rename(modeled = predicted, measured = value)
-
-predicted_values_13 <- tidy_model_predicted_13 %>%
-  ungroup() %>%
-  select(Trait_trans, moments, data, predicted) %>%
-  unnest(c(data, predicted)) %>%
-  rename(modeled = predicted, measured = value)
-
-predicted_values_17 <- tidy_model_predicted_17 %>%
-  ungroup() %>%
-  select(Trait_trans, moments, data, predicted) %>%
-  unnest(c(data, predicted)) %>%
-  rename(modeled = predicted, measured = value)
+AIC_all_models <- AIC_null %>%
+  left_join(AIC_temp, by = c("Trait_trans" = "Trait_trans", "moments" = "moments")) %>% 
+  left_join(AIC_precip, by = c("Trait_trans" = "Trait_trans", "moments" = "moments")) %>% 
+  left_join(AIC_tempAddprecip, by = c("Trait_trans" = "Trait_trans", "moments" = "moments")) %>% 
+  left_join(AIC_tempMulprecip, by = c("Trait_trans" = "Trait_trans", "moments" = "moments"))
+  
 
 # Making a dataset with the model output and the test-statistics (R squared), and summarizing them.
-
-model_output <-function(dat) {
+model_output <-function(dat, fixed_effects) {
   
   model_output <- dat %>% 
     select(Trait_trans, moments, n, model_output, R_squared) %>% 
     unnest(c(model_output, R_squared)) %>% 
-    filter(term %in% c("Temp", "scale(Precip)", "Temp:scale(Precip)")) %>% 
+    filter(term %in% fixed_effect) %>% 
     select(Trait_trans, moments, term, n, estimate, Marginal, Conditional) %>% 
     ungroup() %>% 
     group_by(Trait_trans, moments, term) %>% 
@@ -285,16 +327,15 @@ model_output <-function(dat) {
   return(model_output)
 }
 
-model_output_09 <- model_output(tidy_model_predicted_09)
-model_output_13 <- model_output(tidy_model_predicted_13)
-model_output_17 <- model_output(tidy_model_predicted_17)
+model_output_temp <- model_output(tidy_temp_model_predicted, c("Temp_yearly", "Temp_deviation_decade"))
+model_output_precip <- model_output(tidy_temp_model_predicted, c("Precip_yearly", "Precip_deviation_decade"))
+model_output_tempAddprecip <- model_output(tidy_tempAddprecip_model_predicted, c("Temp_yearly", "Temp_deviation_decade","scale(Precip_yearly)", "scale(Precip_deviation_decade)"))
+model_output_tempMulprecip <- model_output(tidy_tempMulprecip_model_predicted, c("Temp_yearly", "Temp_deviation_decade","scale(Precip_yearly)", "scale(Precip_deviation_decade)", "Temp_yearly:scale(Precip_yearly)", "Temp_deviation_decade:scale(Precip_deviation_decade)"))
 
-write.table(x = model_output_09, file = "model_output_09.csv")
-write.table(x = model_output_13, file = "model_output_13.csv") 
-write.table(x = model_output_17, file = "model_output_17.csv") 
+#write.table(x = model_output, file = "model_output_TDT.csv")
 
 
-#### Correlation ####
+#### Correlation #### Needs to be updated
 
 # Making data ready for correlation tests
 
@@ -335,20 +376,9 @@ ggcorrplot(corr_09, hc.order = FALSE,
            type = "lower", p.mat = p.mat, lab = TRUE,)
 
 #### Ordination ####
-Ord_boot_traits_2009 <- summarised_boot_moments_climate_2009 %>% 
-  ungroup() %>% 
-  filter(!Trait_trans == "Wet_Mass_g_log") %>% 
-  select(turfID, Trait_trans, T_level, P_level, mean) %>% 
-  #gather(Moment, Value, -(turfID:P_cat)) %>% 
-  #unite(temp, Trait, Moment) %>% 
-  spread(key = Trait_trans, value = mean) %>% 
-  column_to_rownames("turfID")
 
-res.pca_09 <- prcomp(Ord_boot_traits_2009[, -(1:2)], scale = TRUE)
 
-fviz_eig(res.pca_09, addlabels = TRUE) #Visualize eigenvalues/scree plot
-
-### Constrained ordination ###
+#### Constrained ordination ####
 
 RDA <- rda(Ord_boot_traits[, -(1:3)]~ Temp+Precip, scale = TRUE, data = Ord_boot_traits)
 
