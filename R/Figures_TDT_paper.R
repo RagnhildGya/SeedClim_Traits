@@ -4,20 +4,21 @@
 library(ggpubr)
 library(ggridges)
 library(ggfortify)
+library("corrplot")
 
 ## Climate figure ##
 
 ggplot(aes(x = Precip_decade, y = Temp_decade,
            color = Precip_level, fill = Precip_level, shape = Temp_level), data = env) +
-  #geom_point() +
-  geom_point(aes(x = Precip_60_90, y = Temp_60_90, size = 2)) +
+  geom_segment(aes(x = Precip_decade, y = Temp_decade, yend = Temp_century, xend = Precip_century)) +
+  geom_point(aes(x = Precip_century, y = Temp_century, size = 4, shape = "1960-1990 mean")) +
   geom_pointrange(aes(ymin = Temp_decade-Temp_se, ymax = Temp_decade+Temp_se)) +
   geom_errorbarh(aes(xmin = Precip_decade-Precip_se, xmax = Precip_decade+Precip_se)) +
   labs(x = "Annual precipitation in mm", y = "Tetraterm temperature in °C") +
   scale_color_manual(name = "Precipitation level", values = c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")) +
   scale_fill_manual(name = "Precipitation level", values = c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")) +
   #scale_color_brewer(name = "Precipitation level", palette = "Blues") + 
-  scale_shape_manual(name = "Temperature level", values = c(25, 21, 24)) +
+  scale_shape_manual(name = "Temperature level", values = c(25, 1, 21, 24)) +
   guides(fill = "none", size = "none") +
   theme_minimal(base_size = 20)
 
@@ -34,7 +35,7 @@ ggplot(aes(x = Precip_deviation_decade, y = Temp_deviation_decade, color = as.fa
 #ggsave("SeedClim_climate_deviation.jpg", width = 18 , height = 18, units = "cm")
 
 ## Plotting trait distributions ##
-set.seed(47)
+set.seed(7)
 
 T_names <- c(
   "6.5" = "Alpine", 
@@ -47,7 +48,7 @@ slice_sample(SeedClim_traits_allYears, n = 200,
   filter(Trait_trans == "SLA_cm2_g") %>% 
   mutate(year = as.factor(year)) %>% 
   ggplot(aes(x = Value, y = fct_rev(year), fill = as.factor(Temp_level))) +
-  geom_density_ridges() +
+  geom_density_ridges(bandwidth = 20) +
   facet_wrap(~Temp_level, nrow = 1, labeller = labeller(Temp_level = T_names)) +
   theme_minimal(base_size = 15) +
   scale_fill_brewer(palette = "RdYlBu", direction = -1) +
@@ -178,22 +179,35 @@ Ord_boot_Size <- SC_moments_allYears %>%
 
 #Visualize the results for variables (traits) with the cos2 values (contribution to the PC)
 
-trait_pca <- prcomp(Ord_boot_traits[, -(1:5)], scale = TRUE)
-leaf_economic_pca <- prcomp(Ord_boot_LeafEconomic[, -(1:5)], scale = TRUE)
-size_pca <- prcomp(Ord_boot_Size[, -(1:5)], scale = TRUE)
+pca_trait <- prcomp(Ord_boot_traits[, -(1:5)], scale = TRUE)
+pca_leaf_economic <- prcomp(Ord_boot_LeafEconomic[, -(1:5)], scale = TRUE)
+pca_size <- prcomp(Ord_boot_Size[, -(1:5)], scale = TRUE)
 
-fviz_eig(trait_pca, addlabels = TRUE) #Visualize eigenvalues/scree plot
-fviz_eig(leaf_economic_pca, addlabels = TRUE)
-fviz_eig(size_pca, addlabels = TRUE)
+var <- get_pca_var(pca_trait)
+corrplot(var$cos2, is.corr = FALSE)
 
-# fviz_pca_var(trait_pca,
+pca_trait_results <- get_pca_ind(pca_trait)
+pca_leaf_economic_results <- get_pca_ind(pca_leaf_economic)
+pca_size_results <- get_pca_ind(pca_size)
+
+coord_1 <- pca_size_results$coord
+
+fviz_cos2(pca_trait, choice = "var")
+fviz_contrib(pca_trait, choice = "var", axes = 1)
+fviz_contrib(pca_trait, choice = "var", axes = 2)
+
+
+fviz_eig(pca_trait, addlabels = TRUE) #Visualize eigenvalues/scree plot
+fviz_eig(pca_leaf_economic, addlabels = TRUE)
+fviz_eig(pca_size, addlabels = TRUE)
+
+# fviz_pca_var(pca_trait,
 #              col.var = "contrib", # Color by contributions to the PC
 #              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
 #              repel = TRUE     # Avoid text overlapping
 # )
 
-
-fviz_pca_biplot(trait_pca, repel = TRUE,
+fviz_pca_biplot(pca_trait, repel = TRUE,
                 col.var = "#2E9FDF", # Variables color
                 col.ind = "#696969",  # Individuals color
                 label = "var",
@@ -203,7 +217,7 @@ fviz_pca_biplot(trait_pca, repel = TRUE,
                 ellipse.level = 0.95) +
   theme_minimal(base_size = 20)
 
-fviz_pca_biplot(leaf_economic_pca, repel = TRUE,
+fviz_pca_biplot(pca_leaf_economic, repel = TRUE,
                 col.var = "#2E9FDF", # Variables color
                 col.ind = "#696969",  # Individuals color
                 label = "var",
@@ -213,7 +227,7 @@ fviz_pca_biplot(leaf_economic_pca, repel = TRUE,
                 ellipse.level = 0.95) +
   theme_minimal(base_size = 20)
 
-fviz_pca_biplot(size_pca, repel = TRUE,
+fviz_pca_biplot(pca_size, repel = TRUE,
                 col.var = "#2E9FDF", # Variables color
                 col.ind = "#696969",  # Individuals color
                 label = "var",
@@ -222,35 +236,4 @@ fviz_pca_biplot(size_pca, repel = TRUE,
                 addEllipses = TRUE,
                 ellipse.level = 0.95) +
   theme_minimal(base_size = 20)
-
-
-'### Constrained ordination ###
-
-RDA <- rda(Ord_boot_traits[, -(1:3)]~ T_level+P_level, scale = TRUE, data = Ord_boot_traits)
-
-autoplot(RDA) +
-  theme_bw()
-
-autoplot(RDA, arrows = TRUE, data = PCA_boot_traits) +
-  scale_x_continuous(expand = c(0.22, 0)) +
-  geom_point(data = RDA, aes(RDA1, RDA2), size=2) +
-  geom_abline(intercept = 0,slope = 0,linetype="dashed", size=0.8) +
-  geom_vline(aes(xintercept=0), linetype="dashed", size=0.8) + labs(x = "Axis 1", y="Axis 2") + 
-  theme_bw()
-
-RDA_fort <- fortify(RDA)
-
-ggplot(RDA_fort, aes(x = RDA1, y = RDA2)) +
-  geom_point(show.legend = FALSE) +
-  scale_size(range = 2) +
-  coord_equal()
-
-plot(RDA)
-screeplot(RDA)
-
-coef(RDA)
-
-RsquareAdj(RDA)$adj.r.squared
-
-
 
