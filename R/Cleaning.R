@@ -2,6 +2,7 @@
 library("tidyverse")
 library("lubridate")
 #library("mosaic")
+library(forcats)
 
 #### Load trait data ####
 
@@ -194,7 +195,10 @@ community <- community %>%
           Precip_se = (sd(Precip_yearly) / sqrt(length(Precip_yearly)))) %>% 
    mutate(Temp_deviation_decade = Temp_yearly - Temp_decade,
           Precip_deviation_decade = Precip_yearly - Precip_decade) %>% 
-   left_join(y = env_old, by = "Site") 
+   left_join(y = env_old, by = "Site") %>% 
+   mutate(Temp_level = fct_relevel(Temp_level, c("6.5", "8.5", "10.5"))) %>% 
+   mutate(Precip_level = fct_relevel(Precip_level, c("600", "1200", "2000", "2700")))
+ 
 
 ####################  Old code #####################
 ### Code to calculate community weighted means.  ###
