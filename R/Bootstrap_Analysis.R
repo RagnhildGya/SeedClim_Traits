@@ -30,7 +30,8 @@ community <- community %>%
 
 traitdata_2 <- traitdata_1 %>% 
   mutate(blockID = "",
-         turfID = "")
+         turfID = "") %>% 
+  filter(Trait %in% c("Leaf_area_cm2", "Plant_Height_mm", "CN_ratio", "SLA_cm2_g"))
 
 # env <- env %>% 
 #   select(-Temp_se, -Precip_se)
@@ -414,7 +415,7 @@ Ord_boot_Size <- SC_moments_allYears %>%
   mutate(uniqueID = paste0(turfID,"_", year, "_", Site)) %>% 
   group_by(uniqueID, Trait_trans) %>% 
   mutate(mean_mean = mean(mean)) %>% 
-  filter(Trait_trans %in% c("Plant_Height_mm_log", "Leaf_Area_cm2_log", "Dry_Mass_g_log", "C_percent")) %>%  #Filter so that only lsize traits are in
+  filter(Trait_trans %in% c("Plant_Height_mm_log", "Leaf_Area_cm2_log", "Dry_Mass_g_log", "C_percent")) %>%  #Filter so that only size traits are in
   select(uniqueID, Site, year, turfID, Trait_trans, Temp_level, Precip_level, mean_mean) %>%
   unique() %>% 
   #gather(Moment, Value, -(turfID:P_cat)) %>% 
@@ -460,6 +461,126 @@ Ord_axis_values <- as.data.frame(pca_trait$x) %>%
   left_join(Ord_axis_values_leaf_economic, by = c("uniqueID" = "uniqueID")) %>% 
   left_join(Ord_axis_values_size, by = c("uniqueID" = "uniqueID")) %>% 
   left_join(Ord_site_env_dat, by = c("uniqueID" = "uniqueID"))
+
+### Make data ready for model testing
+
+Ord_modeling <- Ord_axis_values %>% 
+  pivot_longer(c("Leaf_economic_PC1", "Size_PC1", "Full_ord_PC1", "Full_ord_PC2"), names_to = "ordination", values_to = "value") %>% 
+  ungroup() %>%
+  select(-uniqueID) %>% 
+  group_by(ordination) %>% 
+  nest()
+
+### Model testing with ordiation axis
+
+## Null ##
+mem_results_null_ord <- Ord_modeling %>%
+  mutate(model = map(data, model_null))
+
+tidy_null_model_predicted_ord <- mem_results_null_ord %>%
+  mutate(model_output = map(model, tidy)) %>%
+  mutate(predicted = map(model, predict_with_random)) %>% 
+  mutate(R_squared = map(model, rsquared))
+
+predicted_values_null_ord <- tidy_null_model_predicted_ord %>%
+  ungroup() %>%
+  select(ordination, data, predicted) %>%
+  unnest(c(data, predicted)) %>%
+  rename(modeled = predicted, measured = value)
+
+
+## Temp ##
+mem_results_temp_ord <- Ord_modeling %>%
+  mutate(model = map(data, model_temp))
+
+tidy_temp_model_predicted_ord <- mem_results_temp_ord %>%
+  mutate(model_output = map(model, tidy)) %>%
+  mutate(predicted = map(model, predict_with_random)) %>% 
+  mutate(R_squared = map(model, rsquared))
+
+predicted_values_temp_ord <- tidy_temp_model_predicted_ord %>%
+  ungroup() %>%
+  select(ordination, data, predicted) %>%
+  unnest(c(data, predicted)) %>%
+  rename(modeled = predicted, measured = value)
+
+
+## Precipitation ##
+mem_results_precip_ord <- Ord_modeling %>%
+  mutate(model = map(data, model_precip))
+
+tidy_precip_model_predicted_ord <- mem_results_precip_ord %>%
+  mutate(model_output = map(model, tidy)) %>%
+  mutate(predicted = map(model, predict_with_random)) %>% 
+  mutate(R_squared = map(model, rsquared))
+
+predicted_values_temp_ord <- tidy_temp_model_predicted_ord %>%
+  ungroup() %>%
+  select(ordination, data, predicted) %>%
+  unnest(c(data, predicted)) %>%
+  rename(modeled = predicted, measured = value)
+
+## Temperature + Precipitation (additive) ##
+mem_results_tempAddprecip_ord <- Ord_modeling %>%
+  mutate(model = map(data, model_tempAddprecip))
+
+tidy_tempAddprecip_model_predicted_ord <- mem_results_tempAddprecip_ord %>%
+  mutate(model_output = map(model, tidy)) %>%
+  mutate(predicted = map(model, predict_with_random)) %>% 
+  mutate(R_squared = map(model, rsquared))
+
+predicted_values_tempAddprecip_ord <- tidy_tempAddprecip_model_predicted_ord %>%
+  ungroup() %>%
+  select(ordination, data, predicted) %>%
+  unnest(c(data, predicted)) %>%
+  rename(modeled = predicted, measured = value)
+
+## Temperature * Precipitation (multiplicative) ##
+mem_results_tempMulprecip_ord <- Ord_modeling %>%
+  mutate(model = map(data, model_tempMulprecip))
+
+tidy_tempMulprecip_model_predicted_ord <- mem_results_tempMulprecip_ord %>%
+  mutate(model_output = map(model, tidy)) %>%
+  mutate(predicted = map(model, predict_with_random)) %>% 
+  mutate(R_squared = map(model, rsquared))
+
+predicted_values_tempMulprecip_ord <- tidy_tempMulprecip_model_predicted_ord %>%
+  ungroup() %>%
+  select(ordination, data, predicted) %>%
+  unnest(c(data, predicted)) %>%
+  rename(modeled = predicted, measured = value)
+
+
+# Making a function for AIC tests
+
+AIC_models_ord <-function(dat, model_type) {
+  
+  dat2 <- dat %>% 
+    mutate(AIC = map(model, AIC)) %>% 
+    select(ordination, AIC) %>% 
+    unnest(c(AIC)) %>% 
+    ungroup() %>% 
+    group_by(ordination) %>% 
+    mutate(AIC = mean(AIC)) %>% 
+    unique()
+  
+  return(dat2)
+}
+
+# Get AIC for all models and compare which is beter
+
+AIC_null_ord <- AIC_models_ord(tidy_null_model_predicted_ord, "Temp") %>% rename(Null_AIC = AIC)
+AIC_temp_ord <- AIC_models_ord(tidy_temp_model_predicted_ord, "Temp") %>% rename(Temp_AIC = AIC)
+AIC_precip_ord <- AIC_models_ord(tidy_precip_model_predicted_ord, "Precip") %>% rename(Precip_AIC = AIC)
+AIC_tempAddprecip_ord <- AIC_models_ord(tidy_tempAddprecip_model_predicted_ord, "Precip") %>% rename(TempAddPrecip_AIC = AIC)
+AIC_tempMulprecip_ord <- AIC_models_ord(tidy_tempMulprecip_model_predicted_ord, "Precip") %>% rename(TempMulPrecip_AIC = AIC)
+
+AIC_all_models_ord <- AIC_null_ord %>%
+  left_join(AIC_temp_ord, by = c("ordination" = "ordination")) %>% 
+  left_join(AIC_precip_ord, by = c("ordination" = "ordination")) %>% 
+  left_join(AIC_tempAddprecip_ord, by = c("ordination" = "ordination")) %>% 
+  left_join(AIC_tempMulprecip_ord, by = c("ordination" = "ordination"))
+
 
 
 #### Constrained ordination ####
