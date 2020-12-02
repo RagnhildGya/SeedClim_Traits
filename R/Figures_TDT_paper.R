@@ -135,55 +135,8 @@ summarised_boot_moments_climate_2017 %>%
 
 #### Ordination ####
 
-Ord_boot_traits <- SC_moments_allYears %>% 
-  left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
-  ungroup() %>% 
-  mutate(uniqueID = paste0(turfID,"_", year, "_", Site)) %>% 
-  group_by(uniqueID, Trait_trans) %>% 
-  mutate(mean_mean = mean(mean)) %>% 
-  filter(!Trait_trans == "Wet_Mass_g_log") %>% 
-  select(uniqueID, Site, year, turfID, Trait_trans, Temp_level, Precip_level, mean_mean) %>%
-  unique() %>% 
-  #gather(Moment, Value, -(turfID:P_cat)) %>% 
-  #unite(temp, Trait, Moment) %>% 
-  pivot_wider(names_from = Trait_trans, values_from = mean_mean) %>% 
-  column_to_rownames("uniqueID")
-
-Ord_boot_LeafEconomic <- SC_moments_allYears %>% 
-  left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
-  ungroup() %>% 
-  mutate(uniqueID = paste0(turfID,"_", year, "_", Site)) %>% 
-  group_by(uniqueID, Trait_trans) %>% 
-  mutate(mean_mean = mean(mean)) %>% 
-  filter(Trait_trans %in% c("SLA_cm2_g", "N_percent", "Leaf_Thickness_Ave_mm", "CN_ratio", "LDMC")) %>%  #Filter so that only leaf economic traits are in
-  select(uniqueID, Site, year, turfID, Trait_trans, Temp_level, Precip_level, mean_mean) %>%
-  unique() %>% 
-  #gather(Moment, Value, -(turfID:P_cat)) %>% 
-  #unite(temp, Trait, Moment) %>% 
-  pivot_wider(names_from = Trait_trans, values_from = mean_mean) %>% 
-  column_to_rownames("uniqueID")
-
-Ord_boot_Size <- SC_moments_allYears %>% 
-  left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
-  ungroup() %>% 
-  mutate(uniqueID = paste0(turfID,"_", year, "_", Site)) %>% 
-  group_by(uniqueID, Trait_trans) %>% 
-  mutate(mean_mean = mean(mean)) %>% 
-  filter(Trait_trans %in% c("Plant_Height_mm_log", "Leaf_Area_cm2_log", "Dry_Mass_g_log", "C_percent")) %>%  #Filter so that only lsize traits are in
-  select(uniqueID, Site, year, turfID, Trait_trans, Temp_level, Precip_level, mean_mean) %>%
-  unique() %>% 
-  #gather(Moment, Value, -(turfID:P_cat)) %>% 
-  #unite(temp, Trait, Moment) %>% 
-  pivot_wider(names_from = Trait_trans, values_from = mean_mean) %>% 
-  column_to_rownames("uniqueID")
 
 #Visualize the results for variables (traits) with the cos2 values (contribution to the PC)
-
-pca_trait <- prcomp(Ord_boot_traits[, -(1:5)], scale = TRUE)
-pca_leaf_economic <- prcomp(Ord_boot_LeafEconomic[, -(1:5)], scale = TRUE)
-pca_size <- prcomp(Ord_boot_Size[, -(1:5)], scale = TRUE)
-
-var <- get_pca_var(pca_trait)
 corrplot(var$cos2, is.corr = FALSE)
 
 # var_leaf <- get_pca_var(pca_leaf_economic)
@@ -191,12 +144,6 @@ corrplot(var$cos2, is.corr = FALSE)
 # 
 # var_size <- get_pca_var(pca_size)
 # corrplot(var_size$cos2, is.corr = FALSE)
-
-pca_trait_results <- get_pca_ind(pca_trait)
-pca_leaf_economic_results <- get_pca_ind(pca_leaf_economic)
-pca_size_results <- get_pca_ind(pca_size)
-
-coord_1 <- pca_size_results$coord
 
 fviz_cos2(pca_trait, choice = "var")
 fviz_contrib(pca_trait, choice = "var", axes = 1)
@@ -227,7 +174,7 @@ fviz_pca_biplot(pca_trait, repel = TRUE,
   xlim(-5, 5) + 
   ylim (-5, 5)
 
-ggsave("PCA_all_years_with_temp.jpg", width = 22 , height = 16, units = "cm")
+#ggsave("PCA_all_years_with_temp.jpg", width = 22 , height = 16, units = "cm")
 
 
 fviz_pca_biplot(pca_leaf_economic, repel = TRUE,
@@ -249,29 +196,3 @@ fviz_pca_biplot(pca_size, repel = TRUE,
                 addEllipses = TRUE,
                 ellipse.level = 0.95) +
   theme_minimal(base_size = 20)
-
-
-Ord_site_env_dat <- SC_moments_allYears %>% 
-  left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
-  ungroup() %>% 
-  mutate(uniqueID = paste0(turfID,"_", year, "_", Site)) %>% 
-  select(uniqueID, Site, year, turfID, Temp_yearly, Precip_yearly, Temp_decade, Precip_decade, Temp_deviation_decade, Precip_deviation_decade, Temp_level, Precip_level) %>%
-  unique()
-
-Ord_axis_values_leaf_economic <- as.data.frame(pca_leaf_economic$x) %>% 
-  select(PC1) %>% 
-  rownames_to_column("uniqueID") %>% 
-  rename(Leaf_economic_PC1 = PC1)
-
-Ord_axis_values_size <- as.data.frame(pca_size$x) %>% 
-  select(PC1) %>% 
-  rownames_to_column("uniqueID") %>% 
-  rename(Size_PC1 = PC1)
-
-Ord_axis_values <- as.data.frame(pca_trait$x) %>% 
-  select(PC1, PC2) %>% 
-  rownames_to_column("uniqueID") %>% 
-  rename(Full_ord_PC1 = PC1, Full_ord_PC2 = PC2) %>% 
-  left_join(Ord_axis_values_leaf_economic, by = c("uniqueID" = "uniqueID")) %>% 
-  left_join(Ord_axis_values_size, by = c("uniqueID" = "uniqueID")) %>% 
-  left_join(Ord_site_env_dat, by = c("uniqueID" = "uniqueID"))
