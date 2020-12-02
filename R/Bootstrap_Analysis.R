@@ -30,8 +30,7 @@ community <- community %>%
 
 traitdata_2 <- traitdata_1 %>% 
   mutate(blockID = "",
-         turfID = "") %>% 
-  filter(Trait %in% c("Leaf_area_cm2", "Plant_Height_mm", "CN_ratio", "SLA_cm2_g"))
+         turfID = "") 
 
 # env <- env %>% 
 #   select(-Temp_se, -Precip_se)
