@@ -21,7 +21,7 @@ library(vegan)
 library(ggvegan)
 library(drake)
 
-set.seed(3)
+set.seed(47)
 
 #### Making data ready for traitstrap and merging ####
 
