@@ -139,6 +139,12 @@ summarised_boot_moments_climate_2017 %>%
 #Visualize the results for variables (traits) with the cos2 values (contribution to the PC)
 corrplot(var$cos2, is.corr = FALSE)
 
+contr_traits <- as.data.frame(var$cos2) %>% 
+  select(Dim.1, Dim.2) %>% 
+  rownames_to_column("trait") %>% 
+  group_by(trait) %>% 
+  mutate(contribution = sum(Dim.1, Dim.2))
+
 # var_leaf <- get_pca_var(pca_leaf_economic)
 # corrplot(var_leaf$cos2, is.corr = FALSE)
 # 
