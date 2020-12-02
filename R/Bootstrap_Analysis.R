@@ -21,7 +21,7 @@ library(vegan)
 library(ggvegan)
 library(drake)
 
-set.seed(47)
+set.seed(3)
 
 #### Making data ready for traitstrap and merging ####
 
@@ -305,6 +305,7 @@ AIC_all_models <- AIC_null %>%
   left_join(AIC_tempAddprecip, by = c("Trait_trans" = "Trait_trans", "moments" = "moments")) %>% 
   left_join(AIC_tempMulprecip, by = c("Trait_trans" = "Trait_trans", "moments" = "moments"))
   
+write.table(x = AIC_all_models, file = "AIC_seed3.csv")
 
 # Making a dataset with the model output and the test-statistics (R squared), and summarizing them.
 model_output <-function(dat, fixed_effects) {
@@ -377,33 +378,116 @@ ggcorrplot(corr_09, hc.order = FALSE,
 
 #### Ordination ####
 
+### Make data ready for ordination 
+
+Ord_boot_traits <- SC_moments_allYears %>% 
+  left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
+  ungroup() %>% 
+  mutate(uniqueID = paste0(turfID,"_", year, "_", Site)) %>% 
+  group_by(uniqueID, Trait_trans) %>% 
+  mutate(mean_mean = mean(mean)) %>% 
+  filter(!Trait_trans == "Wet_Mass_g_log") %>% 
+  select(uniqueID, Site, year, turfID, Trait_trans, Temp_level, Precip_level, mean_mean) %>%
+  unique() %>% 
+  #gather(Moment, Value, -(turfID:P_cat)) %>% 
+  #unite(temp, Trait, Moment) %>% 
+  pivot_wider(names_from = Trait_trans, values_from = mean_mean) %>% 
+  column_to_rownames("uniqueID")
+
+Ord_boot_LeafEconomic <- SC_moments_allYears %>% 
+  left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
+  ungroup() %>% 
+  mutate(uniqueID = paste0(turfID,"_", year, "_", Site)) %>% 
+  group_by(uniqueID, Trait_trans) %>% 
+  mutate(mean_mean = mean(mean)) %>% 
+  filter(Trait_trans %in% c("SLA_cm2_g", "N_percent", "Leaf_Thickness_Ave_mm", "CN_ratio", "LDMC")) %>%  #Filter so that only leaf economic traits are in
+  select(uniqueID, Site, year, turfID, Trait_trans, Temp_level, Precip_level, mean_mean) %>%
+  unique() %>% 
+  #gather(Moment, Value, -(turfID:P_cat)) %>% 
+  #unite(temp, Trait, Moment) %>% 
+  pivot_wider(names_from = Trait_trans, values_from = mean_mean) %>% 
+  column_to_rownames("uniqueID")
+
+Ord_boot_Size <- SC_moments_allYears %>% 
+  left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
+  ungroup() %>% 
+  mutate(uniqueID = paste0(turfID,"_", year, "_", Site)) %>% 
+  group_by(uniqueID, Trait_trans) %>% 
+  mutate(mean_mean = mean(mean)) %>% 
+  filter(Trait_trans %in% c("Plant_Height_mm_log", "Leaf_Area_cm2_log", "Dry_Mass_g_log", "C_percent")) %>%  #Filter so that only lsize traits are in
+  select(uniqueID, Site, year, turfID, Trait_trans, Temp_level, Precip_level, mean_mean) %>%
+  unique() %>% 
+  #gather(Moment, Value, -(turfID:P_cat)) %>% 
+  #unite(temp, Trait, Moment) %>% 
+  pivot_wider(names_from = Trait_trans, values_from = mean_mean) %>% 
+  column_to_rownames("uniqueID")
+
+### Do ordination
+pca_trait <- prcomp(Ord_boot_traits[, -(1:5)], scale = TRUE)
+pca_leaf_economic <- prcomp(Ord_boot_LeafEconomic[, -(1:5)], scale = TRUE)
+pca_size <- prcomp(Ord_boot_Size[, -(1:5)], scale = TRUE)
+
+### Get variable
+var <- get_pca_var(pca_trait)
+
+### Get results
+pca_trait_results <- get_pca_ind(pca_trait)
+pca_leaf_economic_results <- get_pca_ind(pca_leaf_economic)
+pca_size_results <- get_pca_ind(pca_size)
+
+### Pull out axis values for different ordinations
+Ord_site_env_dat <- SC_moments_allYears %>% 
+  left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
+  ungroup() %>% 
+  mutate(uniqueID = paste0(turfID,"_", year, "_", Site)) %>% 
+  select(uniqueID, Site, year, turfID, Temp_yearly, Precip_yearly, Temp_decade, Precip_decade, Temp_deviation_decade, Precip_deviation_decade, Temp_level, Precip_level) %>%
+  unique()
+
+Ord_axis_values_leaf_economic <- as.data.frame(pca_leaf_economic$x) %>% 
+  select(PC1) %>% 
+  rownames_to_column("uniqueID") %>% 
+  rename(Leaf_economic_PC1 = PC1)
+
+Ord_axis_values_size <- as.data.frame(pca_size$x) %>% 
+  select(PC1) %>% 
+  rownames_to_column("uniqueID") %>% 
+  rename(Size_PC1 = PC1)
+
+Ord_axis_values <- as.data.frame(pca_trait$x) %>% 
+  select(PC1, PC2) %>% 
+  rownames_to_column("uniqueID") %>% 
+  rename(Full_ord_PC1 = PC1, Full_ord_PC2 = PC2) %>% 
+  left_join(Ord_axis_values_leaf_economic, by = c("uniqueID" = "uniqueID")) %>% 
+  left_join(Ord_axis_values_size, by = c("uniqueID" = "uniqueID")) %>% 
+  left_join(Ord_site_env_dat, by = c("uniqueID" = "uniqueID"))
+
 
 #### Constrained ordination ####
 
-RDA <- rda(Ord_boot_traits[, -(1:3)]~ Temp+Precip, scale = TRUE, data = Ord_boot_traits)
-
-autoplot(RDA) +
-  theme_bw()
-
-autoplot(RDA, arrows = TRUE, data = PCA_boot_traits) +
-  scale_x_continuous(expand = c(0.22, 0)) +
-  geom_point(data = RDA, aes(RDA1, RDA2), size=2) +
-  geom_abline(intercept = 0,slope = 0,linetype="dashed", size=0.8) +
-  geom_vline(aes(xintercept=0), linetype="dashed", size=0.8) + labs(x = "Axis 1", y="Axis 2") + 
-  theme_bw()
-
-RDA_fort <- fortify(RDA)
-
-ggplot(RDA_fort, aes(x = RDA1, y = RDA2)) +
-  geom_point(show.legend = FALSE) +
-  scale_size(range = 2) +
-  coord_equal()
-
-
-RDA_VPD
-plot(RDA)
-screeplot(RDA)
-
-coef(RDA)
-
-RsquareAdj(RDA)$adj.r.squared
+# RDA <- rda(Ord_boot_traits[, -(1:3)]~ Temp+Precip, scale = TRUE, data = Ord_boot_traits)
+# 
+# autoplot(RDA) +
+#   theme_bw()
+# 
+# autoplot(RDA, arrows = TRUE, data = PCA_boot_traits) +
+#   scale_x_continuous(expand = c(0.22, 0)) +
+#   geom_point(data = RDA, aes(RDA1, RDA2), size=2) +
+#   geom_abline(intercept = 0,slope = 0,linetype="dashed", size=0.8) +
+#   geom_vline(aes(xintercept=0), linetype="dashed", size=0.8) + labs(x = "Axis 1", y="Axis 2") + 
+#   theme_bw()
+# 
+# RDA_fort <- fortify(RDA)
+# 
+# ggplot(RDA_fort, aes(x = RDA1, y = RDA2)) +
+#   geom_point(show.legend = FALSE) +
+#   scale_size(range = 2) +
+#   coord_equal()
+# 
+# 
+# RDA_VPD
+# plot(RDA)
+# screeplot(RDA)
+# 
+# coef(RDA)
+# 
+# RsquareAdj(RDA)$adj.r.squared

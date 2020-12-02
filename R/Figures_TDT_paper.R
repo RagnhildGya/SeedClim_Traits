@@ -4,7 +4,7 @@
 library(ggpubr)
 library(ggridges)
 library(ggfortify)
-library("corrplot")
+library(corrplot)
 
 ## Climate figure ##
 
@@ -35,7 +35,7 @@ ggplot(aes(x = Precip_deviation_decade, y = Temp_deviation_decade, color = as.fa
 #ggsave("SeedClim_climate_deviation.jpg", width = 18 , height = 18, units = "cm")
 
 ## Plotting trait distributions ##
-set.seed(7)
+set.seed(47)
 
 T_names <- c(
   "6.5" = "Alpine", 
@@ -186,6 +186,12 @@ pca_size <- prcomp(Ord_boot_Size[, -(1:5)], scale = TRUE)
 var <- get_pca_var(pca_trait)
 corrplot(var$cos2, is.corr = FALSE)
 
+# var_leaf <- get_pca_var(pca_leaf_economic)
+# corrplot(var_leaf$cos2, is.corr = FALSE)
+# 
+# var_size <- get_pca_var(pca_size)
+# corrplot(var_size$cos2, is.corr = FALSE)
+
 pca_trait_results <- get_pca_ind(pca_trait)
 pca_leaf_economic_results <- get_pca_ind(pca_leaf_economic)
 pca_size_results <- get_pca_ind(pca_size)
@@ -213,9 +219,16 @@ fviz_pca_biplot(pca_trait, repel = TRUE,
                 label = "var",
                 labelsize = 5, 
                 habillage = Ord_boot_traits$Temp_level,
-                addEllipses = TRUE,
                 ellipse.level = 0.95) +
-  theme_minimal(base_size = 20)
+  theme_minimal(base_size = 20) +
+  guides(shape = FALSE) +
+  scale_color_manual(name = "Summer temperature", values = c("#8DD5E1", "#FCB971", "#B93B3B")) +
+  theme(legend.text=element_text(size=14), legend.title = element_text(size = 14))+
+  xlim(-5, 5) + 
+  ylim (-5, 5)
+
+ggsave("PCA_all_years_with_temp.jpg", width = 22 , height = 16, units = "cm")
+
 
 fviz_pca_biplot(pca_leaf_economic, repel = TRUE,
                 col.var = "#2E9FDF", # Variables color
@@ -237,3 +250,28 @@ fviz_pca_biplot(pca_size, repel = TRUE,
                 ellipse.level = 0.95) +
   theme_minimal(base_size = 20)
 
+
+Ord_site_env_dat <- SC_moments_allYears %>% 
+  left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
+  ungroup() %>% 
+  mutate(uniqueID = paste0(turfID,"_", year, "_", Site)) %>% 
+  select(uniqueID, Site, year, turfID, Temp_yearly, Precip_yearly, Temp_decade, Precip_decade, Temp_deviation_decade, Precip_deviation_decade, Temp_level, Precip_level) %>%
+  unique()
+
+Ord_axis_values_leaf_economic <- as.data.frame(pca_leaf_economic$x) %>% 
+  select(PC1) %>% 
+  rownames_to_column("uniqueID") %>% 
+  rename(Leaf_economic_PC1 = PC1)
+
+Ord_axis_values_size <- as.data.frame(pca_size$x) %>% 
+  select(PC1) %>% 
+  rownames_to_column("uniqueID") %>% 
+  rename(Size_PC1 = PC1)
+
+Ord_axis_values <- as.data.frame(pca_trait$x) %>% 
+  select(PC1, PC2) %>% 
+  rownames_to_column("uniqueID") %>% 
+  rename(Full_ord_PC1 = PC1, Full_ord_PC2 = PC2) %>% 
+  left_join(Ord_axis_values_leaf_economic, by = c("uniqueID" = "uniqueID")) %>% 
+  left_join(Ord_axis_values_size, by = c("uniqueID" = "uniqueID")) %>% 
+  left_join(Ord_site_env_dat, by = c("uniqueID" = "uniqueID"))
