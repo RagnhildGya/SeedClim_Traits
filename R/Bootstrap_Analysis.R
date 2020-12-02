@@ -153,6 +153,7 @@ SC_moments_clim_long <- SC_moments_allYears %>%
 
 ### Making dataset for models ###
 memodel_data_allYears <- SC_moments_clim_long %>% 
+  filter(Trait_trans %in% c("CN_ratio", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "SLA_cm2_g")) %>% 
   ungroup() %>%
   select(Trait_trans, moments, Site, turfID, Temp_yearly, Precip_yearly, Temp_deviation_decade, Precip_deviation_decade, value, year, n) %>% 
   group_by(Trait_trans, moments, n) %>% 
@@ -237,7 +238,7 @@ tidy_precip_model_predicted <- mem_results_precip %>%
   mutate(predicted = map(model, predict_with_random)) %>% 
   mutate(R_squared = map(model, rsquared))
 
-predicted_values_temp <- tidy_temp_model_predicted %>%
+predicted_values_precip <- tidy_precip_model_predicted %>%
   ungroup() %>%
   select(Trait_trans, moments, data, predicted) %>%
   unnest(c(data, predicted)) %>%
@@ -305,15 +306,17 @@ AIC_all_models <- AIC_null %>%
   left_join(AIC_tempAddprecip, by = c("Trait_trans" = "Trait_trans", "moments" = "moments")) %>% 
   left_join(AIC_tempMulprecip, by = c("Trait_trans" = "Trait_trans", "moments" = "moments"))
   
-write.table(x = AIC_all_models, file = "AIC_seed3.csv")
+write.table(x = AIC_all_models, file = "AIC_new.csv")
 
 # Making a dataset with the model output and the test-statistics (R squared), and summarizing them.
-model_output <-function(dat, fixed_effects) {
+model_output <-function(dat) {
   
   model_output <- dat %>% 
     select(Trait_trans, moments, n, model_output, R_squared) %>% 
+    filter(Trait_trans %in% c("CN_ratio", "SLA_cm2_g") & moments %in% c("mean", "variance")) %>% 
+    filter(!Trait_trans == "CN_ratio" | moments == "variance") %>% 
     unnest(c(model_output, R_squared)) %>% 
-    filter(term %in% fixed_effect) %>% 
+    filter(term %in% c("Temp_yearly", "Temp_deviation_decade","scale(Precip_yearly)", "scale(Precip_deviation_decade)", "Temp_yearly:scale(Precip_yearly)", "Temp_deviation_decade:scale(Precip_deviation_decade)")) %>% 
     select(Trait_trans, moments, term, n, estimate, Marginal, Conditional) %>% 
     ungroup() %>% 
     group_by(Trait_trans, moments, term) %>% 
@@ -328,10 +331,10 @@ model_output <-function(dat, fixed_effects) {
   return(model_output)
 }
 
-model_output_temp <- model_output(tidy_temp_model_predicted, c("Temp_yearly", "Temp_deviation_decade"))
-model_output_precip <- model_output(tidy_temp_model_predicted, c("Precip_yearly", "Precip_deviation_decade"))
-model_output_tempAddprecip <- model_output(tidy_tempAddprecip_model_predicted, c("Temp_yearly", "Temp_deviation_decade","scale(Precip_yearly)", "scale(Precip_deviation_decade)"))
-model_output_tempMulprecip <- model_output(tidy_tempMulprecip_model_predicted, c("Temp_yearly", "Temp_deviation_decade","scale(Precip_yearly)", "scale(Precip_deviation_decade)", "Temp_yearly:scale(Precip_yearly)", "Temp_deviation_decade:scale(Precip_deviation_decade)"))
+#model_output_temp <- model_output(tidy_temp_model_predicted, c("Temp_yearly", "Temp_deviation_decade"))
+#model_output_precip <- model_output(tidy_temp_model_predicted, c("Precip_yearly", "Precip_deviation_decade"))
+#model_output_tempAddprecip <- model_output(tidy_tempAddprecip_model_predicted, c("Temp_yearly", "Temp_deviation_decade","scale(Precip_yearly)", "scale(Precip_deviation_decade)"))
+model_output_tempMulprecip <- model_output(tidy_tempMulprecip_model_predicted)
 
 #write.table(x = model_output, file = "model_output_TDT.csv")
 
