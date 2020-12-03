@@ -153,7 +153,7 @@ SC_moments_clim_long <- SC_moments_allYears %>%
 
 ### Making dataset for models ###
 memodel_data_allYears <- SC_moments_clim_long %>% 
-  filter(Trait_trans %in% c("CN_ratio", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "SLA_cm2_g")) %>% 
+  filter(Trait_trans %in% c("CN_ratio_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "SLA_cm2_g_log")) %>% 
   ungroup() %>%
   select(Trait_trans, moments, Site, turfID, Temp_yearly, Precip_yearly, Temp_deviation_decade, Precip_deviation_decade, value, year, n) %>% 
   group_by(Trait_trans, moments, n) %>% 
