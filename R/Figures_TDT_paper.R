@@ -42,18 +42,24 @@ T_names <- c(
   "8.5" = "Sub-alpine",
   "10.5" = "Boreal")
 
+trait_names <- c(
+  "CN_ratio_log" = "C/N ratio",
+  "Leaf_Area_cm2_log" = "Leaf Area (cm2)",
+  "Plant_Height_mm_log" = "Plant height (mm)",
+  "SLA_cm2_g_log" = "SLA (cm2/g)")
+
 slice_sample(SeedClim_traits_allYears, n = 200,  
              replace = TRUE, weight_by = weight) %>% 
   left_join(env, by = c("Site" = "Site")) %>% 
-  filter(Trait_trans == "SLA_cm2_g") %>% 
+  filter(Trait_trans %in% c("SLA_cm2_g_log", "CN_ratio_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log")) %>% 
   mutate(year = as.factor(year)) %>% 
   ggplot(aes(x = Value, y = fct_rev(year), fill = as.factor(Temp_level))) +
-  geom_density_ridges(bandwidth = 20) +
-  facet_wrap(~Temp_level, nrow = 1, labeller = labeller(Temp_level = T_names)) +
+  geom_density_ridges(bandwidth = 0.1, alpha = 0.5) +
+  facet_wrap(~Trait_trans, nrow = 1, labeller = labeller(Trait_trans = trait_names)) +
   theme_minimal(base_size = 15) +
   scale_fill_brewer(palette = "RdYlBu", direction = -1) +
-  guides(fill=FALSE) +
-  labs(x = "Specific leaf area (cm2/g)", y = "Year")
+  guides(fill == "Temperature levels") +
+  labs(x = "Specific leaf area cm2/g (log)", y = "Year")
 
 # ggsave("SLA_distributions_over_time.jpg", width = 30 , height = 20, units = "cm")
 
@@ -62,12 +68,12 @@ slice_sample(SeedClim_traits_allYears, n = 200,
 SC_moments_clim_allYears %>% 
   filter(Trait_trans == "SLA_cm2_g") %>% 
   mutate(year = as.factor(year)) %>% 
-  ggplot(aes(x = value, y = fct_rev(year), group = year))+
+  ggplot(aes(x = value, y = fct_rev(year), group = year)) +
   geom_density_ridges() +
   facet_grid(~moments, scales = "free") +
   theme_ridges() + 
   theme(legend.position = "none") +
-  labs(x = "SLA (cm2/g)", title = "Probability distribution of moments of SLA distribuion", y = "Year")+
+  labs(x = "SLA (cm2/g)", title = "Probability distribution of moments of SLA distribuion", y = "Year") +
   theme_bw(base_size = 12)
 
 ggsave("SLA_moments_over_time.jpg", width = 30 , height = 20, units = "cm")
