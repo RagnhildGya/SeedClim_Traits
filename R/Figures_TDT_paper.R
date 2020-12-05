@@ -11,16 +11,17 @@ library(corrplot)
 ggplot(aes(x = Precip_decade, y = Temp_decade,
            color = Precip_level, fill = Precip_level, shape = Temp_level), data = env) +
   geom_segment(aes(x = Precip_decade, y = Temp_decade, yend = Temp_century, xend = Precip_century)) +
-  geom_point(aes(x = Precip_century, y = Temp_century, size = 4, shape = "1960-1990 mean")) +
+  geom_point(aes(x = Precip_century, y = Temp_century, size = 4)) +
   geom_pointrange(aes(ymin = Temp_decade-Temp_se, ymax = Temp_decade+Temp_se)) +
   geom_errorbarh(aes(xmin = Precip_decade-Precip_se, xmax = Precip_decade+Precip_se)) +
   labs(x = "Annual precipitation in mm", y = "Tetraterm temperature in °C") +
   scale_color_manual(name = "Precipitation level", values = c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")) +
   scale_fill_manual(name = "Precipitation level", values = c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")) +
   #scale_color_brewer(name = "Precipitation level", palette = "Blues") + 
-  scale_shape_manual(name = "Temperature level", values = c(25, 1, 21, 24)) +
+  scale_shape_manual(name = "Temperature level", values = c(25, 1, 21, 24)) + #add values for the shapes 1960-90
   guides(fill = "none", size = "none") +
   theme_minimal(base_size = 20)
+
 
 #ggsave("SeedClim_climate_over_time.jpg", width = 22 , height = 14, units = "cm")
 
@@ -48,18 +49,22 @@ trait_names <- c(
   "Plant_Height_mm_log" = "Plant height (mm)",
   "SLA_cm2_g_log" = "SLA (cm2/g)")
 
-slice_sample(SeedClim_traits_allYears, n = 200,  
+bandwidthsize <- c(0.1, 0.2, 0.2, 0.1)
+
+a <- slice_sample(SeedClim_traits_allYears, n = 200,  
              replace = TRUE, weight_by = weight) %>% 
   left_join(env, by = c("Site" = "Site")) %>% 
   filter(Trait_trans %in% c("SLA_cm2_g_log", "CN_ratio_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log")) %>% 
-  mutate(year = as.factor(year)) %>% 
-  ggplot(aes(x = Value, y = fct_rev(year), fill = as.factor(Temp_level))) +
-  geom_density_ridges(bandwidth = 0.1, alpha = 0.5) +
-  facet_wrap(~Trait_trans, nrow = 1, labeller = labeller(Trait_trans = trait_names)) +
+  mutate(year = as.factor(year))
+
+  ggplot(aes(x = Value, y = fct_rev(year), fill = fct_rev(as.factor(Temp_level))), data = a) +
+    facet_wrap(~Trait_trans, nrow = 1, scales = "free_x", labeller = labeller(trait_names)) +
+  geom_density_ridges2(bandwidth = 0.08, alpha = 0.5, scale = 0.95) +
   theme_minimal(base_size = 15) +
-  scale_fill_brewer(palette = "RdYlBu", direction = -1) +
-  guides(fill == "Temperature levels") +
-  labs(x = "Specific leaf area cm2/g (log)", y = "Year")
+  facet_wrap(~Trait_trans, nrow = 1, scales = "free_x", labeller = labeller(trait_names)) +
+  scale_fill_manual(name = "Temperature level", values = c("#fe1100", "#fe875d", "#356288")) + 
+  #guides(fill == "Temperature levels") +
+  labs(y = "Year")
 
 # ggsave("SLA_distributions_over_time.jpg", width = 30 , height = 20, units = "cm")
 
