@@ -306,7 +306,7 @@ AIC_all_models <- AIC_null %>%
   left_join(AIC_tempAddprecip, by = c("Trait_trans" = "Trait_trans", "moments" = "moments")) %>% 
   left_join(AIC_tempMulprecip, by = c("Trait_trans" = "Trait_trans", "moments" = "moments"))
   
-write.table(x = AIC_all_models, file = "AIC_new.csv")
+write.table(x = AIC_all_models, file = "AIC_log.csv")
 
 # Making a dataset with the model output and the test-statistics (R squared), and summarizing them.
 model_output <-function(dat) {
@@ -403,7 +403,7 @@ Ord_boot_LeafEconomic <- SC_moments_allYears %>%
   mutate(uniqueID = paste0(turfID,"_", year, "_", Site)) %>% 
   group_by(uniqueID, Trait_trans) %>% 
   mutate(mean_mean = mean(mean)) %>% 
-  filter(Trait_trans %in% c("SLA_cm2_g", "N_percent", "Leaf_Thickness_Ave_mm", "CN_ratio", "LDMC")) %>%  #Filter so that only leaf economic traits are in
+  filter(Trait_trans %in% c("SLA_cm2_g_log", "N_percent", "Leaf_Thickness_Ave_mm", "CN_ratio_log", "LDMC")) %>%  #Filter so that only leaf economic traits are in
   select(uniqueID, Site, year, turfID, Trait_trans, Temp_level, Precip_level, mean_mean) %>%
   unique() %>% 
   #gather(Moment, Value, -(turfID:P_cat)) %>% 
