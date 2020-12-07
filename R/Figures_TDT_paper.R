@@ -8,17 +8,23 @@ library(corrplot)
 
 ## Climate figure ##
 
+env %>% 
+  mutate(Temp_old = recode(Temp_level, "10.5" = "Boreal 1960-90",
+                           "8.5" = "Sub-alpine 1960-90",
+                           "6.5" = "Alpine 1960-90")) %>% 
+  mutate(Temp_level = recode(Temp_level, "10.5" = "Boreal 2009-19",
+                           "8.5" = "Sub-alpine 2009-19",
+                           "6.5" = "Alpine 2009-19")) %>% 
 ggplot(aes(x = Precip_decade, y = Temp_decade,
-           color = Precip_level, fill = Precip_level, shape = Temp_level), data = env) +
+           color = Precip_level, fill = Precip_level, shape = Temp_level)) +
+  geom_point(aes(x = Precip_century, y = Temp_century, shape = Temp_old, size = 3)) +
   geom_segment(aes(x = Precip_decade, y = Temp_decade, yend = Temp_century, xend = Precip_century)) +
-  geom_point(aes(x = Precip_century, y = Temp_century, size = 4)) +
   geom_pointrange(aes(ymin = Temp_decade-Temp_se, ymax = Temp_decade+Temp_se)) +
   geom_errorbarh(aes(xmin = Precip_decade-Precip_se, xmax = Precip_decade+Precip_se)) +
   labs(x = "Annual precipitation in mm", y = "Tetraterm temperature in °C") +
-  scale_color_manual(name = "Precipitation level", values = c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")) +
-  scale_fill_manual(name = "Precipitation level", values = c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")) +
-  #scale_color_brewer(name = "Precipitation level", palette = "Blues") + 
-  scale_shape_manual(name = "Temperature level", values = c(25, 1, 21, 24)) + #add values for the shapes 1960-90
+  scale_color_manual(name = "Precipitation", values = c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")) +
+  scale_fill_manual(name = "Precipitation", values = c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")) +
+  scale_shape_manual(name = "Temperature", values = c(2, 24, 6, 25, 1, 21)) + 
   guides(fill = "none", size = "none") +
   theme_minimal(base_size = 20)
 
