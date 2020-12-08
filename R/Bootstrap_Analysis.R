@@ -9,7 +9,7 @@ source("R/Cleaning.R")
 
  library(broom.mixed)
  library(lme4)
-# library(lmerTest)
+ library(lmerTest)
  library(purrr)
  library(piecewiseSEM)
  library(factoextra)
@@ -19,7 +19,7 @@ source("R/Cleaning.R")
 library(traitstrap)
 library(vegan)
 library(ggvegan)
-library(drake)
+#library(drake)
 
 set.seed(47)
 
@@ -101,7 +101,8 @@ summarised_boot_moments_climate = bind_rows(
 
 SC_moments_clim_long <- SC_moments_allYears %>% 
   pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
-  left_join(env, by = c("Site" = "Site", "year" = "Year"))
+  left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
+  mutate(year = as.factor(year))
 
 
 #### Mixed effect model testing ####
@@ -153,7 +154,7 @@ SC_moments_clim_long <- SC_moments_allYears %>%
 
 ### Making dataset for models ###
 memodel_data_allYears <- SC_moments_clim_long %>% 
-  filter(Trait_trans %in% c("CN_ratio_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "SLA_cm2_g_log")) %>% 
+  #filter(Trait_trans %in% c("CN_ratio_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "SLA_cm2_g_log")) %>% 
   ungroup() %>%
   select(Trait_trans, moments, Site, turfID, Temp_yearly, Precip_yearly, Temp_deviation_decade, Precip_deviation_decade, value, year, n) %>% 
   group_by(Trait_trans, moments, n) %>% 
@@ -161,25 +162,19 @@ memodel_data_allYears <- SC_moments_clim_long %>%
 
 ### Funcitons for different models and model predictions later ###
 
-model_null <-function(df) {
-  lmer(value ~ (1 | Site/turfID), data = df)
+
+model_time<-function(df) {
+  lmer(value ~ Temp_yearly * scale(Precip_yearly) + (1 | Site), data = df)
 }
 
-model_temp <-function(df) {
-  lmer(value ~ Temp_decade + Temp_deviation_decade + (1 | Site/turfID), data = df)
+model_space<-function(df) {
+  lmer(value ~ Temp_yearly * scale(Precip_yearly) + (1 | year), data = df)
 }
 
-model_precip <-function(df) {
-  lmer(value ~ Precip_decade + Precip_deviation_decade + (1 | Site/turfID), data = df)
+model_time_anomalies<-function(df) {
+  lmer(value ~ Temp_deviation_decade * scale(Precip_deviation_decade) + (1 | Site), data = df)
 }
 
-model_tempAddprecip<-function(df) {
-  lmer(value ~Temp_decade + Temp_deviation_decade + scale(Precip_decade) + scale(Precip_deviation_decade) + (1 | Site/turfID), data = df)
-}
-
-model_tempMulprecip<-function(df) {
-  lmer(value ~Temp_decade * scale(Precip_decade) + Temp_deviation_decade*scale(Precip_deviation_decade) + (1 | Site/turfID), data = df)
-}
 
 predict_without_random<-function(model) {
   predict(object = model, re.form=NA)
@@ -196,79 +191,46 @@ predict_with_random<-function(model) {
 # 2) Tidying the model, giving the model output in a nice format. Making predicted values for each of the trait:moment combination along the climatic gradients. Calculating pseudo R squared values based on the method in paper Nakagawa et al 2017.
 # 3) Making a dataset with only the predicted values. Unnesting the list of the predicted values.
 
-## Null model ##
-mem_results_null <- memodel_data_allYears%>%
-  mutate(model = map(data, model_null))
+## Space ##
+mem_results_space <- memodel_data_allYears%>%
+  mutate(model = map(data, model_space))
 
-tidy_null_model_predicted <- mem_results_null %>%
+tidy_space_model_predicted <- mem_results_space %>%
   mutate(model_output = map(model, tidy)) %>%
   mutate(predicted = map(model, predict_with_random)) %>% 
   mutate(R_squared = map(model, rsquared))
 
-predicted_values_null <- tidy_null_model_predicted %>%
+predicted_values_space <- tidy_space_model_predicted %>%
   ungroup() %>%
   select(Trait_trans, moments, data, predicted) %>%
   unnest(c(data, predicted)) %>%
   rename(modeled = predicted, measured = value)
 
+## Time ##
+mem_results_time <- memodel_data_allYears%>%
+  mutate(model = map(data, model_time))
 
-
-## Temp ##
-mem_results_temp <- memodel_data_allYears%>%
-  mutate(model = map(data, model_temp))
-
-tidy_temp_model_predicted <- mem_results_temp %>%
+tidy_time_model_predicted <- mem_results_time %>%
   mutate(model_output = map(model, tidy)) %>%
   mutate(predicted = map(model, predict_with_random)) %>% 
   mutate(R_squared = map(model, rsquared))
 
-predicted_values_temp <- tidy_temp_model_predicted %>%
+predicted_values_time <- tidy_time_model_predicted %>%
   ungroup() %>%
   select(Trait_trans, moments, data, predicted) %>%
   unnest(c(data, predicted)) %>%
   rename(modeled = predicted, measured = value)
 
+## Anomalies ##
+mem_results_anomalies <- memodel_data_allYears%>%
+  mutate(model = map(data, model_time_anomalies))
 
-## Precipitation ##
-mem_results_precip <- memodel_data_allYears%>%
-  mutate(model = map(data, model_precip))
-
-tidy_precip_model_predicted <- mem_results_precip %>%
+tidy_anomalies_model_predicted <- mem_results_anomalies %>%
   mutate(model_output = map(model, tidy)) %>%
   mutate(predicted = map(model, predict_with_random)) %>% 
   mutate(R_squared = map(model, rsquared))
 
-predicted_values_precip <- tidy_precip_model_predicted %>%
-  ungroup() %>%
-  select(Trait_trans, moments, data, predicted) %>%
-  unnest(c(data, predicted)) %>%
-  rename(modeled = predicted, measured = value)
-
-## Temperature + Precipitation (additive) ##
-mem_results_tempAddprecip <- memodel_data_allYears%>%
-  mutate(model = map(data, model_tempAddprecip))
-
-tidy_tempAddprecip_model_predicted <- mem_results_tempAddprecip %>%
-  mutate(model_output = map(model, tidy)) %>%
-  mutate(predicted = map(model, predict_with_random)) %>% 
-  mutate(R_squared = map(model, rsquared))
-
-predicted_values_tempAddprecip <- tidy_tempAddprecip_model_predicted %>%
-  ungroup() %>%
-  select(Trait_trans, moments, data, predicted) %>%
-  unnest(c(data, predicted)) %>%
-  rename(modeled = predicted, measured = value)
-
-## Temperature * Precipitation (multiplicative) ##
-mem_results_tempMulprecip <- memodel_data_allYears%>%
-  mutate(model = map(data, model_tempMulprecip))
-
-tidy_tempMulprecip_model_predicted <- mem_results_tempMulprecip %>%
-  mutate(model_output = map(model, tidy)) %>%
-  mutate(predicted = map(model, predict_with_random)) %>% 
-  mutate(R_squared = map(model, rsquared))
-
-predicted_values_tempMulprecip <- tidy_tempMulprecip_model_predicted %>%
+predicted_values_anomalies <- tidy_anomalies_model_predicted %>%
   ungroup() %>%
   select(Trait_trans, moments, data, predicted) %>%
   unnest(c(data, predicted)) %>%
@@ -277,34 +239,34 @@ predicted_values_tempMulprecip <- tidy_tempMulprecip_model_predicted %>%
 
 # Making a function for AIC tests
 
-AIC_models <-function(dat, model_type) {
-  
-  dat2 <- dat %>% 
-    mutate(AIC = map(model, AIC)) %>% 
-    select(Trait_trans, moments, n, AIC) %>% 
-    unnest(c(AIC)) %>% 
-    ungroup() %>% 
-    group_by(Trait_trans, moments) %>% 
-    mutate(AIC = mean(AIC)) %>% 
-    select(-n) %>% 
-    unique()
-  
-  return(dat2)
-}
-
-# Get AIC for all models and compare which is beter
-
-AIC_null <- AIC_models(tidy_null_model_predicted, "Temp") %>% rename(Null_AIC = AIC)
-AIC_temp <- AIC_models(tidy_temp_model_predicted, "Temp") %>% rename(Temp_AIC = AIC)
-AIC_precip <- AIC_models(tidy_precip_model_predicted, "Precip") %>% rename(Precip_AIC = AIC)
-AIC_tempAddprecip <- AIC_models(tidy_tempAddprecip_model_predicted, "Precip") %>% rename(TempAddPrecip_AIC = AIC)
-AIC_tempMulprecip <- AIC_models(tidy_tempMulprecip_model_predicted, "Precip") %>% rename(TempMulPrecip_AIC = AIC)
-
-AIC_all_models <- AIC_null %>%
-  left_join(AIC_temp, by = c("Trait_trans" = "Trait_trans", "moments" = "moments")) %>% 
-  left_join(AIC_precip, by = c("Trait_trans" = "Trait_trans", "moments" = "moments")) %>% 
-  left_join(AIC_tempAddprecip, by = c("Trait_trans" = "Trait_trans", "moments" = "moments")) %>% 
-  left_join(AIC_tempMulprecip, by = c("Trait_trans" = "Trait_trans", "moments" = "moments"))
+# AIC_models <-function(dat, model_type) {
+#   
+#   dat2 <- dat %>% 
+#     mutate(AIC = map(model, AIC)) %>% 
+#     select(Trait_trans, moments, n, AIC) %>% 
+#     unnest(c(AIC)) %>% 
+#     ungroup() %>% 
+#     group_by(Trait_trans, moments) %>% 
+#     mutate(AIC = mean(AIC)) %>% 
+#     select(-n) %>% 
+#     unique()
+#   
+#   return(dat2)
+# }
+# 
+# # Get AIC for all models and compare which is beter
+# 
+# AIC_null <- AIC_models(tidy_null_model_predicted, "Temp") %>% rename(Null_AIC = AIC)
+# AIC_temp <- AIC_models(tidy_temp_model_predicted, "Temp") %>% rename(Temp_AIC = AIC)
+# AIC_precip <- AIC_models(tidy_precip_model_predicted, "Precip") %>% rename(Precip_AIC = AIC)
+# AIC_tempAddprecip <- AIC_models(tidy_tempAddprecip_model_predicted, "Precip") %>% rename(TempAddPrecip_AIC = AIC)
+# AIC_tempMulprecip <- AIC_models(tidy_tempMulprecip_model_predicted, "Precip") %>% rename(TempMulPrecip_AIC = AIC)
+# 
+# AIC_all_models <- AIC_null %>%
+#   left_join(AIC_temp, by = c("Trait_trans" = "Trait_trans", "moments" = "moments")) %>% 
+#   left_join(AIC_precip, by = c("Trait_trans" = "Trait_trans", "moments" = "moments")) %>% 
+#   left_join(AIC_tempAddprecip, by = c("Trait_trans" = "Trait_trans", "moments" = "moments")) %>% 
+#   left_join(AIC_tempMulprecip, by = c("Trait_trans" = "Trait_trans", "moments" = "moments"))
   
 #write.table(x = AIC_all_models, file = "AIC_log.csv")
 
@@ -316,25 +278,54 @@ model_output <-function(dat) {
     #filter(Trait_trans %in% c("CN_ratio_log", "SLA_cm2_g_log") & moments %in% c("mean", "variance")) %>% 
     #filter(!Trait_trans == "CN_ratio_log" | moments == "variance") %>% 
     unnest(c(model_output, R_squared)) %>% 
-    filter(term %in% c("Temp_yearly", "Temp_deviation_decade","scale(Precip_yearly)", "scale(Precip_deviation_decade)", "Temp_yearly:scale(Precip_yearly)", "Temp_deviation_decade:scale(Precip_deviation_decade)")) %>% 
-    select(Trait_trans, moments, term, n, estimate, Marginal, Conditional) %>% 
+    filter(term %in% c("Temp_yearly", "scale(Precip_yearly)", "Temp_yearly:scale(Precip_yearly)")) %>% 
+    select(Trait_trans, moments, term, n, estimate, std.error, statistic, df, p.value, Marginal, Conditional) %>% 
     ungroup() %>% 
     group_by(Trait_trans, moments, term) %>% 
     summarize(effect = mean(estimate),
               R2_marginal = mean(Marginal),
               R2_conditional = mean(Conditional),
               CIlow.fit = effect - sd(estimate),
-              CIhigh.fit = effect + sd(estimate)) %>% 
+              CIhigh.fit = effect + sd(estimate),
+              std.error = mean(std.error),
+              staticstic = mean(statistic),
+              df = mean(df),
+              p.value = mean(p.value)) %>% 
     mutate(Trend = case_when(CIlow.fit < 0 & CIhigh.fit < 0 ~ "Negative",
                                    CIlow.fit > 0 & CIhigh.fit > 0 ~ "Positive",
                                    CIlow.fit < 0 & CIhigh.fit > 0 ~ "No"))
   return(model_output)
 }
 
+
+
 #model_output_temp <- model_output(tidy_temp_model_predicted, c("Temp_yearly", "Temp_deviation_decade"))
 #model_output_precip <- model_output(tidy_temp_model_predicted, c("Precip_yearly", "Precip_deviation_decade"))
 #model_output_tempAddprecip <- model_output(tidy_tempAddprecip_model_predicted, c("Temp_yearly", "Temp_deviation_decade","scale(Precip_yearly)", "scale(Precip_deviation_decade)"))
-model_output_tempMulprecip <- model_output(tidy_tempMulprecip_model_predicted)
+model_output_time <- model_output(tidy_time_model_predicted)
+model_output_space <- model_output(tidy_space_model_predicted)
+
+model_output_anomalies <- tidy_anomalies_model_predicted %>% 
+  select(Trait_trans, moments, n, model_output, R_squared) %>% 
+  #filter(Trait_trans %in% c("CN_ratio_log", "SLA_cm2_g_log") & moments %in% c("mean", "variance")) %>% 
+  #filter(!Trait_trans == "CN_ratio_log" | moments == "variance") %>% 
+  unnest(c(model_output, R_squared)) %>% 
+  filter(term %in% c("Temp_deviation_decade", "scale(Precip_deviation_decade)", "Temp_deviation_decade:scale(Precip_deviation_decade)")) %>% 
+  select(Trait_trans, moments, term, n, estimate, std.error, statistic, df, p.value, Marginal, Conditional) %>% 
+  ungroup() %>% 
+  group_by(Trait_trans, moments, term) %>% 
+  summarize(effect = mean(estimate),
+            R2_marginal = mean(Marginal),
+            R2_conditional = mean(Conditional),
+            CIlow.fit = effect - sd(estimate),
+            CIhigh.fit = effect + sd(estimate),
+            std.error = mean(std.error),
+            staticstic = mean(statistic),
+            df = mean(df),
+            p.value = mean(p.value)) %>% 
+  mutate(Trend = case_when(CIlow.fit < 0 & CIhigh.fit < 0 ~ "Negative",
+                           CIlow.fit > 0 & CIhigh.fit > 0 ~ "Positive",
+                           CIlow.fit < 0 & CIhigh.fit > 0 ~ "No"))
 
 #write.table(x = model_output, file = "model_output_TDT.csv")
 
