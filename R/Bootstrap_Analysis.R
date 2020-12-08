@@ -166,19 +166,19 @@ model_null <-function(df) {
 }
 
 model_temp <-function(df) {
-  lmer(value ~ Temp_yearly + Temp_deviation_decade + (1 | Site/turfID), data = df)
+  lmer(value ~ Temp_decade + Temp_deviation_decade + (1 | Site/turfID), data = df)
 }
 
 model_precip <-function(df) {
-  lmer(value ~ Precip_yearly + Precip_deviation_decade + (1 | Site/turfID), data = df)
+  lmer(value ~ Precip_decade + Precip_deviation_decade + (1 | Site/turfID), data = df)
 }
 
 model_tempAddprecip<-function(df) {
-  lmer(value ~Temp_yearly + Temp_deviation_decade + scale(Precip_yearly) + scale(Precip_deviation_decade) + (1 | Site/turfID), data = df)
+  lmer(value ~Temp_decade + Temp_deviation_decade + scale(Precip_decade) + scale(Precip_deviation_decade) + (1 | Site/turfID), data = df)
 }
 
 model_tempMulprecip<-function(df) {
-  lmer(value ~Temp_yearly * scale(Precip_yearly) + Temp_deviation_decade*scale(Precip_deviation_decade) + (1 | Site/turfID), data = df)
+  lmer(value ~Temp_decade * scale(Precip_decade) + Temp_deviation_decade*scale(Precip_deviation_decade) + (1 | Site/turfID), data = df)
 }
 
 predict_without_random<-function(model) {
@@ -306,15 +306,15 @@ AIC_all_models <- AIC_null %>%
   left_join(AIC_tempAddprecip, by = c("Trait_trans" = "Trait_trans", "moments" = "moments")) %>% 
   left_join(AIC_tempMulprecip, by = c("Trait_trans" = "Trait_trans", "moments" = "moments"))
   
-write.table(x = AIC_all_models, file = "AIC_log.csv")
+#write.table(x = AIC_all_models, file = "AIC_log.csv")
 
 # Making a dataset with the model output and the test-statistics (R squared), and summarizing them.
 model_output <-function(dat) {
   
   model_output <- dat %>% 
     select(Trait_trans, moments, n, model_output, R_squared) %>% 
-    filter(Trait_trans %in% c("CN_ratio", "SLA_cm2_g") & moments %in% c("mean", "variance")) %>% 
-    filter(!Trait_trans == "CN_ratio" | moments == "variance") %>% 
+    #filter(Trait_trans %in% c("CN_ratio_log", "SLA_cm2_g_log") & moments %in% c("mean", "variance")) %>% 
+    #filter(!Trait_trans == "CN_ratio_log" | moments == "variance") %>% 
     unnest(c(model_output, R_squared)) %>% 
     filter(term %in% c("Temp_yearly", "Temp_deviation_decade","scale(Precip_yearly)", "scale(Precip_deviation_decade)", "Temp_yearly:scale(Precip_yearly)", "Temp_deviation_decade:scale(Precip_deviation_decade)")) %>% 
     select(Trait_trans, moments, term, n, estimate, Marginal, Conditional) %>% 
@@ -325,7 +325,7 @@ model_output <-function(dat) {
               R2_conditional = mean(Conditional),
               CIlow.fit = effect - sd(estimate),
               CIhigh.fit = effect + sd(estimate)) %>% 
-    mutate(Significant = case_when(CIlow.fit < 0 & CIhigh.fit < 0 ~ "Negative",
+    mutate(Trend = case_when(CIlow.fit < 0 & CIhigh.fit < 0 ~ "Negative",
                                    CIlow.fit > 0 & CIhigh.fit > 0 ~ "Positive",
                                    CIlow.fit < 0 & CIhigh.fit > 0 ~ "No"))
   return(model_output)
