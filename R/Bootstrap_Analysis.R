@@ -88,7 +88,7 @@ SeedClim_traits_allYears <- trait_impute(comm = community,
 
 #### Bootstraping community weighted means and making summarised moments of the distributions ####
 
-SC_moments_allYears <- trait_np_bootstrap(imputed_traits = SeedClim_traits_allYears, nrep = 100)
+SC_moments_allYears <- trait_np_bootstrap(imputed_traits = SeedClim_traits_allYears)
 
 sum_SC_moments_allYears <- trait_summarise_boot_moments(SC_moments_allYears)
 
@@ -377,11 +377,12 @@ ggcorrplot(corr_09, hc.order = FALSE,
 Ord_boot_traits <- SC_moments_allYears %>% 
   left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
   ungroup() %>% 
-  mutate(uniqueID = paste0(turfID,"_", year, "_", Site)) %>% 
+  mutate(uniqueID = paste0(turfID,"_", year, "_", Site),
+         templevel_year = paste0(Temp_level, "_", year)) %>% 
   group_by(uniqueID, Trait_trans) %>% 
   mutate(mean_mean = mean(mean)) %>% 
   filter(!Trait_trans == "Wet_Mass_g_log") %>% 
-  select(uniqueID, Site, year, turfID, Trait_trans, Temp_level, Precip_level, mean_mean) %>%
+  select(uniqueID, Site, year, templevel_year, turfID, Trait_trans, Temp_level, Precip_level, mean_mean) %>%
   unique() %>% 
   #gather(Moment, Value, -(turfID:P_cat)) %>% 
   #unite(temp, Trait, Moment) %>% 
