@@ -31,13 +31,26 @@ ggplot(aes(x = Precip_decade, y = Temp_decade,
 
 #ggsave("SeedClim_climate_over_time.jpg", width = 22 , height = 14, units = "cm")
 
-
-ggplot(aes(x = Precip_deviation_decade, y = Temp_deviation_decade, color = as.factor(Year)), data = env) +
+env %>% 
+  mutate(Year = as.factor(Year)) %>% 
+  filter(Year %in% c("2009", "2011", "2012", "2013", "2015", "2017")) %>% 
+ggplot(aes(x = Precip_deviation_decade, y = Temp_deviation_decade, color = as.factor(Year))) +
   geom_point() +
   geom_vline(xintercept =  0) +
   geom_hline(yintercept =  0) +
   labs(x = "Deviation from the decade mean annual precipitation (mm)", y = "Deviation from the devade mean tetraterm temperature (°C)", color = "Year") +
   theme_minimal(base_size = 15)
+
+env %>% 
+  mutate(Year = as.factor(Year)) %>% 
+  filter(Year %in% c("2009", "2011", "2012", "2013", "2015", "2017")) %>% 
+ggplot(aes(x = Year, y = Temp_yearly)) +
+  geom_point() +
+  facet_wrap(~Temp_level)
+
+ggplot(aes(x = Year, y = Precip_yearly), data = env) +
+  geom_point() +
+  facet_wrap(~Precip_level)
 
 #ggsave("SeedClim_climate_deviation.jpg", width = 18 , height = 18, units = "cm")
 
@@ -60,19 +73,53 @@ bandwidthsize <- c(0.1, 0.2, 0.2, 0.1)
 a <- slice_sample(SeedClim_traits_allYears, n = 200,  
              replace = TRUE, weight_by = weight) %>% 
   left_join(env, by = c("Site" = "Site")) %>% 
-  filter(Trait_trans %in% c("SLA_cm2_g_log", "CN_ratio_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log")) %>% 
+  filter(Trait_trans %in% c("SLA_cm2_g_log", "LDMC", "Leaf_Area_cm2_log", "Plant_Height_mm_log")) %>% 
   mutate(year = as.factor(year))
 
-  ggplot(aes(x = Value, y = fct_rev(year), fill = fct_rev(as.factor(Temp_level))), data = a) +
-    facet_wrap(~Trait_trans, nrow = 1, scales = "free_x", labeller = labeller(trait_names)) +
+SLA_density <- a %>% 
+  filter(Trait_trans == "SLA_cm2_g_log") %>% 
+  ggplot(aes(x = Value, y = fct_rev(year), fill = fct_rev(as.factor(Temp_level)))) +
   geom_density_ridges2(bandwidth = 0.08, alpha = 0.5, scale = 0.95) +
-  theme_minimal(base_size = 15) +
-  facet_wrap(~Trait_trans, nrow = 1, scales = "free_x", labeller = labeller(trait_names)) +
-  scale_fill_manual(name = "Temperature level", values = c("#fe1100", "#fe875d", "#356288")) + 
-  #guides(fill == "Temperature levels") +
-  labs(y = "Year")
+  theme_minimal(base_size = 12) +
+  scale_fill_manual(name = "Temperature level", values = c("#fe1100", "#fe875d", "#356288"), labels = c("Boreal", "Sub-alpine", "Alpine")) + 
+  labs(y = "Year", title = "SLA (cm2/g)") +
+  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title = element_text(hjust = 0.5)) 
+  
+LDMC_density <- a %>% 
+  filter(Trait_trans == "LDMC") %>% 
+  ggplot(aes(x = Value, y = fct_rev(year), fill = fct_rev(as.factor(Temp_level)))) +
+  geom_density_ridges2(bandwidth = 0.02, alpha = 0.5, scale = 0.95) +
+  scale_fill_manual(name = "Temperature level", values = c("#fe1100", "#fe875d", "#356288"), labels = c("Boreal", "Sub-alpine", "Alpine")) + 
+  xlim(0, 0.8) +
+  labs(title = "LDMC") +
+  theme_minimal(base_size = 12) +
+  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title = element_text(hjust = 0.5)) 
+  
+Leaf_area_density <- a %>% 
+  filter(Trait_trans == "Leaf_Area_cm2_log") %>% 
+  ggplot(aes(x = Value, y = fct_rev(year), fill = fct_rev(as.factor(Temp_level)))) +
+    geom_density_ridges2(bandwidth = 0.15, alpha = 0.5, scale = 0.95) +
+    theme_minimal(base_size = 12) +
+    scale_fill_manual(name = "Temperature level", values = c("#fe1100", "#fe875d", "#356288"), labels = c("Boreal", "Sub-alpine", "Alpine")) + 
+  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title = element_text(hjust = 0.5)) +
+  labs(title = "Leaf Area (cm2)")
 
-# ggsave("SLA_distributions_over_time.jpg", width = 30 , height = 20, units = "cm")
+Plant_height_density <- a %>% 
+  filter(Trait_trans == "Plant_Height_mm_log") %>% 
+ggplot(aes(x = Value, y = fct_rev(year), fill = fct_rev(as.factor(Temp_level)))) +
+    geom_density_ridges2(bandwidth = 0.15, alpha = 0.5, scale = 0.95) +
+    theme_minimal(base_size = 12) +
+    scale_fill_manual(name = "Temperature level", values = c("#fe1100", "#fe875d", "#356288"), labels = c("Boreal", "Sub-alpine", "Alpine")) + 
+  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title = element_text(hjust = 0.5)) +
+  labs(title = "Plant height (mm)")
+
+ggarrange(SLA_density,
+          LDMC_density + rremove("y.text"), 
+          Leaf_area_density + rremove("y.text"), 
+          Plant_height_density + rremove("y.text"),
+          ncol = 4, nrow = 1, common.legend = TRUE, legend = "bottom")
+
+# ggsave("Trait_distributions_over_time.jpg", width = 35 , height = 20, units = "cm")
 
 ### Community weighted moments probability distributions ###
 
@@ -124,38 +171,52 @@ fviz_eig(pca_size, addlabels = TRUE)
 # )
 
 fviz_pca_biplot(pca_trait, repel = TRUE,
-                col.var = "#2E9FDF", # Variables color
-                col.ind = "#696969",  # Individuals color
+                col.var = "#2A2A2A", # Variables color
                 label = "var",
                 labelsize = 5, 
-                habillage = Ord_boot_traits$Temp_level,
-                ellipse.level = 0.95) +
-  theme_minimal(base_size = 20) +
+                habillage = Ord_boot_traits$Temp_level, 
+                addEllipses = TRUE,
+                ellipse.level = 0.70,
+                palette = c("#8DD5E1", "#FCB971", "#B93B3B")) +
+  theme_minimal(base_size = 15) +
   guides(shape = FALSE) +
   scale_color_manual(name = "Summer temperature", values = c("#8DD5E1", "#FCB971", "#B93B3B")) +
   theme(legend.text=element_text(size=14), legend.title = element_text(size = 14))+
   xlim(-5, 5) + 
   ylim (-5, 5)
 
+pca_fort <- fortify(pca_trait, display = "sites") %>% 
+  bind_cols(Ord_boot_traits[1:6])
+
+pca_fort %>% 
+ggplot(aes(x = PC1, y = PC2, colour = Temp_level, group = turfID)) +
+  geom_path() + #use geom_path not geom_line
+  geom_point(aes(size = if_else(year == 2009, 1, NA_real_)), show.legend = FALSE) +
+  #scale_color_viridis_d() +
+  scale_color_manual(name = "Summer temperature", values = c("#8DD5E1", "#FCB971", "#B93B3B")) +
+  scale_size(range = 2) +
+  coord_equal() +
+  theme_minimal(base_size = 12)
+
 #ggsave("PCA_all_years_with_temp.jpg", width = 22 , height = 16, units = "cm")
 
 
-fviz_pca_biplot(pca_leaf_economic, repel = TRUE,
-                col.var = "#2E9FDF", # Variables color
-                col.ind = "#696969",  # Individuals color
-                label = "var",
-                labelsize = 5,
-                habillage = Ord_boot_traits$Temp_level,
-                addEllipses = TRUE,
-                ellipse.level = 0.95) +
-  theme_minimal(base_size = 20)
-
-fviz_pca_biplot(pca_size, repel = TRUE,
-                col.var = "#2E9FDF", # Variables color
-                col.ind = "#696969",  # Individuals color
-                label = "var",
-                labelsize = 5,
-                habillage = Ord_boot_traits$Temp_level,
-                addEllipses = TRUE,
-                ellipse.level = 0.95) +
-  theme_minimal(base_size = 20)
+# fviz_pca_biplot(pca_leaf_economic, repel = TRUE,
+#                 col.var = "#2E9FDF", # Variables color
+#                 col.ind = "#696969",  # Individuals color
+#                 label = "var",
+#                 labelsize = 5,
+#                 habillage = Ord_boot_traits$Temp_level,
+#                 addEllipses = TRUE,
+#                 ellipse.level = 0.95) +
+#   theme_minimal(base_size = 20)
+# 
+# fviz_pca_biplot(pca_size, repel = TRUE,
+#                 col.var = "#2E9FDF", # Variables color
+#                 col.ind = "#696969",  # Individuals color
+#                 label = "var",
+#                 labelsize = 5,
+#                 habillage = Ord_boot_traits$Temp_level,
+#                 addEllipses = TRUE,
+#                 ellipse.level = 0.95) +
+#   theme_minimal(base_size = 20)
