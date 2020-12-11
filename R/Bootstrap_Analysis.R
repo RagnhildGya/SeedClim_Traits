@@ -261,7 +261,7 @@ predicted_values_space <- tidy_space_model_predicted %>%
   unnest(c(data, predicted)) %>%
   rename(modeled = predicted, measured = value)
 
-## Time ##
+## Time - Full community ##
 mem_results_time <- memodel_data_fullcommunity %>%
   mutate(model = map(data, model_time))
 
@@ -275,6 +275,37 @@ predicted_values_time <- tidy_time_model_predicted %>%
   select(Trait_trans, moments, data, predicted) %>%
   unnest(c(data, predicted)) %>%
   rename(modeled = predicted, measured = value)
+
+## Time - Forbs ##
+mem_results_time_forbs <- memodel_data_forbs %>%
+  mutate(model = map(data, model_time))
+
+tidy_time_model_predicted_forbs <- mem_results_time_forbs %>%
+  mutate(model_output = map(model, tidy)) %>%
+  mutate(predicted = map(model, predict_with_random)) %>% 
+  mutate(R_squared = map(model, rsquared))
+
+predicted_values_time_forbs <- tidy_time_model_predicted_forbs %>%
+  ungroup() %>%
+  select(Trait_trans, moments, data, predicted) %>%
+  unnest(c(data, predicted)) %>%
+  rename(modeled = predicted, measured = value)
+
+## Time - Graminoids ##
+mem_results_time_graminoids <- memodel_data_graminoids %>%
+  mutate(model = map(data, model_time))
+
+tidy_time_model_predicted_graminoids <- mem_results_time_graminoids %>%
+  mutate(model_output = map(model, tidy)) %>%
+  mutate(predicted = map(model, predict_with_random)) %>% 
+  mutate(R_squared = map(model, rsquared))
+
+predicted_values_time_graminoids <- tidy_time_model_predicted_graminoids %>%
+  ungroup() %>%
+  select(Trait_trans, moments, data, predicted) %>%
+  unnest(c(data, predicted)) %>%
+  rename(modeled = predicted, measured = value)
+
 
 ## Anomalies ##
 mem_results_anomalies <- memodel_data_fullcommunity %>%
@@ -360,6 +391,9 @@ model_output <-function(dat) {
 model_output_time <- model_output(tidy_time_model_predicted)
 model_output_space <- model_output(tidy_space_model_predicted)
 
+model_output_time_forbs <- model_output(tidy_time_model_predicted_forbs)
+model_output_time_graminoids <- model_output(tidy_time_model_predicted_graminoids)
+
 model_output_anomalies <- tidy_anomalies_model_predicted %>% 
   select(Trait_trans, moments, n, model_output, R_squared) %>% 
   #filter(Trait_trans %in% c("CN_ratio_log", "SLA_cm2_g_log") & moments %in% c("mean", "variance")) %>% 
@@ -429,7 +463,7 @@ ggcorrplot(corr_09, hc.order = FALSE,
 
 ### Make data ready for ordination 
 
-Ord_boot_traits <- SC_moments_allYears %>% 
+Ord_boot_traits <- Moments_fullcommunity %>% 
   left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
   ungroup() %>% 
   mutate(uniqueID = paste0(turfID,"_", year, "_", Site),
@@ -444,7 +478,7 @@ Ord_boot_traits <- SC_moments_allYears %>%
   pivot_wider(names_from = Trait_trans, values_from = mean_mean) %>% 
   column_to_rownames("uniqueID")
 
-Ord_boot_LeafEconomic <- SC_moments_allYears %>% 
+Ord_boot_LeafEconomic <- Moments_fullcommunity %>% 
   left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
   ungroup() %>% 
   mutate(uniqueID = paste0(turfID,"_", year, "_", Site)) %>% 
@@ -458,7 +492,7 @@ Ord_boot_LeafEconomic <- SC_moments_allYears %>%
   pivot_wider(names_from = Trait_trans, values_from = mean_mean) %>% 
   column_to_rownames("uniqueID")
 
-Ord_boot_Size <- SC_moments_allYears %>% 
+Ord_boot_Size <- Moments_fullcommunity %>% 
   left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
   ungroup() %>% 
   mutate(uniqueID = paste0(turfID,"_", year, "_", Site)) %>% 
@@ -486,7 +520,7 @@ pca_leaf_economic_results <- get_pca_ind(pca_leaf_economic)
 pca_size_results <- get_pca_ind(pca_size)
 
 ### Pull out axis values for different ordinations
-Ord_site_env_dat <- SC_moments_allYears %>% 
+Ord_site_env_dat <- Moments_fullcommunity %>% 
   left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
   ungroup() %>% 
   mutate(uniqueID = paste0(turfID,"_", year, "_", Site)) %>% 
