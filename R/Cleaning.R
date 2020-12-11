@@ -168,7 +168,8 @@ community <- community %>%
   mutate(Site = as.character(Site, levels = c("Ulv", "Lav", "Gud", "Skj", "Alr", "Hog", "Ram", "Ves", "Fau", "Vik", "Arh", "Ovs")))
 
 community <- community %>%
-  left_join(systematics_species, by = c("species"="Species"))
+  left_join(systematics_species, by = c("species"="Species")) %>% 
+  left_join(species_info, by = c("species" = "species"))
 
 ## Environmental data ##
 
