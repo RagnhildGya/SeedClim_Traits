@@ -28,9 +28,21 @@ set.seed(47)
 community <- community %>% 
   filter(!year %in% c("2010", "2016"))
 
+community_forb <- community %>% 
+  filter(functionalGroup %in% c("forb", "woody", "pteridophyte"))
+
+community_graminoid <- community %>% 
+  filter(functionalGroup == "graminoid")
+
 traitdata_2 <- traitdata_1 %>% 
   mutate(blockID = "",
          turfID = "") 
+
+trait_forb <- traitdata_2 %>% 
+  filter(functionalGroup %in% c("forb", "woody", "pteridophyte"))
+
+trait_graminoid <- traitdata_2 %>% 
+  filter(functionalGroup == "graminoid")
 
 # env <- env %>% 
 #   select(-Temp_se, -Precip_se)
@@ -53,53 +65,82 @@ traitdata_2 <- traitdata_1 %>%
 
 #### Trait impute ####
 
-##Fix species with missing taxonomy
-##Check that Car_sp, Alc_sp have a taxonomy
-
-# Trait_impute_per_year <- function(com_dat, trait_dat){
-#   
-#   SeedClim_traits <- trait_impute(comm = com_dat,
-#                                   traits = trait_dat, 
-#                                   scale_hierarchy = c("Site", "blockID", "turfID"),
-#                                   global = FALSE,
-#                                   taxon_col = c("Full_name", "Genus", "Family"),
-#                                   trait_col = "Trait_trans",
-#                                   value_col = "Value",
-#                                   abundance_col = "cover")
-#   
-#   return(SeedClim_traits)
-# }
-# SeedClim_traits_allYears <- Trait_impute_per_year(com_dat = community, trait_dat = traitdata_2)
-#   #group_by(year, Site, blockID, turfID, Trait_trans)
 
 
-SeedClim_traits_allYears <- trait_impute(comm = community,
-             traits = traitdata_2, 
-             scale_hierarchy = c("Site", "blockID", "turfID"),
-             global = FALSE,
-             taxon_col = c("Full_name", "Genus", "Family"),
-             trait_col = "Trait_trans",
-             value_col = "Value",
-             other_col = "year",
-             abundance_col = "cover") %>% 
+ Trait_impute_per_year <- function(com_dat, trait_dat){
+   
+   SeedClim_traits <- trait_impute(comm = com_dat,
+                                   traits = trait_dat, 
+                                   scale_hierarchy = c("Site", "blockID", "turfID"),
+                                   global = FALSE,
+                                   taxon_col = c("Full_name", "Genus", "Family"),
+                                   trait_col = "Trait_trans",
+                                   value_col = "Value",
+                                   other_col = "year",
+                                   abundance_col = "cover")
+   
+   return(SeedClim_traits)
+ }
+ 
+Imputed_traits_fullcommunity <- Trait_impute_per_year(com_dat = community, trait_dat = traitdata_2) %>% 
+   group_by(year, Site, blockID, turfID, Trait_trans)
+
+Imputed_traits_forbs <- Trait_impute_per_year(com_dat = community_forb, trait_dat = trait_forb) %>% 
   group_by(year, Site, blockID, turfID, Trait_trans)
+
+Imputed_traits_graminoids <- Trait_impute_per_year(com_dat = community_graminoid, trait_dat = trait_graminoid) %>% 
+  group_by(year, Site, blockID, turfID, Trait_trans)
+
+
+# SeedClim_traits_allYears <- trait_impute(comm = community,
+#              traits = traitdata_2, 
+#              scale_hierarchy = c("Site", "blockID", "turfID"),
+#              global = FALSE,
+#              taxon_col = c("Full_name", "Genus", "Family"),
+#              trait_col = "Trait_trans",
+#              value_col = "Value",
+#              other_col = "year",
+#              abundance_col = "cover") %>% 
+#   group_by(year, Site, blockID, turfID, Trait_trans)
 
 
 
 #### Bootstraping community weighted means and making summarised moments of the distributions ####
 
-SC_moments_allYears <- trait_np_bootstrap(imputed_traits = SeedClim_traits_allYears)
+Moments_fullcommunity <- trait_np_bootstrap(imputed_traits = Imputed_traits_fullcommunity)
+Moments_forbs <- trait_np_bootstrap(imputed_traits = Imputed_traits_forbs)
+Moments_graminoids <- trait_np_bootstrap(imputed_traits = Imputed_traits_graminoids)
 
-sum_SC_moments_allYears <- trait_summarise_boot_moments(SC_moments_allYears)
+sum_moments_fullcommunity <- trait_summarise_boot_moments(Moments_fullcommunity)
+sum_moments_forbs <- trait_summarise_boot_moments(Moments_forbs)
+sum_moments_graminoids <- trait_summarise_boot_moments(Moments_graminoids)
 
 
 #### Adding climate info & pivoting longer ####
 
-summarised_boot_moments_climate = bind_rows(
-   sum_SC_moments_allYears %>% 
+sum_moments_climate_fullcommunity = bind_rows(
+  sum_moments_fullcommunity %>% 
      left_join(env, by = c("Site" = "Site", "year" = "Year")))
 
-SC_moments_clim_long <- SC_moments_allYears %>% 
+sum_moments_climate_forbs = bind_rows(
+  sum_moments_forbs %>% 
+    left_join(env, by = c("Site" = "Site", "year" = "Year")))
+
+sum_moments_climate_graminoids = bind_rows(
+  sum_moments_graminoids %>% 
+    left_join(env, by = c("Site" = "Site", "year" = "Year")))
+
+moments_clim_long_fullcommunity <- Moments_fullcommunity %>% 
+  pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
+  left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
+  mutate(year = as.factor(year))
+
+moments_clim_long_forbs <- Moments_forbs %>% 
+  pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
+  left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
+  mutate(year = as.factor(year))
+
+moments_clim_long_graminoids <- Moments_graminoids %>% 
   pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
   left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
   mutate(year = as.factor(year))
@@ -153,7 +194,21 @@ SC_moments_clim_long <- SC_moments_allYears %>%
 # }
 
 ### Making dataset for models ###
-memodel_data_allYears <- SC_moments_clim_long %>% 
+memodel_data_fullcommunity <- moments_clim_long_fullcommunity %>% 
+  #filter(Trait_trans %in% c("CN_ratio_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "SLA_cm2_g_log")) %>% 
+  ungroup() %>%
+  select(Trait_trans, moments, Site, turfID, Temp_yearly, Precip_yearly, Temp_deviation_decade, Precip_deviation_decade, value, year, n) %>% 
+  group_by(Trait_trans, moments, n) %>% 
+  nest()
+
+memodel_data_forbs <- moments_clim_long_forbs %>% 
+  #filter(Trait_trans %in% c("CN_ratio_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "SLA_cm2_g_log")) %>% 
+  ungroup() %>%
+  select(Trait_trans, moments, Site, turfID, Temp_yearly, Precip_yearly, Temp_deviation_decade, Precip_deviation_decade, value, year, n) %>% 
+  group_by(Trait_trans, moments, n) %>% 
+  nest()
+
+memodel_data_graminoids <- moments_clim_long_graminoids %>% 
   #filter(Trait_trans %in% c("CN_ratio_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "SLA_cm2_g_log")) %>% 
   ungroup() %>%
   select(Trait_trans, moments, Site, turfID, Temp_yearly, Precip_yearly, Temp_deviation_decade, Precip_deviation_decade, value, year, n) %>% 
@@ -192,7 +247,7 @@ predict_with_random<-function(model) {
 # 3) Making a dataset with only the predicted values. Unnesting the list of the predicted values.
 
 ## Space ##
-mem_results_space <- memodel_data_allYears%>%
+mem_results_space <- memodel_data_fullcommunity %>%
   mutate(model = map(data, model_space))
 
 tidy_space_model_predicted <- mem_results_space %>%
@@ -207,7 +262,7 @@ predicted_values_space <- tidy_space_model_predicted %>%
   rename(modeled = predicted, measured = value)
 
 ## Time ##
-mem_results_time <- memodel_data_allYears%>%
+mem_results_time <- memodel_data_fullcommunity %>%
   mutate(model = map(data, model_time))
 
 tidy_time_model_predicted <- mem_results_time %>%
@@ -222,7 +277,7 @@ predicted_values_time <- tidy_time_model_predicted %>%
   rename(modeled = predicted, measured = value)
 
 ## Anomalies ##
-mem_results_anomalies <- memodel_data_allYears%>%
+mem_results_anomalies <- memodel_data_fullcommunity %>%
   mutate(model = map(data, model_time_anomalies))
 
 tidy_anomalies_model_predicted <- mem_results_anomalies %>%
