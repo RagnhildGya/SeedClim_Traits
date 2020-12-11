@@ -418,9 +418,9 @@ Ord_boot_Size <- SC_moments_allYears %>%
   column_to_rownames("uniqueID")
 
 ### Do ordination
-pca_trait <- prcomp(Ord_boot_traits[, -(1:5)], scale = TRUE)
-pca_leaf_economic <- prcomp(Ord_boot_LeafEconomic[, -(1:5)], scale = TRUE)
-pca_size <- prcomp(Ord_boot_Size[, -(1:5)], scale = TRUE)
+pca_trait <- prcomp(Ord_boot_traits[, -(1:6)], scale = TRUE)
+pca_leaf_economic <- prcomp(Ord_boot_LeafEconomic[, -(1:6)], scale = TRUE)
+pca_size <- prcomp(Ord_boot_Size[, -(1:6)], scale = TRUE)
 
 ### Get variable
 var <- get_pca_var(pca_trait)
