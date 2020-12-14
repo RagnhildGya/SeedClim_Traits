@@ -476,7 +476,8 @@ Ord_boot_traits <- Moments_fullcommunity %>%
   #gather(Moment, Value, -(turfID:P_cat)) %>% 
   #unite(temp, Trait, Moment) %>% 
   pivot_wider(names_from = Trait_trans, values_from = mean_mean) %>% 
-  column_to_rownames("uniqueID")
+  column_to_rownames("uniqueID") %>% 
+  rename("C % "= "C_percent", "C/N" = "CN_ratio_log", "Dry mass" = "Dry_Mass_g_log", "Leaf area" = "Leaf_Area_cm2_log", "Leaf thickness" = "Leaf_Thickness_Ave_mm", "N %" = "N_percent", "Plant height" = "Plant_Height_mm_log", "SLA" = "SLA_cm2_g_log")
 
 Ord_boot_LeafEconomic <- Moments_fullcommunity %>% 
   left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
