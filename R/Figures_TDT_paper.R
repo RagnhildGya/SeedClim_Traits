@@ -261,3 +261,81 @@ ggplot(aes(x = PC1, y = PC2, colour = Temp_level, group = turfID)) +
 #                 addEllipses = TRUE,
 #                 ellipse.level = 0.95) +
 #   theme_minimal(base_size = 20)
+
+time <- model_output_time %>% 
+  filter(moments == "mean") %>% 
+  select(Trait_trans, moments, term, effect, std.error, p.value) %>% 
+  mutate(moments = "time")
+
+model_output_space %>% 
+  bind_rows(time) %>% 
+  mutate(Trait_moment = paste0(moments, "_", Trait_trans)) %>% 
+  mutate(trend_col = ifelse(effect > 0, "positive", "negative")) %>% 
+  mutate(significance = ifelse(p.value > 0.05, "Non significant", "Significant")) %>% 
+  filter(moments %in% c("mean", "kurtosis", "time")) %>% 
+  mutate(moments = factor(moments, levels = c("mean", "time", "kurtosis"))) %>% 
+  mutate(term = as.factor(recode(term, "Temp_yearly_prev" = "PreviousYearTemp", "scale(Precip_yearly)" = "Precipitation", "Temp_yearly_spring" = "SpringTemp", "Temp_yearly_prev:scale(Precip_yearly)" = "PreviousYearTemp:Precipitation", "scale(Precip_yearly):Temp_yearly_spring" ="Precipitation:SpringTemp"))) %>% 
+  mutate(term = factor(term, levels = c("PreviousYearTemp", "Precipitation", "SpringTemp", "PreviousYearTemp:Precipitation", "Precipitation:SpringTemp"))) %>% 
+  ggplot(aes(x = effect, y = Trait_trans, color = trend_col, shape = significance)) +
+  geom_point(size = 4)+
+  geom_pointrange(aes(xmin = effect-std.error, xmax = effect+std.error)) +
+  facet_grid(term ~ moments, scales = "free") +
+  scale_color_manual(values = c("#8DD5E1", "#B93B3B")) +
+  scale_shape_manual(values = c(1,19)) +
+  geom_vline(xintercept =  0) +
+  theme_bw()
+
+model_output_space %>% 
+  bind_rows(time) %>% 
+  mutate(Trait_moment = paste0(moments, "_", Trait_trans)) %>% 
+  mutate(trend_col = ifelse(effect > 0, "positive", "negative")) %>% 
+  mutate(significance = ifelse(p.value > 0.05, "Non significant", "Significant")) %>% 
+  filter(moments %in% c("mean", "skewness", "time")) %>% 
+  mutate(moments = factor(moments, levels = c("skewness", "time", "mean"))) %>% 
+  mutate(coloring = paste0(moments, "", significance)) %>% 
+  mutate(coloring = factor(coloring, levels = c("skewnessNon significant", "skewnessSignificant", "timeNon significant", "timeSignificant", "meanNon significant", "meanSignificant"))) %>% 
+  mutate(term = as.factor(recode(term, "Temp_yearly_prev" = "PreviousYearTemp", "scale(Precip_yearly)" = "Precipitation", "Temp_yearly_spring" = "SpringTemp", "Temp_yearly_prev:scale(Precip_yearly)" = "PreviousYearTemp:Precipitation", "scale(Precip_yearly):Temp_yearly_spring" ="Precipitation:SpringTemp"))) %>% 
+  mutate(term = factor(term, levels = c("PreviousYearTemp", "Precipitation", "SpringTemp", "PreviousYearTemp:Precipitation", "Precipitation:SpringTemp"))) %>% 
+  mutate(Trait_trans = factor(Trait_trans, levels = c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent", "SLA_cm2_g_log", "CN_ratio_log", "LDMC", "N_percent", "Leaf_Thickness_Ave_mm"))) %>%
+  ggplot(aes(x = fct_rev(Trait_trans), y = effect, fill = coloring, color = moments)) +
+  geom_bar(stat = "identity", position = position_dodge(width=0.6), width = 0.7) +
+  #geom_bar_pattern(aes(pattern = 'stripe'), stat = "identity", position = "dodge") +
+  #geom_errorbar(aes(xmin = effect-std.error, xmax = effect+std.error)) +
+  facet_grid(~term, scales = "free") +
+  scale_color_manual(values = c("#BAD8F7", "#89B7E1", "#2E75B6")) +
+  scale_fill_manual(values = c("#EDEDED", "#BAD8F7", "#EDEDED", "#89B7E1", "#EDEDED", "#2E75B6")) +
+  #scale_shape_manual(values = c(1,19)) +
+  geom_hline(yintercept =  0) +
+  theme_bw() +
+  coord_flip()
+
+geom_errorbar(aes(ymin=len-sd, ymax=len+sd), width=.2,
+              position=position_dodge(.9))
+
+c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")
+
+model_output_space %>% 
+  ggplot(aes(x = term, y = effect, fill = moments)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  coord_flip()
+
+a <- c("Space", "Time", "Skewness", "Space", "Time", "Skewness")
+b <- c(3, 2.8, 2.2, 1.5, 3.1, 2.8)
+c <- c("Trait 1", "Trait 1","Trait 1", "Trait 2", "Trait 2", "Trait 2")
+d <- data.frame(a,b, c)
+
+labels <- c("Space", "Time", "Skewness")
+
+d %>% 
+  filter(c == "Trait 1") %>% 
+ggplot(aes(x = c, y = b, fill = a, color = a)) +
+  geom_bar(stat = "identity", position = position_dodge(width=0.6), width = 0.7) +
+  scale_fill_manual(values = c( "#BAD8F7", "#89B7E1", "#2E75B6")) +
+  scale_color_manual(values = c( "#BAD8F7", "#89B7E1", "#2E75B6")) +
+  theme_minimal() +
+  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), axis.text = element_blank()) +
+  guides(fill = "none", color = "none") +
+  geom_text(aes(x = c, y = b, label=a), color="white", size=3.5, angle = 270) +
+  coord_flip()
+
+  
