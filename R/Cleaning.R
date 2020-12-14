@@ -183,22 +183,34 @@ community <- community %>%
           Precip_level = as.factor(recode(Site, Ulv = 600, Alr = 600, Fau = 600, Lav = 1200, Hog = 1200, Vik = 1200, Gud = 2000, Ram = 2000, Arh = 2000, Skj = 2700, Ves = 2700, Ovs = 2700))) %>% 
    select(Site, Temp_century, Precip_century, Temp_level, Precip_level)
 
- env <-read.csv("Data/GriddedDailyClimateData2009-2019.csv", header=TRUE, sep = ",", stringsAsFactors = FALSE)
+ env <- read.csv("Data/GriddedDailyClimateData2009-2019.csv", header=TRUE, sep = ",", stringsAsFactors = FALSE)
+ 
+ summer <- env %>% 
+   group_by(Site, Year) %>% 
+   filter(Month %in% c(6:9)) %>% 
+   mutate(Temp_yearly_prev = mean(Temperature)) %>% 
+   select(Site, Year, Temp_yearly_prev) %>% 
+   mutate(Year = Year + 1) %>% 
+   unique()
  
  env <- env %>% 
-   group_by(Site, Year) %>% 
+   mutate(Date = ymd(Date)) %>% 
+   mutate(Year2 = ifelse(Month > 7, Year + 1, Year)) %>% 
+   group_by(Site, Year2) %>% 
    mutate(Precip_yearly = sum(Precipitation)) %>% 
-   filter(Month %in% c(6:9)) %>% 
-   mutate(Temp_yearly = mean(Temperature)) %>% 
-   select(Site, Year, Precip_yearly, Temp_yearly) %>% 
+   filter(Month %in% c(5:7)) %>% 
+   mutate(Temp_yearly_spring = mean(Temperature)) %>% 
+   ungroup() %>% 
+   select(Site, Year, Precip_yearly, Temp_yearly_spring) %>% 
    unique() %>% 
+   left_join(y = summer, by = c("Site" = "Site", "Year" = "Year")) %>% 
    ungroup() %>% 
    group_by(Site) %>% 
-   mutate(Temp_decade = mean(Temp_yearly),
-          Temp_se = (sd(Temp_yearly) / sqrt(length(Temp_yearly))),
+   mutate(Temp_decade = mean(Temp_yearly_prev, na.rm = TRUE),
+          Temp_se = (sd(Temp_yearly_prev, na.rm = TRUE) / sqrt(length(Temp_yearly_prev))),
           Precip_decade = mean(Precip_yearly),
           Precip_se = (sd(Precip_yearly) / sqrt(length(Precip_yearly)))) %>% 
-   mutate(Temp_deviation_decade = Temp_yearly - Temp_decade,
+   mutate(Temp_deviation_decade = Temp_yearly_prev - Temp_decade,
           Precip_deviation_decade = Precip_yearly - Precip_decade) %>% 
    left_join(y = env_old, by = "Site") %>% 
    mutate(Temp_level = fct_relevel(Temp_level, c("6.5", "8.5", "10.5"))) %>% 
