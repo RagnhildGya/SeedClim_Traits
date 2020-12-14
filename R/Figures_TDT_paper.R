@@ -5,6 +5,7 @@ library(ggpubr)
 library(ggridges)
 library(ggfortify)
 library(corrplot)
+library(svglite)
 
 ## Climate figure ##
 
@@ -123,8 +124,8 @@ ggarrange(SLA_density,
 
 ### Community weighted moments probability distributions ###
 
-SC_moments_clim_allYears %>% 
-  filter(Trait_trans == "SLA_cm2_g") %>% 
+moments_clim_long_fullcommunity %>% 
+  filter(Trait_trans == "SLA_cm2_g_log") %>% 
   mutate(year = as.factor(year)) %>% 
   ggplot(aes(x = value, y = fct_rev(year), group = year)) +
   geom_density_ridges() +
@@ -170,21 +171,61 @@ fviz_eig(pca_size, addlabels = TRUE)
 #              repel = TRUE     # Avoid text overlapping
 # )
 
+#### Ordination with traits ####
+
 fviz_pca_biplot(pca_trait, repel = TRUE,
                 col.var = "#2A2A2A", # Variables color
+                col.ind = "#AAB7B8",
                 label = "var",
+                labelsize = 5) +
+  theme_minimal(base_size = 15) +
+  guides(shape = FALSE) +
+  #scale_color_manual(name = "Summer temperature", values = c("#8DD5E1", "#FCB971", "#B93B3B")) +
+  theme(plot.title = element_blank()) +
+  coord_fixed()
+
+ggsave("Ordination_LES_Size.svg", width = 22 , height = 16, units = "cm", dpi = 600)
+
+#### Ordination with temperature ####
+
+fviz_pca_ind(pca_trait, repel = TRUE,
+                col.var = "#2A2A2A", # Variables color
+                label = "none",
                 labelsize = 5, 
                 habillage = Ord_boot_traits$Temp_level, 
                 addEllipses = TRUE,
-                ellipse.level = 0.70,
+                ellipse.level = 0.95,
                 palette = c("#8DD5E1", "#FCB971", "#B93B3B")) +
   theme_minimal(base_size = 15) +
-  guides(shape = FALSE) +
-  scale_color_manual(name = "Summer temperature", values = c("#8DD5E1", "#FCB971", "#B93B3B")) +
-  theme(legend.text=element_text(size=14), legend.title = element_text(size = 14))+
-  xlim(-5, 5) + 
-  ylim (-5, 5)
+  #scale_color_manual(name = "Summer temperature", values = c("#8DD5E1", "#FCB971", "#B93B3B")) +
+  theme(legend.text=element_text(size=14), legend.title = element_text(size = 14), plot.title = element_blank(), axis.title = element_blank()) +
+  labs(fill = "Summer temperature", color = "Summer temperature", shape = "Summer temperature") +
+  coord_fixed()
 
+ggsave("Ordination_Temp.svg", width = 18 , height = 11, units = "cm", dpi = 600)
+
+
+### Ordination with precipitation ####
+
+fviz_pca_ind(pca_trait, repel = TRUE,
+              col.var = "#2A2A2A", # Variables color
+              label = "none",
+              labelsize = 5, 
+              habillage = Ord_boot_traits$Precip_level, 
+              addEllipses = TRUE,
+              ellipse.level = 0.95,
+              palette = c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")) +
+  theme_minimal(base_size = 15) +
+    #scale_color_manual(name = "Summer temperature", values = c("#8DD5E1", "#FCB971", "#B93B3B")) +
+  theme(legend.text=element_text(size=14), legend.title = element_text(size = 14), plot.title = element_blank(), axis.title = element_blank()) +
+  labs(fill = "Yearly precipitation", color = "Yearly precipitation", shape = "Yearly precipitation") +
+  coord_fixed()
+
+ggsave("Ordination_Precip.svg", width = 18 , height = 11, units = "cm", dpi = 600)
+  
+## Ordination over time ##
+  
+  
 pca_fort <- fortify(pca_trait, display = "sites") %>% 
   bind_cols(Ord_boot_traits[1:6])
 
