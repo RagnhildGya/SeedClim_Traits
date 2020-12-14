@@ -399,7 +399,7 @@ predicted_values_time_alpine <- tidy_time_model_predicted_alpine %>%
   unnest(c(data, predicted)) %>%
   rename(modeled = predicted, measured = value)
 
-## Time - alpine ##
+## Time - subalpine ##
 mem_results_time_subalpine <- memodel_data_subalpine %>%
   mutate(model = map(data, model_time))
 
@@ -487,7 +487,7 @@ model_output <-function(dat) {
     #filter(Trait_trans %in% c("CN_ratio_log", "SLA_cm2_g_log") & moments %in% c("mean", "variance")) %>% 
     #filter(!Trait_trans == "CN_ratio_log" | moments == "variance") %>% 
     unnest(c(model_output, R_squared)) %>% 
-    filter(term %in% c("Temp_yearly_prev", "scale(Precip_yearly)", "Temp_yearly_prev:scale(Precip_yearly)", "Temp_yearly_spring", "Teamp_yearly_spring:scale(Precip_yearly)")) %>% 
+    filter(term %in% c("Temp_yearly_prev", "scale(Precip_yearly)", "Temp_yearly_prev:scale(Precip_yearly)", "Temp_yearly_spring", "scale(Precip_yearly):Temp_yearly_spring")) %>% 
     select(Trait_trans, moments, term, n, estimate, std.error, statistic, df, p.value, Marginal, Conditional) %>% 
     ungroup() %>% 
     group_by(Trait_trans, moments, term) %>% 
