@@ -8,6 +8,10 @@ library(corrplot)
 library(svglite)
 library(grid)
 
+## Color palettes ##
+Temp_palette <- c("#d8c593", "#dd7631", "#bb3b0e")
+Precip_palette <- c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")
+
 ## Climate figure ##
 
 env %>% 
@@ -196,7 +200,7 @@ fviz_pca_ind(pca_trait, repel = TRUE,
                 habillage = Ord_boot_traits$Temp_level, 
                 addEllipses = TRUE,
                 ellipse.level = 0.95,
-                palette = c("#8DD5E1", "#FCB971", "#B93B3B")) +
+                palette = c("#d8c593", "#dd7631", "#bb3b0e")) +
   theme_minimal(base_size = 15) +
   #scale_color_manual(name = "Summer temperature", values = c("#8DD5E1", "#FCB971", "#B93B3B")) +
   theme(legend.text=element_text(size=14), legend.title = element_text(size = 14), plot.title = element_blank(), axis.title = element_blank()) +
@@ -501,4 +505,37 @@ model_output_space %>%
   geom_hline(yintercept =  0) +
   coord_flip()
 
+
+### Making boxplot of variance and kurtosis at temp and precip levels ####
+
+moments_clim_long_fullcommunity %>% 
+  filter(moments == "kurtosis") %>% 
+  ggplot(aes(x = Precip_level, y = value, fill = Precip_level)) +
+  geom_violin() +
+  # stat_summary(fun.data=mean_sdl, 
+  #              geom="pointrange", color="black") +
+  geom_boxplot(width=0.1, fill="white") +
+  facet_wrap(~Trait_trans, nrow = 4, scales = "free") +
+  scale_fill_manual(values = Precip_palette) +
+  ylab("Community weighted kurtosis")
+
+sum_moments_climate_fullcommunity %>% 
+  group_by(Site, blockID, turfID, Trait_trans, year) %>% 
+  mutate(skewness = mean(skew),
+         kurtosis = mean(kurt)) %>% 
+  select(skewness, kurtosis, Site, turfID, year, Temp_level, Temp_level) %>% 
+  unique() %>% 
+  ggplot(aes(x = skewness^2, y = kurtosis, col= Temp_level)) +
+  geom_point() +
+  facet_wrap(~Trait_trans, nrow = 4)
+
+moments_clim_long_fullcommunity %>% 
+  filter(moments == "variance") %>% 
+  ggplot(aes(x = Precip_level, y = value, fill = Precip_level)) +
+  geom_violin() +
+  stat_summary(fun.data=mean_sdl, 
+               geom="pointrange", color="black") +
+  facet_wrap(~Trait_trans, nrow = 4, scales = "free") +
+  scale_fill_manual(values = Precip_palette)
+  
 
