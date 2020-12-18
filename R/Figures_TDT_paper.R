@@ -6,6 +6,7 @@ library(ggridges)
 library(ggfortify)
 library(corrplot)
 library(svglite)
+library(grid)
 
 ## Climate figure ##
 
@@ -267,6 +268,17 @@ time <- model_output_time %>%
   select(Trait_trans, moments, term, effect, std.error, p.value) %>% 
   mutate(moments = "time")
 
+time_skewness <- model_output_time %>% 
+  filter(moments == "skewness") %>% 
+  select(Trait_trans, moments, term, effect, std.error, p.value) %>% 
+  mutate(moments = "time")
+
+time_var_kurt <- model_output_time %>% 
+  filter(moments %in% c("variance", "kurtosis")) %>% 
+  select(Trait_trans, moments, term, effect, std.error, p.value) %>% 
+  mutate(moments = recode(moments, "variance" = "variance_time",
+                        "kurtosis" = "kurtosis_time"))
+
 model_output_space %>% 
   bind_rows(time) %>% 
   mutate(Trait_moment = paste0(moments, "_", Trait_trans)) %>% 
@@ -285,7 +297,92 @@ model_output_space %>%
   geom_vline(xintercept =  0) +
   theme_bw()
 
+## Mean ##
+
 model_output_space %>% 
+  bind_rows(time) %>% 
+  mutate(Trait_moment = paste0(moments, "_", Trait_trans)) %>% 
+  mutate(trend_col = ifelse(effect > 0, "positive", "negative")) %>% 
+  mutate(significance = ifelse(p.value > 0.05, "Non significant", "Significant")) %>% 
+  filter(moments %in% c("mean", "time")) %>% 
+  mutate(moments = factor(moments, levels = c("time", "mean"))) %>% 
+  mutate(coloring = paste0(moments, "", significance)) %>% 
+  mutate(coloring = factor(coloring, levels = c("timeNon significant", "timeSignificant", "meanNon significant", "meanSignificant"))) %>% 
+  mutate(term = as.factor(recode(term, "Temp_yearly_prev" = "PreviousYearTemp", "scale(Precip_yearly)" = "Precipitation", "Temp_yearly_spring" = "SpringTemp", "Temp_yearly_prev:scale(Precip_yearly)" = "PreviousYearTemp:Precipitation", "scale(Precip_yearly):Temp_yearly_spring" ="Precipitation:SpringTemp"))) %>% 
+  mutate(term = factor(term, levels = c("PreviousYearTemp", "Precipitation", "SpringTemp", "PreviousYearTemp:Precipitation", "Precipitation:SpringTemp"))) %>% 
+  mutate(Trait_trans = factor(Trait_trans, levels = c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent", "SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))) %>%
+  ggplot(aes(x = fct_rev(Trait_trans), y = effect, fill = coloring, color = moments)) +
+  geom_bar(stat = "identity", position = position_dodge(width=0.6), width = 0.7) +
+  #geom_bar_pattern(aes(pattern = 'stripe'), stat = "identity", position = "dodge") +
+  #geom_errorbar(aes(xmin = effect-std.error, xmax = effect+std.error)) +
+  facet_grid(~term, scales = "free") +
+  scale_color_manual(values = c("#89B7E1", "#2E75B6")) +
+  scale_fill_manual(values = c("#EDEDED", "#89B7E1", "#EDEDED", "#2E75B6")) +
+  #scale_shape_manual(values = c(1,19)) +
+  geom_hline(yintercept =  0) +
+  theme_bw() +
+  coord_flip() +
+  guides(fill = "none", color = "none", size = "none") +
+  theme(axis.title.y=element_blank())
+
+## Skewness ## Appendix figure?
+
+model_output_space %>% 
+  bind_rows(time_skewness) %>% 
+  mutate(Trait_moment = paste0(moments, "_", Trait_trans)) %>% 
+  mutate(trend_col = ifelse(effect > 0, "positive", "negative")) %>% 
+  mutate(significance = ifelse(p.value > 0.05, "Non significant", "Significant")) %>% 
+  filter(moments %in% c("skewness", "time")) %>% 
+  mutate(moments = factor(moments, levels = c("time", "skewness"))) %>% 
+  mutate(coloring = paste0(moments, "", significance)) %>% 
+  mutate(coloring = factor(coloring, levels = c("timeNon significant", "timeSignificant", "skewnessNon significant", "skewnessSignificant"))) %>% 
+  mutate(term = as.factor(recode(term, "Temp_yearly_prev" = "PreviousYearTemp", "scale(Precip_yearly)" = "Precipitation", "Temp_yearly_spring" = "SpringTemp", "Temp_yearly_prev:scale(Precip_yearly)" = "PreviousYearTemp:Precipitation", "scale(Precip_yearly):Temp_yearly_spring" ="Precipitation:SpringTemp"))) %>% 
+  mutate(term = factor(term, levels = c("PreviousYearTemp", "Precipitation", "SpringTemp", "PreviousYearTemp:Precipitation", "Precipitation:SpringTemp"))) %>% 
+  mutate(Trait_trans = factor(Trait_trans, levels = c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent", "SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))) %>%
+  ggplot(aes(x = fct_rev(Trait_trans), y = effect, fill = coloring, color = moments)) +
+  geom_bar(stat = "identity", position = position_dodge(width=0.6), width = 0.7) +
+  #geom_bar_pattern(aes(pattern = 'stripe'), stat = "identity", position = "dodge") +
+  #geom_errorbar(aes(xmin = effect-std.error, xmax = effect+std.error)) +
+  facet_grid(~term, scales = "free") +
+  scale_color_manual(values = c("#89B7E1", "#2E75B6")) +
+  scale_fill_manual(values = c("#EDEDED", "#89B7E1", "#EDEDED", "#2E75B6")) +
+  #scale_shape_manual(values = c(1,19)) +
+  geom_hline(yintercept =  0) +
+  theme_bw() +
+  coord_flip() +
+  guides(fill = "none", color = "none", size = "none") +
+  theme(axis.title.y=element_blank())
+
+## Variance & kurtosis figure ##
+
+model_output_space %>% 
+  bind_rows(time_var_kurt) %>% 
+  mutate(Trait_moment = paste0(moments, "_", Trait_trans)) %>% 
+  mutate(trend_col = ifelse(effect > 0, "positive", "negative")) %>% 
+  mutate(significance = ifelse(p.value > 0.05, "Non significant", "Significant")) %>% 
+  filter(moments %in% c("kurtosis", "variance", "kurtosis_time", "variance_time")) %>% 
+  mutate(moments = factor(moments, levels = c("kurtosis", "kurtosis_time", "variance", "variance_time"))) %>% 
+  mutate(coloring = paste0(moments, "", significance)) %>% 
+  mutate(coloring = factor(coloring, levels = c("kurtosisNon significant", "kurtosisSignificant", "kurtosis_timeNon significant", "kurtosis_timeSignificant", "varianceNon significant", "varianceSignificant", "variance_timeNon significant", "variance_timeSignificant"))) %>% 
+  mutate(term = as.factor(recode(term, "Temp_yearly_prev" = "PreviousYearTemp", "scale(Precip_yearly)" = "Precipitation", "Temp_yearly_spring" = "SpringTemp", "Temp_yearly_prev:scale(Precip_yearly)" = "PreviousYearTemp:Precipitation", "scale(Precip_yearly):Temp_yearly_spring" ="Precipitation:SpringTemp"))) %>% 
+  mutate(term = factor(term, levels = c("PreviousYearTemp", "Precipitation", "SpringTemp", "PreviousYearTemp:Precipitation", "Precipitation:SpringTemp"))) %>% 
+  mutate(Trait_trans = factor(Trait_trans, levels = c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent", "SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))) %>%
+  ggplot(aes(x = fct_rev(Trait_trans), y = effect, fill = moments, color = moments)) +
+  geom_bar(stat = "identity", position = position_dodge(width=0.6), width = 0.7) +
+  #geom_bar_pattern(aes(pattern = 'stripe'), stat = "identity", position = "dodge") +
+  #geom_errorbar(aes(xmin = effect-std.error, xmax = effect+std.error)) +
+  facet_grid(~term, scales = "free") +
+  scale_color_manual(values = c("#89B7E1", "#2E75B6", "#A3D08F", "#67855A")) +
+  scale_fill_manual(values = c("#89B7E1", "#2E75B6", "#A3D08F","#67855A")) +
+  #scale_shape_manual(values = c(1,19)) +
+  geom_hline(yintercept =  0) +
+  theme_bw() +
+  coord_flip() +
+  guides(size = "none") +
+  theme(axis.title.y=element_blank())
+
+
+mean_time_space_skewness_plot <- model_output_space %>% 
   bind_rows(time) %>% 
   mutate(Trait_moment = paste0(moments, "_", Trait_trans)) %>% 
   mutate(trend_col = ifelse(effect > 0, "positive", "negative")) %>% 
@@ -296,7 +393,7 @@ model_output_space %>%
   mutate(coloring = factor(coloring, levels = c("skewnessNon significant", "skewnessSignificant", "timeNon significant", "timeSignificant", "meanNon significant", "meanSignificant"))) %>% 
   mutate(term = as.factor(recode(term, "Temp_yearly_prev" = "PreviousYearTemp", "scale(Precip_yearly)" = "Precipitation", "Temp_yearly_spring" = "SpringTemp", "Temp_yearly_prev:scale(Precip_yearly)" = "PreviousYearTemp:Precipitation", "scale(Precip_yearly):Temp_yearly_spring" ="Precipitation:SpringTemp"))) %>% 
   mutate(term = factor(term, levels = c("PreviousYearTemp", "Precipitation", "SpringTemp", "PreviousYearTemp:Precipitation", "Precipitation:SpringTemp"))) %>% 
-  mutate(Trait_trans = factor(Trait_trans, levels = c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent", "SLA_cm2_g_log", "CN_ratio_log", "LDMC", "N_percent", "Leaf_Thickness_Ave_mm"))) %>%
+  mutate(Trait_trans = factor(Trait_trans, levels = c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent", "SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))) %>%
   ggplot(aes(x = fct_rev(Trait_trans), y = effect, fill = coloring, color = moments)) +
   geom_bar(stat = "identity", position = position_dodge(width=0.6), width = 0.7) +
   #geom_bar_pattern(aes(pattern = 'stripe'), stat = "identity", position = "dodge") +
@@ -307,35 +404,101 @@ model_output_space %>%
   #scale_shape_manual(values = c(1,19)) +
   geom_hline(yintercept =  0) +
   theme_bw() +
-  coord_flip()
+  coord_flip() +
+  guides(fill = "none", color = "none", size = "none") +
+  theme(axis.title.y=element_blank())
 
-geom_errorbar(aes(ymin=len-sd, ymax=len+sd), width=.2,
-              position=position_dodge(.9))
+#geom_errorbar(aes(ymin=len-sd, ymax=len+sd), width=.2, position=position_dodge(.9))
 
-c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")
 
-model_output_space %>% 
-  ggplot(aes(x = term, y = effect, fill = moments)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  coord_flip()
-
-a <- c("Space", "Time", "Skewness", "Space", "Time", "Skewness")
+a <- c("Mean (Space)", "Mean (Time)", "Skewness", "Mean (Space)", "Mean (Time)", "Skewness")
 b <- c(3, 2.8, 2.2, 1.5, 3.1, 2.8)
 c <- c("Trait 1", "Trait 1","Trait 1", "Trait 2", "Trait 2", "Trait 2")
 d <- data.frame(a,b, c)
 
-labels <- c("Space", "Time", "Skewness")
+nudge <- c(-1.7, -1.5, -0.9)
 
-d %>% 
+legend_significant_plot <- d %>% 
   filter(c == "Trait 1") %>% 
-ggplot(aes(x = c, y = b, fill = a, color = a)) +
-  geom_bar(stat = "identity", position = position_dodge(width=0.6), width = 0.7) +
+  mutate(a = factor(a, levels = c("Skewness", "Mean (Time)", "Mean (Space)"))) %>% 
+ggplot(aes(x = a, y = b, fill = a, color = a)) +
+  geom_bar(stat = "identity", position = position_dodge(width=0.6), width = 1) +
   scale_fill_manual(values = c( "#BAD8F7", "#89B7E1", "#2E75B6")) +
   scale_color_manual(values = c( "#BAD8F7", "#89B7E1", "#2E75B6")) +
   theme_minimal() +
-  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), axis.text = element_blank()) +
-  guides(fill = "none", color = "none") +
-  geom_text(aes(x = c, y = b, label=a), color="white", size=3.5, angle = 270) +
+  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), axis.text = element_blank(), plot.title = element_text(size=15, hjust = 0.5)) +
+  guides(fill = "none", color = "none", size = "none") +
+  geom_text(aes(x = a, y = b, label=a ), color="black", size=4, nudge_y = nudge) +
+  coord_flip() +
+  ggtitle("Significant")
+
+
+legend_nonsignificant_plot <- d %>% 
+  filter(c == "Trait 1") %>% 
+  mutate(a = factor(a, levels = c("Skewness", "Mean (Time)", "Mean (Space)"))) %>% 
+  ggplot(aes(x = a, y = b, fill = a, color = a)) +
+  geom_bar(stat = "identity", position = position_dodge(width=1), width = 1) +
+  scale_fill_manual(values = c( "#EDEDED", "#EDEDED", "#EDEDED")) +
+  scale_color_manual(values = c( "#BAD8F7", "#89B7E1", "#2E75B6")) +
+  theme_minimal() +
+  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), axis.text = element_blank(), plot.title = element_text(size=15, hjust = 0.5)) +
+  guides(fill = "none", color = "none", size = "none") +
+  geom_text(aes(x = a, y = b, label=a ), color="black", size=4, nudge_y = nudge) +
+  coord_flip()+
+  ggtitle("Non significant")
+  
+
+
+# Move to a new page
+grid.newpage()
+# Create layout : nrow = 3, ncol = 2
+pushViewport(viewport(layout = grid.layout(nrow = 5, ncol = 6)))
+# A helper function to define a region on the layout
+define_region <- function(row, col){
+  viewport(layout.pos.row = row, layout.pos.col = col)
+} 
+# Arrange the plots
+print(mean_time_space_skewness_plot, vp = define_region(row = 1:4, col = 1:6))   # Span over two columns
+print(legend_significant_plot, vp = define_region(row = 5, col = 3))
+print(legend_nonsignificant_plot, vp = define_region(row = 5, col = 5))
+
+
+sum_moments_climate_fullcommunity %>% 
+  group_by(Site, turfID, Trait_trans, year) %>% 
+  mutate(skewness = mean(skew),
+         kurtosis = mean(kurt)) %>% 
+  select(Site, turfID, Trait_trans, year, skewness, kurtosis, Temp_yearly_prev, Precip_yearly, Temp_yearly_spring, Temp_level) %>% 
+  ggplot(aes(x = Temp_yearly_prev, y = kurtosis, color = Temp_level)) +
+  geom_point() +
+  facet_wrap(~Trait_trans, scales = "free")
+
+
+
+mean_direction_shift <- model_output_space %>% 
+  filter(moments == "mean") %>% 
+  mutate(mean_direction_shift = ifelse(effect > 0, "positive", "negative")) %>%
+  ungroup() %>% 
+  select(Trait_trans, term, mean_direction_shift) 
+
+skewness_direction_shift_time <- model_output_time %>% 
+  filter(moments == "skewness") %>% 
+  mutate(skewness_direction_shift_time = ifelse(effect > 0, "positive", "negative")) %>%
+  ungroup() %>% 
+  select(Trait_trans, term, skewness_direction_shift_time) 
+
+### Directional change in skewness compared to the mean, and timely changes with skewness ###
+
+model_output_space %>% 
+  filter(moments == "skewness") %>% 
+  left_join(mean_direction_shift, by = c("Trait_trans" = "Trait_trans", "term" = "term")) %>% 
+  left_join(skewness_direction_shift_time, by = c("Trait_trans" = "Trait_trans", "term" = "term")) %>% 
+  mutate(Trait_trans = factor(Trait_trans, levels = c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent", "SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))) %>%
+  filter(term %in% c("Temp_yearly_prev", "Temp_yearly_spring")) %>% 
+  ggplot(aes(x = fct_rev(Trait_trans), y = effect, col = skewness_direction_shift_time)) +
+  geom_point() +
+  facet_wrap(term ~ mean_direction_shift, nrow = 2, scales = "free_x") +
+  #geom_vline(xintercept =  0) +
+  geom_hline(yintercept =  0) +
   coord_flip()
 
-  
+
