@@ -107,7 +107,8 @@ traitdata <- traitdata %>%
   mutate(LDMC = Dry_mass/Wet_mass)%>%
   mutate(Lth_ave = rowMeans(select(traitdata, starts_with("Lth")), na.rm = TRUE)) %>% #Make the numbers only with four digits
   #filter(LDMC<1) %>% 
-  select(-Lth_1, -Lth_2, -Lth_3)
+  select(-Lth_1, -Lth_2, -Lth_3) %>% 
+  filter(!LDMC > 1)
 
 traitdata_trans <- traitdata %>% 
   mutate(Height = log(Height),
