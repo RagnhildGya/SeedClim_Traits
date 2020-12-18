@@ -304,6 +304,14 @@ model_space<-function(df) {
   lmer(value ~ Temp_yearly_prev * scale(Precip_yearly) + Temp_yearly_spring * scale(Precip_yearly) + (1 | year), data = df)
 }
 
+model_space_1<-function(df) {
+  lmer(value ~ Temp_yearly_prev * scale(Precip_yearly) + (1 | year), data = df)
+}
+
+model_space_2 <- function(df) {
+  lmer(value ~ Temp_yearly_spring * scale(Precip_yearly) + (1 | year), data = df)
+}
+
 model_time_anomalies<-function(df) {
   lmer(value ~ Temp_deviation_decade * scale(Precip_deviation_decade) + (1 | Site), data = df)
 }
@@ -338,6 +346,27 @@ predicted_values_space <- tidy_space_model_predicted %>%
   select(Trait_trans, moments, data, predicted) %>%
   unnest(c(data, predicted)) %>%
   rename(modeled = predicted, measured = value)
+
+## Space model 1 ##
+
+mem_results_space_lastyeartemp <- memodel_data_fullcommunity %>%
+  mutate(model = map(data, model_space_1))
+
+tidy_space_model_predicted_lastyeartemp <- mem_results_space_lastyeartemp %>%
+  mutate(model_output = map(model, tidy)) %>%
+  mutate(predicted = map(model, predict_with_random)) %>% 
+  mutate(R_squared = map(model, rsquared))
+
+## Space model 2 ##
+
+mem_results_space_springtemp <- memodel_data_fullcommunity %>%
+  mutate(model = map(data, model_space_2))
+
+tidy_space_model_predicted_springtemp <- mem_results_space_springtemp %>%
+  mutate(model_output = map(model, tidy)) %>%
+  mutate(predicted = map(model, predict_with_random)) %>% 
+  mutate(R_squared = map(model, rsquared))
+
 
 ## Time - Full community ##
 mem_results_time <- memodel_data_fullcommunity %>%
@@ -448,34 +477,30 @@ predicted_values_anomalies <- tidy_anomalies_model_predicted %>%
 
 # Making a function for AIC tests
 
-# AIC_models <-function(dat, model_type) {
-#   
-#   dat2 <- dat %>% 
-#     mutate(AIC = map(model, AIC)) %>% 
-#     select(Trait_trans, moments, n, AIC) %>% 
-#     unnest(c(AIC)) %>% 
-#     ungroup() %>% 
-#     group_by(Trait_trans, moments) %>% 
-#     mutate(AIC = mean(AIC)) %>% 
-#     select(-n) %>% 
-#     unique()
-#   
-#   return(dat2)
-# }
-# 
-# # Get AIC for all models and compare which is beter
-# 
-# AIC_null <- AIC_models(tidy_null_model_predicted, "Temp") %>% rename(Null_AIC = AIC)
-# AIC_temp <- AIC_models(tidy_temp_model_predicted, "Temp") %>% rename(Temp_AIC = AIC)
-# AIC_precip <- AIC_models(tidy_precip_model_predicted, "Precip") %>% rename(Precip_AIC = AIC)
-# AIC_tempAddprecip <- AIC_models(tidy_tempAddprecip_model_predicted, "Precip") %>% rename(TempAddPrecip_AIC = AIC)
-# AIC_tempMulprecip <- AIC_models(tidy_tempMulprecip_model_predicted, "Precip") %>% rename(TempMulPrecip_AIC = AIC)
-# 
-# AIC_all_models <- AIC_null %>%
-#   left_join(AIC_temp, by = c("Trait_trans" = "Trait_trans", "moments" = "moments")) %>% 
-#   left_join(AIC_precip, by = c("Trait_trans" = "Trait_trans", "moments" = "moments")) %>% 
-#   left_join(AIC_tempAddprecip, by = c("Trait_trans" = "Trait_trans", "moments" = "moments")) %>% 
-#   left_join(AIC_tempMulprecip, by = c("Trait_trans" = "Trait_trans", "moments" = "moments"))
+ AIC_models <-function(dat, model_type) {
+   
+   dat2 <- dat %>% 
+     mutate(AIC = map(model, AIC)) %>% 
+     select(Trait_trans, moments, n, AIC) %>% 
+     unnest(c(AIC)) %>% 
+     ungroup() %>% 
+     group_by(Trait_trans, moments) %>% 
+     mutate(AIC = mean(AIC)) %>% 
+     select(-n) %>% 
+     unique()
+   
+   return(dat2)
+ }
+ 
+ # Get AIC for all models and compare which is better
+ 
+ AIC_lastyeartemp <- AIC_models(tidy_space_model_predicted_lastyeartemp, "Last year temp") %>% rename(Lastyeartemp_AIC = AIC)
+ AIC_springtemp <- AIC_models(tidy_space_model_predicted_springtemp, "Spring temp") %>% rename(Springtemp_AIC = AIC)
+ AIC_alltemp <- AIC_models(tidy_space_model_predicted, "full temp") %>% rename(full_AIC = AIC)
+ 
+ AIC_all_models <- AIC_lastyeartemp %>%
+   left_join(AIC_springtemp, by = c("Trait_trans" = "Trait_trans", "moments" = "moments")) %>% 
+   left_join(AIC_alltemp, by = c("Trait_trans" = "Trait_trans", "moments" = "moments"))
   
 #write.table(x = AIC_all_models, file = "AIC_log.csv")
 
