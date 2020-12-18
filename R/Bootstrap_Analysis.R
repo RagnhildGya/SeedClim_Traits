@@ -202,6 +202,10 @@ moments_clim_long_boreal <- Moments_boreal %>%
   left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
   mutate(year = as.factor(year))
 
+#### Making data set with with summary information about moments in the data set ####
+
+
+
 
 #### Mixed effect model testing ####
 
