@@ -99,6 +99,7 @@ Trait_impute_without_intra <- function(com_dat, trait_dat){
   
   SeedClim_traits <- trait_impute(comm = com_dat,
                                   traits = trait_dat, 
+                                  scale_hierarchy = NULL,
                                   global = TRUE,
                                   taxon_col = c("Full_name", "Genus", "Family"),
                                   trait_col = "Trait_trans",
@@ -288,14 +289,14 @@ moments_clim_long_without_intra <- Moments_without_intra %>%
 memodel_data_fullcommunity <- moments_clim_long_fullcommunity %>% 
   #filter(Trait_trans %in% c("CN_ratio_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "SLA_cm2_g_log")) %>% 
   ungroup() %>%
-  select(Trait_trans, moments, Site, turfID, Temp_yearly_prev, Temp_yearly_spring, Precip_yearly, Temp_deviation_decade, Precip_deviation_decade, value, year, n) %>% 
+  select(Trait_trans, moments, Site, turfID, Temp_yearly_prev, Temp_yearly_spring, Precip_yearly, value, year, n) %>% 
   group_by(Trait_trans, moments, n) %>% 
   nest()
 
 memodel_data_without_intra <- moments_clim_long_without_intra %>% 
   #filter(Trait_trans %in% c("CN_ratio_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "SLA_cm2_g_log")) %>% 
   ungroup() %>%
-  select(Trait_trans, moments, Site, turfID, Temp_yearly_prev, Temp_yearly_spring, Precip_yearly, Temp_deviation_decade, Precip_deviation_decade, value, year, n) %>% 
+  select(Trait_trans, moments, Site, turfID, Temp_yearly_prev, Temp_yearly_spring, Precip_yearly, value, year, n) %>% 
   group_by(Trait_trans, moments, n) %>% 
   nest()
 
@@ -377,15 +378,29 @@ predict_with_random<-function(model) {
 mem_results_space <- memodel_data_fullcommunity %>%
   mutate(model = map(data, model_space))
 
+bla <- mem_results_space %>%
+  filter(Trait_trans == "C_percent",
+         moments == "mean",
+         n %in% c(1:5)) %>% 
+  unnest(data) %>% 
+  mutate(predicted = map(model, predict_with_random)) %>% 
+  unnest(predicted)
+
 tidy_space_model_predicted <- mem_results_space %>%
   mutate(model_output = map(model, tidy)) %>%
-  mutate(predicted = map(model, predict_with_random)) %>% 
   mutate(R_squared = map(model, rsquared))
 
-predicted_values_space <- tidy_space_model_predicted %>%
+predicted_values_space <- mem_results_space %>%
+  filter(Trait_trans == "C_percent",
+         n %in% c(1:5)) %>% 
   ungroup() %>%
-  select(Trait_trans, moments, data, predicted) %>%
-  unnest(c(data, predicted)) %>%
+  group_by(Trait_trans, moments) %>% 
+  
+  select(Trait_trans, moments, data, model) %>%
+  unnest(data) %>%
+  mutate(predicted = map(model, predict_with_random)) %>% 
+  select(-model) %>% 
+  unnest(predicted) %>% 
   rename(modeled = predicted, measured = value)
 
 ## Space without intra ##
@@ -394,7 +409,7 @@ mem_results_space_without_intra <- memodel_data_without_intra %>%
 
 tidy_space_model_predicted_without_intra <- mem_results_space_without_intra %>%
   mutate(model_output = map(model, tidy)) %>%
-  mutate(predicted = map(model, predict_with_random)) %>% 
+  #mutate(predicted = map(model, predict_with_random)) %>% 
   mutate(R_squared = map(model, rsquared))
 
 predicted_values_space_without_intra <- tidy_space_model_predicted_without_intra %>%
