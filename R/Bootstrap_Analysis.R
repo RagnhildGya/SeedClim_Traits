@@ -94,9 +94,27 @@ trait_graminoid <- traitdata_2 %>%
    
    return(SeedClim_traits)
  }
+
+Trait_impute_without_intra <- function(com_dat, trait_dat){
+  
+  SeedClim_traits <- trait_impute(comm = com_dat,
+                                  traits = trait_dat, 
+                                  global = TRUE,
+                                  taxon_col = c("Full_name", "Genus", "Family"),
+                                  trait_col = "Trait_trans",
+                                  value_col = "Value",
+                                  other_col = "year",
+                                  abundance_col = "cover")
+  
+  return(SeedClim_traits)
+}
+
  
 Imputed_traits_fullcommunity <- Trait_impute_per_year(com_dat = community, trait_dat = traitdata_2) %>% 
    group_by(year, Site, blockID, turfID, Trait_trans)
+
+Imputed_traits_without_intra <- Trait_impute_per_year(com_dat = community, trait_dat = traitdata_2) %>% 
+  group_by(year, Site, blockID, turfID, Trait_trans)
 
 Imputed_traits_forbs <- Trait_impute_per_year(com_dat = community_forb, trait_dat = trait_forb) %>% 
   group_by(year, Site, blockID, turfID, Trait_trans)
@@ -129,6 +147,9 @@ Imputed_traits_boreal <- Trait_impute_per_year(com_dat = community_boreal, trait
 
 #### Bootstraping community weighted means and making summarised moments of the distributions ####
 
+Moments_without_intra <- trait_np_bootstrap(imputed_traits = Imputed_traits_without_intra)
+sum_moments_without_intra <- trait_summarise_boot_moments(Moments_without_intra)
+
 Moments_fullcommunity <- trait_np_bootstrap(imputed_traits = Imputed_traits_fullcommunity)
 Moments_forbs <- trait_np_bootstrap(imputed_traits = Imputed_traits_forbs)
 Moments_graminoids <- trait_np_bootstrap(imputed_traits = Imputed_traits_graminoids)
@@ -149,6 +170,10 @@ sum_moments_boreal <- trait_summarise_boot_moments(Moments_boreal)
 sum_moments_climate_fullcommunity = bind_rows(
   sum_moments_fullcommunity %>% 
      left_join(env, by = c("Site" = "Site", "year" = "Year")))
+
+sum_moments_climate_without_intra = bind_rows(
+  sum_moments_without_intra %>% 
+    left_join(env, by = c("Site" = "Site", "year" = "Year")))
 
 sum_moments_climate_forbs = bind_rows(
   sum_moments_forbs %>% 
@@ -173,6 +198,11 @@ sum_moments_climate_boreal = bind_rows(
 
 
 moments_clim_long_fullcommunity <- Moments_fullcommunity %>% 
+  pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
+  left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
+  mutate(year = as.factor(year))
+
+moments_clim_long_without_intra <- Moments_without_intra %>% 
   pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
   left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
   mutate(year = as.factor(year))
@@ -256,6 +286,13 @@ moments_clim_long_boreal <- Moments_boreal %>%
 
 ### Making dataset for models ###
 memodel_data_fullcommunity <- moments_clim_long_fullcommunity %>% 
+  #filter(Trait_trans %in% c("CN_ratio_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "SLA_cm2_g_log")) %>% 
+  ungroup() %>%
+  select(Trait_trans, moments, Site, turfID, Temp_yearly_prev, Temp_yearly_spring, Precip_yearly, Temp_deviation_decade, Precip_deviation_decade, value, year, n) %>% 
+  group_by(Trait_trans, moments, n) %>% 
+  nest()
+
+memodel_data_without_intra <- moments_clim_long_without_intra %>% 
   #filter(Trait_trans %in% c("CN_ratio_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "SLA_cm2_g_log")) %>% 
   ungroup() %>%
   select(Trait_trans, moments, Site, turfID, Temp_yearly_prev, Temp_yearly_spring, Precip_yearly, Temp_deviation_decade, Precip_deviation_decade, value, year, n) %>% 
@@ -351,25 +388,20 @@ predicted_values_space <- tidy_space_model_predicted %>%
   unnest(c(data, predicted)) %>%
   rename(modeled = predicted, measured = value)
 
-## Space model 1 ##
+## Space without intra ##
+mem_results_space_without_intra <- memodel_data_without_intra %>%
+  mutate(model = map(data, model_space))
 
-mem_results_space_lastyeartemp <- memodel_data_fullcommunity %>%
-  mutate(model = map(data, model_space_1))
-
-tidy_space_model_predicted_lastyeartemp <- mem_results_space_lastyeartemp %>%
+tidy_space_model_predicted_without_intra <- mem_results_space_without_intra %>%
   mutate(model_output = map(model, tidy)) %>%
   mutate(predicted = map(model, predict_with_random)) %>% 
   mutate(R_squared = map(model, rsquared))
 
-## Space model 2 ##
-
-mem_results_space_springtemp <- memodel_data_fullcommunity %>%
-  mutate(model = map(data, model_space_2))
-
-tidy_space_model_predicted_springtemp <- mem_results_space_springtemp %>%
-  mutate(model_output = map(model, tidy)) %>%
-  mutate(predicted = map(model, predict_with_random)) %>% 
-  mutate(R_squared = map(model, rsquared))
+predicted_values_space_without_intra <- tidy_space_model_predicted_without_intra %>%
+  ungroup() %>%
+  select(Trait_trans, moments, data, predicted) %>%
+  unnest(c(data, predicted)) %>%
+  rename(modeled = predicted, measured = value)
 
 
 ## Time - Full community ##
@@ -542,6 +574,8 @@ model_output <-function(dat) {
 #model_output_tempAddprecip <- model_output(tidy_tempAddprecip_model_predicted, c("Temp_yearly", "Temp_deviation_decade","scale(Precip_yearly)", "scale(Precip_deviation_decade)"))
 model_output_time <- model_output(tidy_time_model_predicted)
 model_output_space <- model_output(tidy_space_model_predicted)
+
+model_output_space_without_intra <- model_output(tidy_space_model_predicted_without_intra)
 
 model_output_time_forbs <- model_output(tidy_time_model_predicted_forbs)
 model_output_time_graminoids <- model_output(tidy_time_model_predicted_graminoids)
