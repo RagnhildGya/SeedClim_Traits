@@ -272,6 +272,11 @@ time <- model_output_time %>%
   select(Trait_trans, moments, term, effect, std.error, p.value) %>% 
   mutate(moments = "time")
 
+without_intra <- model_output_space_without_intra %>% 
+  filter(moments == "mean") %>% 
+  select(Trait_trans, moments, term, effect, std.error, p.value) %>% 
+  mutate(moments = "without_intra")
+
 time_skewness <- model_output_time %>% 
   filter(moments == "skewness") %>% 
   select(Trait_trans, moments, term, effect, std.error, p.value) %>% 
@@ -304,14 +309,15 @@ model_output_space %>%
 ## Mean ##
 
 model_output_space %>% 
-  bind_rows(time) %>% 
+  bind_rows(time) %>%
+  bind_rows(without_intra) %>% 
   mutate(Trait_moment = paste0(moments, "_", Trait_trans)) %>% 
   mutate(trend_col = ifelse(effect > 0, "positive", "negative")) %>% 
   mutate(significance = ifelse(p.value > 0.05, "Non significant", "Significant")) %>% 
-  filter(moments %in% c("mean", "time")) %>% 
-  mutate(moments = factor(moments, levels = c("time", "mean"))) %>% 
+  filter(moments %in% c("mean", "time", "without_intra")) %>% 
+  mutate(moments = factor(moments, levels = c("time", "without_intra", "mean"))) %>% 
   mutate(coloring = paste0(moments, "", significance)) %>% 
-  mutate(coloring = factor(coloring, levels = c("timeNon significant", "timeSignificant", "meanNon significant", "meanSignificant"))) %>% 
+  mutate(coloring = factor(coloring, levels = c("timeNon significant", "timeSignificant", "without_intraNon significant", "without_intraSignificant", "meanNon significant", "meanSignificant" ))) %>% 
   mutate(term = as.factor(recode(term, "Temp_yearly_prev" = "PreviousYearTemp", "scale(Precip_yearly)" = "Precipitation", "Temp_yearly_spring" = "SpringTemp", "Temp_yearly_prev:scale(Precip_yearly)" = "PreviousYearTemp:Precipitation", "scale(Precip_yearly):Temp_yearly_spring" ="Precipitation:SpringTemp"))) %>% 
   mutate(term = factor(term, levels = c("PreviousYearTemp", "Precipitation", "SpringTemp", "PreviousYearTemp:Precipitation", "Precipitation:SpringTemp"))) %>% 
   mutate(Trait_trans = factor(Trait_trans, levels = c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent", "SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))) %>%
@@ -320,8 +326,8 @@ model_output_space %>%
   #geom_bar_pattern(aes(pattern = 'stripe'), stat = "identity", position = "dodge") +
   #geom_errorbar(aes(xmin = effect-std.error, xmax = effect+std.error)) +
   facet_grid(~term, scales = "free") +
-  scale_color_manual(values = c("#89B7E1", "#2E75B6")) +
-  scale_fill_manual(values = c("#EDEDED", "#89B7E1", "#EDEDED", "#2E75B6")) +
+  scale_color_manual(values = c("#89B7E1", "#5693CA", "#2E75B6")) +
+  scale_fill_manual(values = c("#EDEDED", "#89B7E1", "#EDEDED", "#5693CA", "#EDEDED", "#2E75B6")) +
   #scale_shape_manual(values = c(1,19)) +
   geom_hline(yintercept =  0) +
   theme_bw() +
