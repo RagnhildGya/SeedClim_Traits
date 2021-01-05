@@ -30,20 +30,20 @@ set.seed(47)
 community <- community %>% 
   filter(!year %in% c("2010", "2016"))
 
-community_forb <- community %>% 
-  filter(functionalGroup %in% c("forb", "woody", "pteridophyte"))
-
-community_graminoid <- community %>% 
-  filter(functionalGroup == "graminoid")
-
-community_alpine <- community %>% 
-  filter(siteCode %in% c("alp1", "alp2", "alp3", "alp4"))
-
-community_subalpine <- community %>% 
-  filter(siteCode %in% c("int1", "int2", "int3", "int4"))
-
-community_boreal <- community %>% 
-  filter(siteCode %in% c("low1", "low2", "low3", "low4"))
+# community_forb <- community %>% 
+#   filter(functionalGroup %in% c("forb", "woody", "pteridophyte"))
+# 
+# community_graminoid <- community %>% 
+#   filter(functionalGroup == "graminoid")
+# 
+# community_alpine <- community %>% 
+#   filter(siteCode %in% c("alp1", "alp2", "alp3", "alp4"))
+# 
+# community_subalpine <- community %>% 
+#   filter(siteCode %in% c("int1", "int2", "int3", "int4"))
+# 
+# community_boreal <- community %>% 
+#   filter(siteCode %in% c("low1", "low2", "low3", "low4"))
 
 ## Trait data ##
 
@@ -51,11 +51,11 @@ traitdata_2 <- traitdata_1 %>%
   mutate(blockID = "",
          turfID = "") 
 
-trait_forb <- traitdata_2 %>% 
-  filter(functionalGroup %in% c("forb", "woody", "pteridophyte"))
-
-trait_graminoid <- traitdata_2 %>% 
-  filter(functionalGroup == "graminoid")
+# trait_forb <- traitdata_2 %>% 
+#   filter(functionalGroup %in% c("forb", "woody", "pteridophyte"))
+# 
+# trait_graminoid <- traitdata_2 %>% 
+#   filter(functionalGroup == "graminoid")
 
 # env <- env %>% 
 #   select(-Temp_se, -Precip_se)
@@ -116,20 +116,20 @@ Imputed_traits_fullcommunity <- Trait_impute_per_year(com_dat = community, trait
 Imputed_traits_without_intra <- Trait_impute_per_year(com_dat = community, trait_dat = traitdata_2) %>% 
   group_by(year, Site, blockID, turfID, Trait_trans)
 
-Imputed_traits_forbs <- Trait_impute_per_year(com_dat = community_forb, trait_dat = trait_forb) %>% 
-  group_by(year, Site, blockID, turfID, Trait_trans)
-
-Imputed_traits_graminoids <- Trait_impute_per_year(com_dat = community_graminoid, trait_dat = trait_graminoid) %>% 
-  group_by(year, Site, blockID, turfID, Trait_trans)
-
-Imputed_traits_alpine <- Trait_impute_per_year(com_dat = community_alpine, trait_dat = traitdata_2) %>% 
-  group_by(year, Site, blockID, turfID, Trait_trans)
-
-Imputed_traits_subalpine <- Trait_impute_per_year(com_dat = community_subalpine, trait_dat = traitdata_2) %>% 
-  group_by(year, Site, blockID, turfID, Trait_trans)
-
-Imputed_traits_boreal <- Trait_impute_per_year(com_dat = community_boreal, trait_dat = traitdata_2) %>% 
-  group_by(year, Site, blockID, turfID, Trait_trans)
+# Imputed_traits_forbs <- Trait_impute_per_year(com_dat = community_forb, trait_dat = trait_forb) %>% 
+#   group_by(year, Site, blockID, turfID, Trait_trans)
+# 
+# Imputed_traits_graminoids <- Trait_impute_per_year(com_dat = community_graminoid, trait_dat = trait_graminoid) %>% 
+#   group_by(year, Site, blockID, turfID, Trait_trans)
+# 
+# Imputed_traits_alpine <- Trait_impute_per_year(com_dat = community_alpine, trait_dat = traitdata_2) %>% 
+#   group_by(year, Site, blockID, turfID, Trait_trans)
+# 
+# Imputed_traits_subalpine <- Trait_impute_per_year(com_dat = community_subalpine, trait_dat = traitdata_2) %>% 
+#   group_by(year, Site, blockID, turfID, Trait_trans)
+# 
+# Imputed_traits_boreal <- Trait_impute_per_year(com_dat = community_boreal, trait_dat = traitdata_2) %>% 
+#   group_by(year, Site, blockID, turfID, Trait_trans)
 
 
 # SeedClim_traits_allYears <- trait_impute(comm = community,
@@ -151,18 +151,18 @@ Moments_without_intra <- trait_np_bootstrap(imputed_traits = Imputed_traits_with
 sum_moments_without_intra <- trait_summarise_boot_moments(Moments_without_intra)
 
 Moments_fullcommunity <- trait_np_bootstrap(imputed_traits = Imputed_traits_fullcommunity)
-Moments_forbs <- trait_np_bootstrap(imputed_traits = Imputed_traits_forbs)
-Moments_graminoids <- trait_np_bootstrap(imputed_traits = Imputed_traits_graminoids)
-Moments_alpine <- trait_np_bootstrap(imputed_traits = Imputed_traits_alpine)
-Moments_subalpine <- trait_np_bootstrap(imputed_traits = Imputed_traits_subalpine)
-Moments_boreal <- trait_np_bootstrap(imputed_traits = Imputed_traits_boreal)
+# Moments_forbs <- trait_np_bootstrap(imputed_traits = Imputed_traits_forbs)
+# Moments_graminoids <- trait_np_bootstrap(imputed_traits = Imputed_traits_graminoids)
+# Moments_alpine <- trait_np_bootstrap(imputed_traits = Imputed_traits_alpine)
+# Moments_subalpine <- trait_np_bootstrap(imputed_traits = Imputed_traits_subalpine)
+# Moments_boreal <- trait_np_bootstrap(imputed_traits = Imputed_traits_boreal)
 
 sum_moments_fullcommunity <- trait_summarise_boot_moments(Moments_fullcommunity)
-sum_moments_forbs <- trait_summarise_boot_moments(Moments_forbs)
-sum_moments_graminoids <- trait_summarise_boot_moments(Moments_graminoids)
-sum_moments_alpine <- trait_summarise_boot_moments(Moments_alpine)
-sum_moments_subalpine <- trait_summarise_boot_moments(Moments_subalpine)
-sum_moments_boreal <- trait_summarise_boot_moments(Moments_boreal)
+# sum_moments_forbs <- trait_summarise_boot_moments(Moments_forbs)
+# sum_moments_graminoids <- trait_summarise_boot_moments(Moments_graminoids)
+# sum_moments_alpine <- trait_summarise_boot_moments(Moments_alpine)
+# sum_moments_subalpine <- trait_summarise_boot_moments(Moments_subalpine)
+# sum_moments_boreal <- trait_summarise_boot_moments(Moments_boreal)
 
 
 #### Adding climate info & pivoting longer ####
@@ -175,25 +175,25 @@ sum_moments_climate_without_intra = bind_rows(
   sum_moments_without_intra %>% 
     left_join(env, by = c("Site" = "Site", "year" = "Year")))
 
-sum_moments_climate_forbs = bind_rows(
-  sum_moments_forbs %>% 
-    left_join(env, by = c("Site" = "Site", "year" = "Year")))
-
-sum_moments_climate_graminoids = bind_rows(
-  sum_moments_graminoids %>% 
-    left_join(env, by = c("Site" = "Site", "year" = "Year")))
-
-sum_moments_climate_alpine = bind_rows(
-  sum_moments_alpine %>% 
-    left_join(env, by = c("Site" = "Site", "year" = "Year")))
-
-sum_moments_climate_subalpine = bind_rows(
-  sum_moments_subalpine %>% 
-    left_join(env, by = c("Site" = "Site", "year" = "Year")))
-
-sum_moments_climate_boreal = bind_rows(
-  sum_moments_boreal %>% 
-    left_join(env, by = c("Site" = "Site", "year" = "Year")))
+# sum_moments_climate_forbs = bind_rows(
+#   sum_moments_forbs %>% 
+#     left_join(env, by = c("Site" = "Site", "year" = "Year")))
+# 
+# sum_moments_climate_graminoids = bind_rows(
+#   sum_moments_graminoids %>% 
+#     left_join(env, by = c("Site" = "Site", "year" = "Year")))
+# 
+# sum_moments_climate_alpine = bind_rows(
+#   sum_moments_alpine %>% 
+#     left_join(env, by = c("Site" = "Site", "year" = "Year")))
+# 
+# sum_moments_climate_subalpine = bind_rows(
+#   sum_moments_subalpine %>% 
+#     left_join(env, by = c("Site" = "Site", "year" = "Year")))
+# 
+# sum_moments_climate_boreal = bind_rows(
+#   sum_moments_boreal %>% 
+#     left_join(env, by = c("Site" = "Site", "year" = "Year")))
 
 
 
@@ -207,30 +207,30 @@ moments_clim_long_without_intra <- Moments_without_intra %>%
   left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
   mutate(year = as.factor(year))
 
-moments_clim_long_forbs <- Moments_forbs %>% 
-  pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
-  left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
-  mutate(year = as.factor(year))
-
-moments_clim_long_graminoids <- Moments_graminoids %>% 
-  pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
-  left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
-  mutate(year = as.factor(year))
-
-moments_clim_long_alpine <- Moments_alpine %>% 
-  pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
-  left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
-  mutate(year = as.factor(year))
-
-moments_clim_long_subalpine <- Moments_subalpine %>% 
-  pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
-  left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
-  mutate(year = as.factor(year))
-
-moments_clim_long_boreal <- Moments_boreal %>% 
-  pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
-  left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
-  mutate(year = as.factor(year))
+# moments_clim_long_forbs <- Moments_forbs %>% 
+#   pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
+#   left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
+#   mutate(year = as.factor(year))
+# 
+# moments_clim_long_graminoids <- Moments_graminoids %>% 
+#   pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
+#   left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
+#   mutate(year = as.factor(year))
+# 
+# moments_clim_long_alpine <- Moments_alpine %>% 
+#   pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
+#   left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
+#   mutate(year = as.factor(year))
+# 
+# moments_clim_long_subalpine <- Moments_subalpine %>% 
+#   pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
+#   left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
+#   mutate(year = as.factor(year))
+# 
+# moments_clim_long_boreal <- Moments_boreal %>% 
+#   pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
+#   left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
+#   mutate(year = as.factor(year))
 
 #### Making data set with with summary information about moments in the data set ####
 
@@ -299,40 +299,40 @@ memodel_data_without_intra <- moments_clim_long_without_intra %>%
   group_by(Trait_trans, moments, n) %>% 
   nest()
 
-memodel_data_forbs <- moments_clim_long_forbs %>% 
-  #filter(Trait_trans %in% c("CN_ratio_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "SLA_cm2_g_log")) %>% 
-  ungroup() %>%
-  select(Trait_trans, moments, Site, turfID, Temp_yearly_prev, Temp_yearly_spring,  Precip_yearly, Temp_deviation_decade, Precip_deviation_decade, value, year, n) %>% 
-  group_by(Trait_trans, moments, n) %>% 
-  nest()
-
-memodel_data_graminoids <- moments_clim_long_graminoids %>% 
-  #filter(Trait_trans %in% c("CN_ratio_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "SLA_cm2_g_log")) %>% 
-  ungroup() %>%
-  select(Trait_trans, moments, Site, turfID, Temp_yearly_prev, Temp_yearly_spring,  Precip_yearly, Temp_deviation_decade, Precip_deviation_decade, value, year, n) %>% 
-  group_by(Trait_trans, moments, n) %>% 
-  nest()
-
-memodel_data_alpine <- moments_clim_long_alpine %>% 
-  #filter(Trait_trans %in% c("CN_ratio_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "SLA_cm2_g_log")) %>% 
-  ungroup() %>%
-  select(Trait_trans, moments, Site, turfID, Temp_yearly_prev, Temp_yearly_spring,  Precip_yearly, Temp_deviation_decade, Precip_deviation_decade, value, year, n) %>% 
-  group_by(Trait_trans, moments, n) %>% 
-  nest()
-
-memodel_data_subalpine <- moments_clim_long_subalpine %>% 
-  #filter(Trait_trans %in% c("CN_ratio_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "SLA_cm2_g_log")) %>% 
-  ungroup() %>%
-  select(Trait_trans, moments, Site, turfID, Temp_yearly_prev, Temp_yearly_spring,  Precip_yearly, Temp_deviation_decade, Precip_deviation_decade, value, year, n) %>% 
-  group_by(Trait_trans, moments, n) %>% 
-  nest()
-
-memodel_data_boreal <- moments_clim_long_boreal %>% 
-  #filter(Trait_trans %in% c("CN_ratio_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "SLA_cm2_g_log")) %>% 
-  ungroup() %>%
-  select(Trait_trans, moments, Site, turfID, Temp_yearly_prev, Temp_yearly_spring, Precip_yearly, Temp_deviation_decade, Precip_deviation_decade, value, year, n) %>% 
-  group_by(Trait_trans, moments, n) %>% 
-  nest()
+# memodel_data_forbs <- moments_clim_long_forbs %>% 
+#   #filter(Trait_trans %in% c("CN_ratio_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "SLA_cm2_g_log")) %>% 
+#   ungroup() %>%
+#   select(Trait_trans, moments, Site, turfID, Temp_yearly_prev, Temp_yearly_spring,  Precip_yearly, Temp_deviation_decade, Precip_deviation_decade, value, year, n) %>% 
+#   group_by(Trait_trans, moments, n) %>% 
+#   nest()
+# 
+# memodel_data_graminoids <- moments_clim_long_graminoids %>% 
+#   #filter(Trait_trans %in% c("CN_ratio_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "SLA_cm2_g_log")) %>% 
+#   ungroup() %>%
+#   select(Trait_trans, moments, Site, turfID, Temp_yearly_prev, Temp_yearly_spring,  Precip_yearly, Temp_deviation_decade, Precip_deviation_decade, value, year, n) %>% 
+#   group_by(Trait_trans, moments, n) %>% 
+#   nest()
+# 
+# memodel_data_alpine <- moments_clim_long_alpine %>% 
+#   #filter(Trait_trans %in% c("CN_ratio_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "SLA_cm2_g_log")) %>% 
+#   ungroup() %>%
+#   select(Trait_trans, moments, Site, turfID, Temp_yearly_prev, Temp_yearly_spring,  Precip_yearly, Temp_deviation_decade, Precip_deviation_decade, value, year, n) %>% 
+#   group_by(Trait_trans, moments, n) %>% 
+#   nest()
+# 
+# memodel_data_subalpine <- moments_clim_long_subalpine %>% 
+#   #filter(Trait_trans %in% c("CN_ratio_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "SLA_cm2_g_log")) %>% 
+#   ungroup() %>%
+#   select(Trait_trans, moments, Site, turfID, Temp_yearly_prev, Temp_yearly_spring,  Precip_yearly, Temp_deviation_decade, Precip_deviation_decade, value, year, n) %>% 
+#   group_by(Trait_trans, moments, n) %>% 
+#   nest()
+# 
+# memodel_data_boreal <- moments_clim_long_boreal %>% 
+#   #filter(Trait_trans %in% c("CN_ratio_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "SLA_cm2_g_log")) %>% 
+#   ungroup() %>%
+#   select(Trait_trans, moments, Site, turfID, Temp_yearly_prev, Temp_yearly_spring, Precip_yearly, Temp_deviation_decade, Precip_deviation_decade, value, year, n) %>% 
+#   group_by(Trait_trans, moments, n) %>% 
+#   nest()
 
 ### Funcitons for different models and model predictions later ###
 
@@ -419,80 +419,80 @@ predicted_values_time <- tidy_time_model_predicted %>%
   unnest(c(data, predicted)) %>%
   rename(modeled = predicted, measured = value)
 
-## Time - Forbs ##
-mem_results_time_forbs <- memodel_data_forbs %>%
-  mutate(model = map(data, model_time))
-
-tidy_time_model_predicted_forbs <- mem_results_time_forbs %>%
-  mutate(model_output = map(model, tidy)) %>%
-  mutate(predicted = map(model, predict_with_random)) %>% 
-  mutate(R_squared = map(model, rsquared))
-
-predicted_values_time_forbs <- tidy_time_model_predicted_forbs %>%
-  ungroup() %>%
-  select(Trait_trans, moments, data, predicted) %>%
-  unnest(c(data, predicted)) %>%
-  rename(modeled = predicted, measured = value)
-
-## Time - Graminoids ##
-mem_results_time_graminoids <- memodel_data_graminoids %>%
-  mutate(model = map(data, model_time))
-
-tidy_time_model_predicted_graminoids <- mem_results_time_graminoids %>%
-  mutate(model_output = map(model, tidy)) %>%
-  mutate(predicted = map(model, predict_with_random)) %>% 
-  mutate(R_squared = map(model, rsquared))
-
-predicted_values_time_graminoids <- tidy_time_model_predicted_graminoids %>%
-  ungroup() %>%
-  select(Trait_trans, moments, data, predicted) %>%
-  unnest(c(data, predicted)) %>%
-  rename(modeled = predicted, measured = value)
-
-## Time - alpine ##
-mem_results_time_alpine <- memodel_data_alpine %>%
-  mutate(model = map(data, model_time))
-
-tidy_time_model_predicted_alpine <- mem_results_time_alpine %>%
-  mutate(model_output = map(model, tidy)) %>%
-  mutate(predicted = map(model, predict_with_random)) %>% 
-  mutate(R_squared = map(model, rsquared))
-
-predicted_values_time_alpine <- tidy_time_model_predicted_alpine %>%
-  ungroup() %>%
-  select(Trait_trans, moments, data, predicted) %>%
-  unnest(c(data, predicted)) %>%
-  rename(modeled = predicted, measured = value)
-
-## Time - subalpine ##
-mem_results_time_subalpine <- memodel_data_subalpine %>%
-  mutate(model = map(data, model_time))
-
-tidy_time_model_predicted_subalpine <- mem_results_time_subalpine %>%
-  mutate(model_output = map(model, tidy)) %>%
-  mutate(predicted = map(model, predict_with_random)) %>% 
-  mutate(R_squared = map(model, rsquared))
-
-predicted_values_time_subalpine <- tidy_time_model_predicted_subalpine %>%
-  ungroup() %>%
-  select(Trait_trans, moments, data, predicted) %>%
-  unnest(c(data, predicted)) %>%
-  rename(modeled = predicted, measured = value)
-
-## Time - boreal ##
-mem_results_time_boreal <- memodel_data_boreal %>%
-  mutate(model = map(data, model_time))
-
-tidy_time_model_predicted_boreal <- mem_results_time_boreal %>%
-  mutate(model_output = map(model, tidy)) %>%
-  mutate(predicted = map(model, predict_with_random)) %>% 
-  mutate(R_squared = map(model, rsquared))
-
-predicted_values_time_boreal <- tidy_time_model_predicted_boreal %>%
-  ungroup() %>%
-  select(Trait_trans, moments, data, predicted) %>%
-  unnest(c(data, predicted)) %>%
-  rename(modeled = predicted, measured = value)
+# ## Time - Forbs ##
+# mem_results_time_forbs <- memodel_data_forbs %>%
+#   mutate(model = map(data, model_time))
+# 
+# tidy_time_model_predicted_forbs <- mem_results_time_forbs %>%
+#   mutate(model_output = map(model, tidy)) %>%
+#   mutate(predicted = map(model, predict_with_random)) %>% 
+#   mutate(R_squared = map(model, rsquared))
+# 
+# predicted_values_time_forbs <- tidy_time_model_predicted_forbs %>%
+#   ungroup() %>%
+#   select(Trait_trans, moments, data, predicted) %>%
+#   unnest(c(data, predicted)) %>%
+#   rename(modeled = predicted, measured = value)
+# 
+# ## Time - Graminoids ##
+# mem_results_time_graminoids <- memodel_data_graminoids %>%
+#   mutate(model = map(data, model_time))
+# 
+# tidy_time_model_predicted_graminoids <- mem_results_time_graminoids %>%
+#   mutate(model_output = map(model, tidy)) %>%
+#   mutate(predicted = map(model, predict_with_random)) %>% 
+#   mutate(R_squared = map(model, rsquared))
+# 
+# predicted_values_time_graminoids <- tidy_time_model_predicted_graminoids %>%
+#   ungroup() %>%
+#   select(Trait_trans, moments, data, predicted) %>%
+#   unnest(c(data, predicted)) %>%
+#   rename(modeled = predicted, measured = value)
+# 
+# ## Time - alpine ##
+# mem_results_time_alpine <- memodel_data_alpine %>%
+#   mutate(model = map(data, model_time))
+# 
+# tidy_time_model_predicted_alpine <- mem_results_time_alpine %>%
+#   mutate(model_output = map(model, tidy)) %>%
+#   mutate(predicted = map(model, predict_with_random)) %>% 
+#   mutate(R_squared = map(model, rsquared))
+# 
+# predicted_values_time_alpine <- tidy_time_model_predicted_alpine %>%
+#   ungroup() %>%
+#   select(Trait_trans, moments, data, predicted) %>%
+#   unnest(c(data, predicted)) %>%
+#   rename(modeled = predicted, measured = value)
+# 
+# ## Time - subalpine ##
+# mem_results_time_subalpine <- memodel_data_subalpine %>%
+#   mutate(model = map(data, model_time))
+# 
+# tidy_time_model_predicted_subalpine <- mem_results_time_subalpine %>%
+#   mutate(model_output = map(model, tidy)) %>%
+#   mutate(predicted = map(model, predict_with_random)) %>% 
+#   mutate(R_squared = map(model, rsquared))
+# 
+# predicted_values_time_subalpine <- tidy_time_model_predicted_subalpine %>%
+#   ungroup() %>%
+#   select(Trait_trans, moments, data, predicted) %>%
+#   unnest(c(data, predicted)) %>%
+#   rename(modeled = predicted, measured = value)
+# 
+# ## Time - boreal ##
+# mem_results_time_boreal <- memodel_data_boreal %>%
+#   mutate(model = map(data, model_time))
+# 
+# tidy_time_model_predicted_boreal <- mem_results_time_boreal %>%
+#   mutate(model_output = map(model, tidy)) %>%
+#   mutate(predicted = map(model, predict_with_random)) %>% 
+#   mutate(R_squared = map(model, rsquared))
+# 
+# predicted_values_time_boreal <- tidy_time_model_predicted_boreal %>%
+#   ungroup() %>%
+#   select(Trait_trans, moments, data, predicted) %>%
+#   unnest(c(data, predicted)) %>%
+#   rename(modeled = predicted, measured = value)
 
 
 ## Anomalies ##
@@ -577,12 +577,12 @@ model_output_space <- model_output(tidy_space_model_predicted)
 
 model_output_space_without_intra <- model_output(tidy_space_model_predicted_without_intra)
 
-model_output_time_forbs <- model_output(tidy_time_model_predicted_forbs)
-model_output_time_graminoids <- model_output(tidy_time_model_predicted_graminoids)
-
-model_output_time_alpine <- model_output(tidy_time_model_predicted_alpine)
-model_output_time_subalpine <- model_output(tidy_time_model_predicted_subalpine)
-model_output_time_boreal <- model_output(tidy_time_model_predicted_boreal)
+# model_output_time_forbs <- model_output(tidy_time_model_predicted_forbs)
+# model_output_time_graminoids <- model_output(tidy_time_model_predicted_graminoids)
+# 
+# model_output_time_alpine <- model_output(tidy_time_model_predicted_alpine)
+# model_output_time_subalpine <- model_output(tidy_time_model_predicted_subalpine)
+# model_output_time_boreal <- model_output(tidy_time_model_predicted_boreal)
 
 model_output_anomalies <- tidy_anomalies_model_predicted %>% 
   select(Trait_trans, moments, n, model_output, R_squared) %>% 
