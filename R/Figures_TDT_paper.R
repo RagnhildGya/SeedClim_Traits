@@ -545,3 +545,10 @@ moments_clim_long_fullcommunity %>%
   scale_fill_manual(values = Precip_palette)
   
 
+#### Making plots for predicted values and observed values
+
+predicted_values_space %>% 
+  ggplot(aes(x = Precip_yearly, y = measured)) +
+  geom_point() +
+  facet_grid(~Trait_trans)
+
