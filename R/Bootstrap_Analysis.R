@@ -382,75 +382,16 @@ tidy_space_model_predicted <- mem_results_space %>%
   mutate(model_output = map(model, tidy)) %>%
   mutate(R_squared = map(model, rsquared))
 
-predicted_values_space <- tidy_space_model_predicted %>% 
-  filter(n == 47) %>% 
-  select(Trait_trans, moments, data, model) %>%
-  unnest(data) %>% 
+predicted_values_space_ <- tidy_space_model_predicted %>%
   ungroup() %>%
-  mutate(predicted = map(model, predict_with_random)) %>% 
-  select(-model) %>%
-  unnest(predicted) %>%
-  rename(modeled = predicted, measured = value) %>% 
-  unique()
-  ungroup() %>% 
-  group_by(Trait_trans, moments, Site, turfID, year, Temp_yearly_spring, Temp_yearly_prev, Precip_yearly, measured) %>% 
-  summarise(modeled = mean(modeled))
-
-  
-  
-mem_results_space %>% 
-  unnest(data) %>% 
-  ungroup() %>% 
-  group_by(Trait_trans, moments, Site, turfID, year) %>% 
-  mutate(value = mean(value)) %>%
-  mutate(predicted = map(model, predict_with_random)) %>% 
-  unnest(predicted) %>% 
-  select(-n, -model) %>% 
-  unique()
-
-a_model <- mem_results_space[[5]][[1]]
-
-c <- predict(object = a_model, newdata = new_data, re.form = NULL)
-
-bla <- mem_results_space %>%
-  filter(Trait_trans == "C_percent",
-         moments == "mean",
-         n %in% c(1:5)) %>% 
-  unnest(data) %>% 
-  mutate(predicted = map(model, predict_with_random)) %>% 
-  unnest(predicted)
-
-b <- mem_results_space %>% 
-  mutate(predicted = map(model, predict_with_random)) %>% 
-  unnest(predicted)
-
-new_data <- env %>% 
-  ungroup() %>% 
-  select(Temp_yearly_prev, Temp_yearly_spring, Precip_yearly, Year) %>% 
-  rename(year = Year) %>% 
-  filter(year %in% c("2009", "2011", "2012", "2013", "2015", "2017"))
+  select(Trait_trans, moments, data, predicted) %>%
+  unnest(c(data, predicted)) %>%
+  rename(modeled = predicted, measured = value)
 
 
-## Run model on one of the boostrappings of the mean of SLA to make a figure ##
-SLA_mean <- memodel_data_fullcommunity %>%
-  filter(Trait_trans == "SLA_cm2_g_log",
-         moments == "mean",
-         n == 90) %>% 
-  unnest(data) %>% 
-  ungroup()
-  
-mem_results_SLA_mean <- lmer(value ~ Temp_yearly_spring * scale(Precip_yearly) + (1 | year), data = SLA_mean)
-
-newdata_try<-expand.grid(Precip_yearly=seq(400,6000, length=500), Temp_yearly_spring=c(6.5, 8.5, 10.5), year = c(2009, 2011, 2012, 2013, 2015, 2017))
-
-newdata_try$predicted <- predict(object = mem_results_SLA_mean, newdata = newdata_try, re.form = NA, allow.new.levels=TRUE)
-
-ggplot(SLA_mean, aes(x = Precip_yearly, y = value)) +
-  geom_jitter(show.legend = FALSE) +
-  theme_minimal(base_size = 11) +
-  geom_line(aes(x = Precip_yearly, y = predicted, color = factor(Temp_yearly_spring)), data=newdata_try, size = 1, inherit.aes = FALSE, show.legend = TRUE)
-
-
+## Without intraspecific variability ##
+mem_results_space_without_intra <- memodel_data_without_intra %>%
+  mutate(model = map(data, model_space))
 
 tidy_space_model_predicted_without_intra <- mem_results_space_without_intra %>%
   mutate(model_output = map(model, tidy)) %>%
@@ -682,6 +623,52 @@ model_output_anomalies <- tidy_anomalies_model_predicted %>%
                            CIlow.fit < 0 & CIhigh.fit > 0 ~ "No"))
 
 #write.table(x = model_output, file = "model_output_TDT.csv")
+
+
+#### Simpler mixed effect models on specific traits to make predicted plots ####
+
+## Run model on one of the boostrappings of the mean of SLA to make a figure ##
+SLA_mean <- memodel_data_fullcommunity %>%
+  filter(Trait_trans == "SLA_cm2_g_log",
+         moments == "mean",
+         n == 90) %>% 
+  unnest(data) %>% 
+  ungroup()
+
+mem_results_SLA_mean <- lmer(value ~ Temp_yearly_spring * scale(Precip_yearly) + (1 | year), data = SLA_mean)
+
+newdata_SLA<-expand.grid(Precip_yearly=seq(400,6000, length=500), Temp_yearly_spring=c(6.5, 9.1, 10.9), year = c(2009, 2011, 2012, 2013, 2015, 2017))
+
+newdata_SLA$predicted <- predict(object = mem_results_SLA_mean, newdata = newdata_SLA, re.form = NA, allow.new.levels=TRUE)
+
+## Run model on one of the boostrappings of the mean of LDMC to make a figure ##
+LDMC_mean <- memodel_data_fullcommunity %>%
+  filter(Trait_trans == "LDMC",
+         moments == "mean",
+         n == 90) %>% 
+  unnest(data) %>% 
+  ungroup()
+
+mem_results_LDMC_mean <- lmer(value ~ Temp_yearly_spring * scale(Precip_yearly) + (1 | year), data = LDMC_mean)
+
+newdata_LDMC<-expand.grid(Precip_yearly=seq(400,6000, length=500), Temp_yearly_spring=c(6.5, 9.1, 10.9), year = c(2009, 2011, 2012, 2013, 2015, 2017))
+
+newdata_LDMC$predicted <- predict(object = mem_results_LDMC_mean, newdata = newdata_LDMC, re.form = NA, allow.new.levels=TRUE)
+
+## Run model on one of the boostrappings of the mean of plant heigh to make a figure ##
+Plant_height_mean <- memodel_data_fullcommunity %>%
+  filter(Trait_trans == "Plant_Height_mm_log",
+         moments == "mean",
+         n == 90) %>% 
+  unnest(data) %>% 
+  ungroup()
+
+mem_results_height_mean <- lmer(value ~ Temp_yearly_spring * scale(Precip_yearly) + (1 | year), data = Plant_height_mean)
+
+newdata_height<-expand.grid(Precip_yearly=seq(400,6000, length=500), Temp_yearly_spring=c(6.5, 9.1, 10.9), year = c(2009, 2011, 2012, 2013, 2015, 2017))
+
+newdata_height$predicted <- predict(object = mem_results_height_mean, newdata = newdata_height, re.form = NA, allow.new.levels=TRUE)
+
 
 
 #### Correlation #### Needs to be updated
