@@ -378,6 +378,40 @@ predict_with_random<-function(model) {
 mem_results_space <- memodel_data_fullcommunity %>%
   mutate(model = map(data, model_space))
 
+tidy_space_model_predicted <- mem_results_space %>%
+  mutate(model_output = map(model, tidy)) %>%
+  mutate(R_squared = map(model, rsquared))
+
+predicted_values_space <- tidy_space_model_predicted %>% 
+  filter(n == 47) %>% 
+  select(Trait_trans, moments, data, model) %>%
+  unnest(data) %>% 
+  ungroup() %>%
+  mutate(predicted = map(model, predict_with_random)) %>% 
+  select(-model) %>%
+  unnest(predicted) %>%
+  rename(modeled = predicted, measured = value) %>% 
+  unique()
+  ungroup() %>% 
+  group_by(Trait_trans, moments, Site, turfID, year, Temp_yearly_spring, Temp_yearly_prev, Precip_yearly, measured) %>% 
+  summarise(modeled = mean(modeled))
+
+  
+  
+mem_results_space %>% 
+  unnest(data) %>% 
+  ungroup() %>% 
+  group_by(Trait_trans, moments, Site, turfID, year) %>% 
+  mutate(value = mean(value)) %>%
+  mutate(predicted = map(model, predict_with_random)) %>% 
+  unnest(predicted) %>% 
+  select(-n, -model) %>% 
+  unique()
+
+a_model <- mem_results_space[[5]][[1]]
+
+c <- predict(object = a_model, newdata = new_data, re.form = NULL)
+
 bla <- mem_results_space %>%
   filter(Trait_trans == "C_percent",
          moments == "mean",
@@ -386,21 +420,47 @@ bla <- mem_results_space %>%
   mutate(predicted = map(model, predict_with_random)) %>% 
   unnest(predicted)
 
-tidy_space_model_predicted <- mem_results_space %>%
+b <- mem_results_space %>% 
+  mutate(predicted = map(model, predict_with_random)) %>% 
+  unnest(predicted)
+
+new_data <- env %>% 
+  ungroup() %>% 
+  select(Temp_yearly_prev, Temp_yearly_spring, Precip_yearly, Year) %>% 
+  rename(year = Year) %>% 
+  filter(year %in% c("2009", "2011", "2012", "2013", "2015", "2017"))
+
+
+## Run model on one of the boostrappings of the mean of SLA to make a figure ##
+SLA_mean <- memodel_data_fullcommunity %>%
+  filter(Trait_trans == "SLA_cm2_g_log",
+         moments == "mean",
+         n == 90) %>% 
+  unnest(data) %>% 
+  ungroup()
+  
+mem_results_SLA_mean <- lmer(value ~ Temp_yearly_spring * scale(Precip_yearly) + (1 | year), data = SLA_mean)
+
+newdata_try<-expand.grid(Precip_yearly=seq(400,6000, length=500), Temp_yearly_spring=c(6.5, 8.5, 10.5), year = c(2009, 2011, 2012, 2013, 2015, 2017))
+
+newdata_try$predicted <- predict(object = mem_results_SLA_mean, newdata = newdata_try, re.form = NA, allow.new.levels=TRUE)
+
+ggplot(SLA_mean, aes(x = Precip_yearly, y = value)) +
+  geom_jitter(show.legend = FALSE) +
+  theme_minimal(base_size = 11) +
+  geom_line(aes(x = Precip_yearly, y = predicted, color = factor(Temp_yearly_spring)), data=newdata_try, size = 1, inherit.aes = FALSE, show.legend = TRUE)
+
+
+
+tidy_space_model_predicted_without_intra <- mem_results_space_without_intra %>%
   mutate(model_output = map(model, tidy)) %>%
+  #mutate(predicted = map(model, predict_with_random)) %>% 
   mutate(R_squared = map(model, rsquared))
 
-predicted_values_space <- mem_results_space %>%
-  filter(Trait_trans == "C_percent",
-         n %in% c(1:5)) %>% 
+predicted_values_space_without_intra <- tidy_space_model_predicted_without_intra %>%
   ungroup() %>%
-  group_by(Trait_trans, moments) %>% 
-  
-  select(Trait_trans, moments, data, model) %>%
-  unnest(data) %>%
-  mutate(predicted = map(model, predict_with_random)) %>% 
-  select(-model) %>% 
-  unnest(predicted) %>% 
+  select(Trait_trans, moments, data, predicted) %>%
+  unnest(c(data, predicted)) %>%
   rename(modeled = predicted, measured = value)
 
 ## Space without intra ##
