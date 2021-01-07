@@ -547,8 +547,20 @@ moments_clim_long_fullcommunity %>%
 
 #### Making plots for predicted values and observed values
 
-predicted_values_space %>% 
-  ggplot(aes(x = Precip_yearly, y = measured)) +
-  geom_point() +
-  facet_grid(~Trait_trans)
+ggplot(SLA_mean, aes(x = Precip_yearly, y = 10^(value))) +
+  geom_point(color = "grey") +
+  theme_minimal(base_size = 11) +
+  geom_line(aes(x = Precip_yearly, y = 10^predicted, color = factor(Temp_yearly_spring)), data=newdata_try, size = 1, inherit.aes = FALSE, show.legend = TRUE) +
+  scale_color_manual(values = Temp_palette)
 
+ggplot(LDMC_mean, aes(x = Precip_yearly, y = value)) +
+  geom_point(color = "grey") +
+  theme_minimal(base_size = 11) +
+  geom_line(aes(x = Precip_yearly, y = predicted, color = factor(Temp_yearly_spring)), data=newdata_LDMC, size = 1, inherit.aes = FALSE, show.legend = TRUE) +
+  scale_color_manual(values = Temp_palette)
+
+ggplot(Plant_height_mean, aes(x = Precip_yearly, y = value)) +
+  geom_point(color = "grey") +
+  theme_minimal(base_size = 11) +
+  geom_line(aes(x = Precip_yearly, y = predicted, color = factor(Temp_yearly_spring)), data=newdata_height, size = 1, inherit.aes = FALSE, show.legend = TRUE) +
+  scale_color_manual(values = Temp_palette)
