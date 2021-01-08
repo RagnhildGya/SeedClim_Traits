@@ -547,20 +547,34 @@ moments_clim_long_fullcommunity %>%
 
 #### Making plots for predicted values and observed values
 
-ggplot(SLA_mean, aes(x = Precip_yearly, y = 10^(value))) +
+Trend_SLA_plot <- ggplot(SLA_mean, aes(x = Precip_yearly, y = value)) +
   geom_point(color = "grey") +
+  geom_line(aes(x = Precip_yearly, y = predicted, color = factor(Temp_yearly_spring)), data=newdata_SLA, size = 1, inherit.aes = FALSE, show.legend = TRUE) +
+  scale_color_manual(values = Temp_palette) +
+  labs(x = "", y = "", title = "Specific leaf area (cm2/g log)", color = "Spring temperature") +
   theme_minimal(base_size = 11) +
-  geom_line(aes(x = Precip_yearly, y = 10^predicted, color = factor(Temp_yearly_spring)), data=newdata_try, size = 1, inherit.aes = FALSE, show.legend = TRUE) +
-  scale_color_manual(values = Temp_palette)
+  theme(plot.title = element_text(hjust = 0.5))
 
-ggplot(LDMC_mean, aes(x = Precip_yearly, y = value)) +
+Trend_LDMC_plot <- ggplot(LDMC_mean, aes(x = Precip_yearly, y = value)) +
   geom_point(color = "grey") +
-  theme_minimal(base_size = 11) +
   geom_line(aes(x = Precip_yearly, y = predicted, color = factor(Temp_yearly_spring)), data=newdata_LDMC, size = 1, inherit.aes = FALSE, show.legend = TRUE) +
-  scale_color_manual(values = Temp_palette)
-
-ggplot(Plant_height_mean, aes(x = Precip_yearly, y = value)) +
-  geom_point(color = "grey") +
+  scale_color_manual(values = Temp_palette) +
+  labs(x = "", y = "", title = "Leaf dry matter content (g/g)", color = "Spring temperature") +
   theme_minimal(base_size = 11) +
-  geom_line(aes(x = Precip_yearly, y = predicted, color = factor(Temp_yearly_spring)), data=newdata_height, size = 1, inherit.aes = FALSE, show.legend = TRUE) +
-  scale_color_manual(values = Temp_palette)
+  theme(plot.title = element_text(hjust = 0.5))
+
+Trend_LA_plot <- ggplot(Leaf_area_mean, aes(x = Precip_yearly, y = value)) +
+  geom_point(color = "grey") +
+  geom_line(aes(x = Precip_yearly, y = predicted, color = factor(Temp_yearly_spring)), data=newdata_LA, size = 1, inherit.aes = FALSE, show.legend = TRUE) +
+  scale_color_manual(values = Temp_palette) +
+  labs(x = "", y = "", title = "Leaf area (cm2 log)", color = "Spring temperature") +
+  theme_minimal(base_size = 11) +
+  theme(plot.title = element_text(hjust = 0.5))
+
+Trend_C_plot <- ggplot(C_percent_mean, aes(x = Precip_yearly, y = value)) +
+  geom_point(color = "grey") +
+  geom_line(aes(x = Precip_yearly, y = predicted, color = factor(Temp_yearly_spring)), data=newdata_C, size = 1, inherit.aes = FALSE, show.legend = TRUE) +
+  scale_color_manual(values = Temp_palette) +
+  labs(x = "", y = "", title = "Carbon content of leaf (%)", color = "Spring temperature") +
+  theme_minimal(base_size = 11) +
+  theme(plot.title = element_text(hjust = 0.5))
