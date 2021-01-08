@@ -20,6 +20,7 @@ library(traitstrap)
 library(vegan)
 library(ggvegan)
 #library(drake)
+library(default)
 
 set.seed(47)
 
@@ -95,6 +96,14 @@ traitdata_2 <- traitdata_1 %>%
    return(SeedClim_traits)
  }
 
+Imputed_traits_fullcommunity <- Trait_impute_per_year(com_dat = community, trait_dat = traitdata_2) %>% 
+  group_by(year, Site, blockID, turfID, Trait_trans)
+
+
+#Overriding the default setting for traitimpute
+default(trait_impute) <- list(scale_hierarchy = NULL)
+
+#Write function for trait imputations without the intraspecifica variability by sampling across sites instead of just from that site
 Trait_impute_without_intra <- function(com_dat, trait_dat){
   
   SeedClim_traits <- trait_impute(comm = com_dat,
@@ -110,9 +119,9 @@ Trait_impute_without_intra <- function(com_dat, trait_dat){
   return(SeedClim_traits)
 }
 
- 
-Imputed_traits_fullcommunity <- Trait_impute_per_year(com_dat = community, trait_dat = traitdata_2) %>% 
-   group_by(year, Site, blockID, turfID, Trait_trans)
+#reset the default of the trait impute function
+trait_impute <- default::reset_default(trait_impute) 
+
 
 Imputed_traits_without_intra <- Trait_impute_per_year(com_dat = community, trait_dat = traitdata_2) %>% 
   group_by(year, Site, blockID, turfID, Trait_trans)
