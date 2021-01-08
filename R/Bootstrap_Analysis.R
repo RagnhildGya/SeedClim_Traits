@@ -637,6 +637,8 @@ SLA_mean <- memodel_data_fullcommunity %>%
 
 mem_results_SLA_mean <- lmer(value ~ Temp_yearly_spring * scale(Precip_yearly) + (1 | year), data = SLA_mean)
 
+summary(mem_results_SLA_mean)
+
 newdata_SLA<-expand.grid(Precip_yearly=seq(400,6000, length=500), Temp_yearly_spring=c(6.5, 9.1, 10.9), year = c(2009, 2011, 2012, 2013, 2015, 2017))
 
 newdata_SLA$predicted <- predict(object = mem_results_SLA_mean, newdata = newdata_SLA, re.form = NA, allow.new.levels=TRUE)
@@ -651,11 +653,13 @@ LDMC_mean <- memodel_data_fullcommunity %>%
 
 mem_results_LDMC_mean <- lmer(value ~ Temp_yearly_spring * scale(Precip_yearly) + (1 | year), data = LDMC_mean)
 
+summary(mem_results_LDMC_mean)
+
 newdata_LDMC<-expand.grid(Precip_yearly=seq(400,6000, length=500), Temp_yearly_spring=c(6.5, 9.1, 10.9), year = c(2009, 2011, 2012, 2013, 2015, 2017))
 
 newdata_LDMC$predicted <- predict(object = mem_results_LDMC_mean, newdata = newdata_LDMC, re.form = NA, allow.new.levels=TRUE)
 
-## Run model on one of the boostrappings of the mean of plant heigh to make a figure ##
+## Run model on one of the boostrappings of the mean of plant height to make a figure ##
 Plant_height_mean <- memodel_data_fullcommunity %>%
   filter(Trait_trans == "Plant_Height_mm_log",
          moments == "mean",
@@ -668,6 +672,39 @@ mem_results_height_mean <- lmer(value ~ Temp_yearly_spring * scale(Precip_yearly
 newdata_height<-expand.grid(Precip_yearly=seq(400,6000, length=500), Temp_yearly_spring=c(6.5, 9.1, 10.9), year = c(2009, 2011, 2012, 2013, 2015, 2017))
 
 newdata_height$predicted <- predict(object = mem_results_height_mean, newdata = newdata_height, re.form = NA, allow.new.levels=TRUE)
+
+## Run model on one of the boostrappings of the mean of leaf area to make a figure ##
+Leaf_area_mean <- memodel_data_fullcommunity %>%
+  filter(Trait_trans == "Leaf_Area_cm2_log",
+         moments == "mean",
+         n == 90) %>% 
+  unnest(data) %>% 
+  ungroup()
+
+mem_results_LA_mean <- lmer(value ~ Temp_yearly_spring * scale(Precip_yearly) + (1 | year), data = Leaf_area_mean)
+
+summary(mem_results_LA_mean)
+
+newdata_LA<-expand.grid(Precip_yearly=seq(400,6000, length=500), Temp_yearly_spring=c(6.5, 9.1, 10.9), year = c(2009, 2011, 2012, 2013, 2015, 2017))
+
+newdata_LA$predicted <- predict(object = mem_results_LA_mean, newdata = newdata_LA, re.form = NA, allow.new.levels=TRUE)
+
+## Run model on one of the boostrappings of the mean of c% to make a figure ##
+C_percent_mean <- memodel_data_fullcommunity %>%
+  filter(Trait_trans == "C_percent",
+         moments == "mean",
+         n == 90) %>% 
+  unnest(data) %>% 
+  ungroup()
+
+mem_results_C_mean <- lmer(value ~ Temp_yearly_spring * scale(Precip_yearly) + (1 | year), data = C_percent_mean)
+
+summary(mem_results_C_mean)
+
+newdata_C<-expand.grid(Precip_yearly=seq(400,6000, length=500), Temp_yearly_spring=c(6.5, 9.1, 10.9), year = c(2009, 2011, 2012, 2013, 2015, 2017))
+
+newdata_C$predicted <- predict(object = mem_results_C_mean, newdata = newdata_C, re.form = NA, allow.new.levels=TRUE)
+
 
 
 
