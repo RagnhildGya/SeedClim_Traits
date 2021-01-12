@@ -20,7 +20,7 @@ library(traitstrap)
 library(vegan)
 library(ggvegan)
 #library(drake)
-library(default)
+#library(default)
 
 set.seed(47)
 
@@ -100,15 +100,28 @@ Imputed_traits_fullcommunity <- Trait_impute_per_year(com_dat = community, trait
   group_by(year, Site, blockID, turfID, Trait_trans)
 
 
-#Overriding the default setting for traitimpute
-default(trait_impute) <- list(scale_hierarchy = NULL)
+traitstrap:::autoplot.imputed_trait(Imputed_traits_fullcommunity) #Now they are doing the same, samling for the site, and also only covering 6 % of the cover..???
+traitstrap:::autoplot.imputed_trait(Imputed_traits_without_intra)
 
-#Write function for trait imputations without the intraspecifica variability by sampling across sites instead of just from that site
+### Trying to figure out how much trait data we are missing
+com_sp <- community %>% select(Site, Full_name, cover) %>% group_by(Site, Full_name) %>% mutate(cover = mean(cover)) %>% ungroup() %>% group_by(Site) %>% unique()
+
+trait_sp <- traitdata_2 %>% select(Site, Full_name) %>% group_by(Site) %>% unique() %>% mutate(trait = "T")
+
+com_trait <- com_sp %>% left_join(trait_sp, by = c("Site", "Full_name"))
+
+#Overriding the default setting for traitimpute
+default(trait_impute) <- list(scale_hierarchy = character (0))
+
+#Write function for trait imputations without the intraspecific variability by sampling across sites instead of just from that site
 Trait_impute_without_intra <- function(com_dat, trait_dat){
+  
+  com_dat <- com_dat %>% 
+    mutate(random = 1)
   
   SeedClim_traits <- trait_impute(comm = com_dat,
                                   traits = trait_dat, 
-                                  scale_hierarchy = NULL,
+                                  scale_hierarchy = random,
                                   global = TRUE,
                                   taxon_col = c("Full_name", "Genus", "Family"),
                                   trait_col = "Trait_trans",
@@ -119,40 +132,11 @@ Trait_impute_without_intra <- function(com_dat, trait_dat){
   return(SeedClim_traits)
 }
 
-#reset the default of the trait impute function
-trait_impute <- default::reset_default(trait_impute) 
-
-
 Imputed_traits_without_intra <- Trait_impute_per_year(com_dat = community, trait_dat = traitdata_2) %>% 
   group_by(year, Site, blockID, turfID, Trait_trans)
 
-# Imputed_traits_forbs <- Trait_impute_per_year(com_dat = community_forb, trait_dat = trait_forb) %>% 
-#   group_by(year, Site, blockID, turfID, Trait_trans)
-# 
-# Imputed_traits_graminoids <- Trait_impute_per_year(com_dat = community_graminoid, trait_dat = trait_graminoid) %>% 
-#   group_by(year, Site, blockID, turfID, Trait_trans)
-# 
-# Imputed_traits_alpine <- Trait_impute_per_year(com_dat = community_alpine, trait_dat = traitdata_2) %>% 
-#   group_by(year, Site, blockID, turfID, Trait_trans)
-# 
-# Imputed_traits_subalpine <- Trait_impute_per_year(com_dat = community_subalpine, trait_dat = traitdata_2) %>% 
-#   group_by(year, Site, blockID, turfID, Trait_trans)
-# 
-# Imputed_traits_boreal <- Trait_impute_per_year(com_dat = community_boreal, trait_dat = traitdata_2) %>% 
-#   group_by(year, Site, blockID, turfID, Trait_trans)
-
-
-# SeedClim_traits_allYears <- trait_impute(comm = community,
-#              traits = traitdata_2, 
-#              scale_hierarchy = c("Site", "blockID", "turfID"),
-#              global = FALSE,
-#              taxon_col = c("Full_name", "Genus", "Family"),
-#              trait_col = "Trait_trans",
-#              value_col = "Value",
-#              other_col = "year",
-#              abundance_col = "cover") %>% 
-#   group_by(year, Site, blockID, turfID, Trait_trans)
-
+#reset the default of the trait impute function
+trait_impute <- default::reset_default(trait_impute) 
 
 
 #### Bootstraping community weighted means and making summarised moments of the distributions ####
@@ -161,18 +145,7 @@ Moments_without_intra <- trait_np_bootstrap(imputed_traits = Imputed_traits_with
 sum_moments_without_intra <- trait_summarise_boot_moments(Moments_without_intra)
 
 Moments_fullcommunity <- trait_np_bootstrap(imputed_traits = Imputed_traits_fullcommunity)
-# Moments_forbs <- trait_np_bootstrap(imputed_traits = Imputed_traits_forbs)
-# Moments_graminoids <- trait_np_bootstrap(imputed_traits = Imputed_traits_graminoids)
-# Moments_alpine <- trait_np_bootstrap(imputed_traits = Imputed_traits_alpine)
-# Moments_subalpine <- trait_np_bootstrap(imputed_traits = Imputed_traits_subalpine)
-# Moments_boreal <- trait_np_bootstrap(imputed_traits = Imputed_traits_boreal)
-
 sum_moments_fullcommunity <- trait_summarise_boot_moments(Moments_fullcommunity)
-# sum_moments_forbs <- trait_summarise_boot_moments(Moments_forbs)
-# sum_moments_graminoids <- trait_summarise_boot_moments(Moments_graminoids)
-# sum_moments_alpine <- trait_summarise_boot_moments(Moments_alpine)
-# sum_moments_subalpine <- trait_summarise_boot_moments(Moments_subalpine)
-# sum_moments_boreal <- trait_summarise_boot_moments(Moments_boreal)
 
 
 #### Adding climate info & pivoting longer ####
@@ -184,26 +157,6 @@ sum_moments_climate_fullcommunity = bind_rows(
 sum_moments_climate_without_intra = bind_rows(
   sum_moments_without_intra %>% 
     left_join(env, by = c("Site" = "Site", "year" = "Year")))
-
-# sum_moments_climate_forbs = bind_rows(
-#   sum_moments_forbs %>% 
-#     left_join(env, by = c("Site" = "Site", "year" = "Year")))
-# 
-# sum_moments_climate_graminoids = bind_rows(
-#   sum_moments_graminoids %>% 
-#     left_join(env, by = c("Site" = "Site", "year" = "Year")))
-# 
-# sum_moments_climate_alpine = bind_rows(
-#   sum_moments_alpine %>% 
-#     left_join(env, by = c("Site" = "Site", "year" = "Year")))
-# 
-# sum_moments_climate_subalpine = bind_rows(
-#   sum_moments_subalpine %>% 
-#     left_join(env, by = c("Site" = "Site", "year" = "Year")))
-# 
-# sum_moments_climate_boreal = bind_rows(
-#   sum_moments_boreal %>% 
-#     left_join(env, by = c("Site" = "Site", "year" = "Year")))
 
 
 
@@ -355,17 +308,17 @@ model_space<-function(df) {
   lmer(value ~ Temp_yearly_prev * scale(Precip_yearly) + Temp_yearly_spring * scale(Precip_yearly) + (1 | year), data = df)
 }
 
-model_space_1<-function(df) {
-  lmer(value ~ Temp_yearly_prev * scale(Precip_yearly) + (1 | year), data = df)
-}
-
-model_space_2 <- function(df) {
-  lmer(value ~ Temp_yearly_spring * scale(Precip_yearly) + (1 | year), data = df)
-}
-
-model_time_anomalies<-function(df) {
-  lmer(value ~ Temp_deviation_decade * scale(Precip_deviation_decade) + (1 | Site), data = df)
-}
+# model_space_1<-function(df) {
+#   lmer(value ~ Temp_yearly_prev * scale(Precip_yearly) + (1 | year), data = df)
+# }
+# 
+# model_space_2 <- function(df) {
+#   lmer(value ~ Temp_yearly_spring * scale(Precip_yearly) + (1 | year), data = df)
+# }
+# 
+# model_time_anomalies<-function(df) {
+#   lmer(value ~ Temp_deviation_decade * scale(Precip_deviation_decade) + (1 | Site), data = df)
+# }
 
 
 predict_without_random<-function(model) {
@@ -443,81 +396,6 @@ predicted_values_time <- tidy_time_model_predicted %>%
   select(Trait_trans, moments, data, predicted) %>%
   unnest(c(data, predicted)) %>%
   rename(modeled = predicted, measured = value)
-
-# ## Time - Forbs ##
-# mem_results_time_forbs <- memodel_data_forbs %>%
-#   mutate(model = map(data, model_time))
-# 
-# tidy_time_model_predicted_forbs <- mem_results_time_forbs %>%
-#   mutate(model_output = map(model, tidy)) %>%
-#   mutate(predicted = map(model, predict_with_random)) %>% 
-#   mutate(R_squared = map(model, rsquared))
-# 
-# predicted_values_time_forbs <- tidy_time_model_predicted_forbs %>%
-#   ungroup() %>%
-#   select(Trait_trans, moments, data, predicted) %>%
-#   unnest(c(data, predicted)) %>%
-#   rename(modeled = predicted, measured = value)
-# 
-# ## Time - Graminoids ##
-# mem_results_time_graminoids <- memodel_data_graminoids %>%
-#   mutate(model = map(data, model_time))
-# 
-# tidy_time_model_predicted_graminoids <- mem_results_time_graminoids %>%
-#   mutate(model_output = map(model, tidy)) %>%
-#   mutate(predicted = map(model, predict_with_random)) %>% 
-#   mutate(R_squared = map(model, rsquared))
-# 
-# predicted_values_time_graminoids <- tidy_time_model_predicted_graminoids %>%
-#   ungroup() %>%
-#   select(Trait_trans, moments, data, predicted) %>%
-#   unnest(c(data, predicted)) %>%
-#   rename(modeled = predicted, measured = value)
-# 
-# ## Time - alpine ##
-# mem_results_time_alpine <- memodel_data_alpine %>%
-#   mutate(model = map(data, model_time))
-# 
-# tidy_time_model_predicted_alpine <- mem_results_time_alpine %>%
-#   mutate(model_output = map(model, tidy)) %>%
-#   mutate(predicted = map(model, predict_with_random)) %>% 
-#   mutate(R_squared = map(model, rsquared))
-# 
-# predicted_values_time_alpine <- tidy_time_model_predicted_alpine %>%
-#   ungroup() %>%
-#   select(Trait_trans, moments, data, predicted) %>%
-#   unnest(c(data, predicted)) %>%
-#   rename(modeled = predicted, measured = value)
-# 
-# ## Time - subalpine ##
-# mem_results_time_subalpine <- memodel_data_subalpine %>%
-#   mutate(model = map(data, model_time))
-# 
-# tidy_time_model_predicted_subalpine <- mem_results_time_subalpine %>%
-#   mutate(model_output = map(model, tidy)) %>%
-#   mutate(predicted = map(model, predict_with_random)) %>% 
-#   mutate(R_squared = map(model, rsquared))
-# 
-# predicted_values_time_subalpine <- tidy_time_model_predicted_subalpine %>%
-#   ungroup() %>%
-#   select(Trait_trans, moments, data, predicted) %>%
-#   unnest(c(data, predicted)) %>%
-#   rename(modeled = predicted, measured = value)
-# 
-# ## Time - boreal ##
-# mem_results_time_boreal <- memodel_data_boreal %>%
-#   mutate(model = map(data, model_time))
-# 
-# tidy_time_model_predicted_boreal <- mem_results_time_boreal %>%
-#   mutate(model_output = map(model, tidy)) %>%
-#   mutate(predicted = map(model, predict_with_random)) %>% 
-#   mutate(R_squared = map(model, rsquared))
-# 
-# predicted_values_time_boreal <- tidy_time_model_predicted_boreal %>%
-#   ungroup() %>%
-#   select(Trait_trans, moments, data, predicted) %>%
-#   unnest(c(data, predicted)) %>%
-#   rename(modeled = predicted, measured = value)
 
 
 ## Anomalies ##
@@ -644,6 +522,7 @@ SLA_mean <- memodel_data_fullcommunity %>%
   unnest(data) %>% 
   ungroup()
 
+### Space 
 mem_results_SLA_mean <- lmer(value ~ Temp_yearly_spring * scale(Precip_yearly) + (1 | year), data = SLA_mean)
 
 summary(mem_results_SLA_mean)
@@ -651,6 +530,15 @@ summary(mem_results_SLA_mean)
 newdata_SLA<-expand.grid(Precip_yearly=seq(400,6000, length=500), Temp_yearly_spring=c(6.5, 9.1, 10.9), year = c(2009, 2011, 2012, 2013, 2015, 2017))
 
 newdata_SLA$predicted <- predict(object = mem_results_SLA_mean, newdata = newdata_SLA, re.form = NA, allow.new.levels=TRUE)
+
+###Time
+mem_results_time_SLA_mean <- lmer(value ~ Temp_yearly_prev * scale(Precip_yearly) + (1 | Site), data = SLA_mean)
+
+summary(mem_results_time_SLA_mean)
+
+newdata_time_SLA<-expand.grid(Precip_yearly=seq(400,6000, length=500), Temp_yearly_prev=c(6.5, 9.1, 10.9), year = c(2009, 2011, 2012, 2013, 2015, 2017), Site = NA)
+
+newdata_time_SLA$predicted <- predict(object = mem_results_time_SLA_mean, newdata = newdata_time_SLA, re.form = NA, allow.new.levels=TRUE)
 
 ## Run model on one of the boostrappings of the mean of LDMC to make a figure ##
 LDMC_mean <- memodel_data_fullcommunity %>%
