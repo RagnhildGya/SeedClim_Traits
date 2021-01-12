@@ -7,10 +7,28 @@ library(ggfortify)
 library(corrplot)
 library(svglite)
 library(grid)
+library(gridExtra)
 
 ## Color palettes ##
 Temp_palette <- c("#d8c593", "#dd7631", "#bb3b0e")
 Precip_palette <- c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")
+
+## Without intraspecific plot ##
+
+plot1 <- sum_moments_climate_without_intra %>% 
+  filter(Trait_trans == "SLA_cm2_g_log") %>% 
+ggplot(aes(x = Precip_yearly, y = mean, color = Temp_level))+
+  geom_point() +
+  geom_smooth(method = "lm")
+
+plot2 <- sum_moments_climate_fullcommunity %>% 
+  filter(Trait_trans == "SLA_cm2_g_log") %>% 
+  ggplot(aes(x = Precip_yearly, y = mean, color = Temp_level))+
+  geom_point() +
+  geom_smooth(method = "lm")
+
+plot1 + plot2
+
 
 ## Climate figure ##
 
@@ -552,7 +570,15 @@ Trend_SLA_plot <- ggplot(SLA_mean, aes(x = Precip_yearly, y = value)) +
   geom_line(aes(x = Precip_yearly, y = predicted, color = factor(Temp_yearly_spring)), data=newdata_SLA, size = 1, inherit.aes = FALSE, show.legend = TRUE) +
   scale_color_manual(values = Temp_palette) +
   labs(x = "", y = "", title = "Specific leaf area (cm2/g log)", color = "Spring temperature") +
-  theme_minimal(base_size = 11) +
+  theme_minimal(base_size = 15) +
+  theme(plot.title = element_text(hjust = 0.5))
+
+Trend_SLA_time_plot <- ggplot(SLA_mean, aes(x = Precip_yearly, y = value)) +
+  geom_point(color = "grey") +
+  geom_line(aes(x = Precip_yearly, y = predicted, color = factor(Temp_yearly_prev)), data=newdata_time_SLA, size = 1, inherit.aes = FALSE, show.legend = TRUE) +
+  scale_color_manual(values = Temp_palette) +
+  labs(x = "", y = "", title = "Specific leaf area (cm2/g log)", color = "Spring temperature") +
+  theme_minimal(base_size = 15) +
   theme(plot.title = element_text(hjust = 0.5))
 
 Trend_LDMC_plot <- ggplot(LDMC_mean, aes(x = Precip_yearly, y = value)) +
@@ -560,7 +586,7 @@ Trend_LDMC_plot <- ggplot(LDMC_mean, aes(x = Precip_yearly, y = value)) +
   geom_line(aes(x = Precip_yearly, y = predicted, color = factor(Temp_yearly_spring)), data=newdata_LDMC, size = 1, inherit.aes = FALSE, show.legend = TRUE) +
   scale_color_manual(values = Temp_palette) +
   labs(x = "", y = "", title = "Leaf dry matter content (g/g)", color = "Spring temperature") +
-  theme_minimal(base_size = 11) +
+  theme_minimal(base_size = 15) +
   theme(plot.title = element_text(hjust = 0.5))
 
 Trend_LA_plot <- ggplot(Leaf_area_mean, aes(x = Precip_yearly, y = value)) +
@@ -568,7 +594,7 @@ Trend_LA_plot <- ggplot(Leaf_area_mean, aes(x = Precip_yearly, y = value)) +
   geom_line(aes(x = Precip_yearly, y = predicted, color = factor(Temp_yearly_spring)), data=newdata_LA, size = 1, inherit.aes = FALSE, show.legend = TRUE) +
   scale_color_manual(values = Temp_palette) +
   labs(x = "", y = "", title = "Leaf area (cm2 log)", color = "Spring temperature") +
-  theme_minimal(base_size = 11) +
+  theme_minimal(base_size = 15) +
   theme(plot.title = element_text(hjust = 0.5))
 
 Trend_C_plot <- ggplot(C_percent_mean, aes(x = Precip_yearly, y = value)) +
@@ -576,5 +602,12 @@ Trend_C_plot <- ggplot(C_percent_mean, aes(x = Precip_yearly, y = value)) +
   geom_line(aes(x = Precip_yearly, y = predicted, color = factor(Temp_yearly_spring)), data=newdata_C, size = 1, inherit.aes = FALSE, show.legend = TRUE) +
   scale_color_manual(values = Temp_palette) +
   labs(x = "", y = "", title = "Carbon content of leaf (%)", color = "Spring temperature") +
-  theme_minimal(base_size = 11) +
+  theme_minimal(base_size = 15) +
   theme(plot.title = element_text(hjust = 0.5))
+
+Trend_figure <- ggarrange(Trend_SLA_plot, Trend_LDMC_plot, Trend_LA_plot, Trend_C_plot, nrow = 2, ncol = 2, common.legend = TRUE, legend = "right", labels = c("A)", "B)", "C)", "D)"))
+Fig_TDT_paper <- annotate_figure(Trend_figure,
+              bottom = text_grob("Annual precipitation (mm)", hjust = 0.7, size = 13))
+
+ggsave(filename = "Trend_figure.png", plot = Fig_TDT_paper, width = 30, height = 19, units = "cm")
+ggsave(filename = "Trend_figure_smaller.png", plot = Fig_TDT_paper, width = 24, height = 14, units = "cm")
