@@ -31,14 +31,16 @@ set.seed(47)
 community <- community %>% 
   filter(!year %in% c("2010", "2016"))
 
+community_2011 <- community %>% 
+  filter(year == "2011")
 # community_forb <- community %>% 
 #   filter(functionalGroup %in% c("forb", "woody", "pteridophyte"))
 # 
 # community_graminoid <- community %>% 
 #   filter(functionalGroup == "graminoid")
 # 
-# community_alpine <- community %>% 
-#   filter(siteCode %in% c("alp1", "alp2", "alp3", "alp4"))
+ community_alpine <- community %>% 
+   filter(siteCode %in% c("alp1", "alp2", "alp3", "alp4"))
 # 
 # community_subalpine <- community %>% 
 #   filter(siteCode %in% c("int1", "int2", "int3", "int4"))
@@ -52,6 +54,7 @@ traitdata_2 <- traitdata_1 %>%
   mutate(blockID = "",
          turfID = "") 
 
+rm(traitdata_1)
 # trait_forb <- traitdata_2 %>% 
 #   filter(functionalGroup %in% c("forb", "woody", "pteridophyte"))
 # 
@@ -85,7 +88,7 @@ traitdata_2 <- traitdata_1 %>%
    
    SeedClim_traits <- trait_impute(comm = com_dat,
                                    traits = trait_dat, 
-                                   scale_hierarchy = c("Site", "blockID", "turfID"),
+                                   scale_hierarchy = c("siteID", "blockID", "turfID"),
                                    global = FALSE,
                                    taxon_col = c("Full_name", "Genus", "Family"),
                                    trait_col = "Trait_trans",
@@ -97,46 +100,31 @@ traitdata_2 <- traitdata_1 %>%
  }
 
 Imputed_traits_fullcommunity <- Trait_impute_per_year(com_dat = community, trait_dat = traitdata_2) %>% 
-  group_by(year, Site, blockID, turfID, Trait_trans)
+  group_by(year, siteID, blockID, turfID, Trait_trans)
 
 
-traitstrap:::autoplot.imputed_trait(Imputed_traits_fullcommunity) #Now they are doing the same, samling for the site, and also only covering 6 % of the cover..???
-traitstrap:::autoplot.imputed_trait(Imputed_traits_without_intra)
-
-### Trying to figure out how much trait data we are missing
-com_sp <- community %>% select(Site, Full_name, cover) %>% group_by(Site, Full_name) %>% mutate(cover = mean(cover)) %>% ungroup() %>% group_by(Site) %>% unique()
-
-trait_sp <- traitdata_2 %>% select(Site, Full_name) %>% group_by(Site) %>% unique() %>% mutate(trait = "T")
-
-com_trait <- com_sp %>% left_join(trait_sp, by = c("Site", "Full_name"))
-
-#Overriding the default setting for traitimpute
-default(trait_impute) <- list(scale_hierarchy = character (0))
+traitstrap:::autoplot.imputed_trait(Imputed_traits_fullcommunity) 
+traitstrap:::autoplot.imputed_trait(Imputed_traits_without_intra) 
 
 #Write function for trait imputations without the intraspecific variability by sampling across sites instead of just from that site
 Trait_impute_without_intra <- function(com_dat, trait_dat){
   
-  com_dat <- com_dat %>% 
-    mutate(random = 1)
-  
   SeedClim_traits <- trait_impute(comm = com_dat,
                                   traits = trait_dat, 
-                                  scale_hierarchy = random,
-                                  global = TRUE,
+                                  scale_hierarchy = c("Temp_level", "siteID", "blockID", "turfID"),
                                   taxon_col = c("Full_name", "Genus", "Family"),
                                   trait_col = "Trait_trans",
                                   value_col = "Value",
                                   other_col = "year",
-                                  abundance_col = "cover")
+                                  abundance_col = "cover",
+                                  global = TRUE) 
   
   return(SeedClim_traits)
 }
 
-Imputed_traits_without_intra <- Trait_impute_per_year(com_dat = community, trait_dat = traitdata_2) %>% 
-  group_by(year, Site, blockID, turfID, Trait_trans)
+Imputed_traits_without_intra <- Trait_impute_without_intra(com_dat = community, trait_dat = traitdata_2) %>% 
+  group_by(year, siteID, blockID, turfID, Trait_trans)
 
-#reset the default of the trait impute function
-trait_impute <- default::reset_default(trait_impute) 
 
 
 #### Bootstraping community weighted means and making summarised moments of the distributions ####
@@ -152,22 +140,22 @@ sum_moments_fullcommunity <- trait_summarise_boot_moments(Moments_fullcommunity)
 
 sum_moments_climate_fullcommunity = bind_rows(
   sum_moments_fullcommunity %>% 
-     left_join(env, by = c("Site" = "Site", "year" = "Year")))
+     left_join(env, by = c("siteID" = "siteID", "year" = "Year")))
 
 sum_moments_climate_without_intra = bind_rows(
   sum_moments_without_intra %>% 
-    left_join(env, by = c("Site" = "Site", "year" = "Year")))
+    left_join(env, by = c("siteID" = "siteID", "year" = "Year")))
 
 
 
 moments_clim_long_fullcommunity <- Moments_fullcommunity %>% 
   pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
-  left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
+  left_join(env, by = c("siteID" = "siteID", "year" = "Year")) %>% 
   mutate(year = as.factor(year))
 
 moments_clim_long_without_intra <- Moments_without_intra %>% 
   pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
-  left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
+  left_join(env, by = c("siteID" = "siteID", "year" = "Year")) %>% 
   mutate(year = as.factor(year))
 
 # moments_clim_long_forbs <- Moments_forbs %>% 
