@@ -27,7 +27,7 @@ plot2 <- sum_moments_climate_fullcommunity %>%
   geom_point() +
   geom_smooth(method = "lm")
 
-plot1 + plot2
+ggarrange(plot1, plot2, ncol = 2)
 
 
 ## Climate figure ##
@@ -96,7 +96,7 @@ bandwidthsize <- c(0.1, 0.2, 0.2, 0.1)
 
 a <- slice_sample(SeedClim_traits_allYears, n = 200,  
              replace = TRUE, weight_by = weight) %>% 
-  left_join(env, by = c("Site" = "Site")) %>% 
+  left_join(env, by = c("siteID" = "siteID")) %>% 
   filter(Trait_trans %in% c("SLA_cm2_g_log", "LDMC", "Leaf_Area_cm2_log", "Plant_Height_mm_log")) %>% 
   mutate(year = as.factor(year))
 
@@ -249,7 +249,7 @@ ggsave("Ordination_Precip.svg", width = 18 , height = 11, units = "cm", dpi = 60
 ## Ordination over time ##
   
   
-pca_fort <- fortify(pca_trait, display = "sites") %>% 
+pca_fort <- fortify(pca_trait, display = "Sites") %>% 
   bind_cols(Ord_boot_traits[1:6])
 
 pca_fort %>% 
@@ -492,10 +492,10 @@ print(legend_nonsignificant_plot, vp = define_region(row = 5, col = 5))
 
 
 sum_moments_climate_fullcommunity %>% 
-  group_by(Site, turfID, Trait_trans, year) %>% 
+  group_by(siteID, turfID, Trait_trans, year) %>% 
   mutate(skewness = mean(skew),
          kurtosis = mean(kurt)) %>% 
-  select(Site, turfID, Trait_trans, year, skewness, kurtosis, Temp_yearly_prev, Precip_yearly, Temp_yearly_spring, Temp_level) %>% 
+  select(siteID, turfID, Trait_trans, year, skewness, kurtosis, Temp_yearly_prev, Precip_yearly, Temp_yearly_spring, Temp_level) %>% 
   ggplot(aes(x = Temp_yearly_prev, y = kurtosis, color = Temp_level)) +
   geom_point() +
   facet_wrap(~Trait_trans, scales = "free")
@@ -544,10 +544,10 @@ moments_clim_long_fullcommunity %>%
   ylab("Community weighted kurtosis")
 
 sum_moments_climate_fullcommunity %>% 
-  group_by(Site, blockID, turfID, Trait_trans, year) %>% 
+  group_by(siteID, blockID, turfID, Trait_trans, year) %>% 
   mutate(skewness = mean(skew),
          kurtosis = mean(kurt)) %>% 
-  select(skewness, kurtosis, Site, turfID, year, Temp_level, Temp_level) %>% 
+  select(skewness, kurtosis, siteID, turfID, year, Temp_level, Temp_level) %>% 
   unique() %>% 
   ggplot(aes(x = skewness^2, y = kurtosis, col= Temp_level)) +
   geom_point() +
