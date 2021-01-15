@@ -11,7 +11,7 @@ traits <-read.csv("Data/LeafTraits_SeedClim.csv", header=TRUE, sep = ";", string
 dict_Site_2016 <- read.table(header = TRUE, stringsAsFactors = FALSE, text = 
                                "old new
 Arh Arhelleren
-Ovs Ovstedal
+Ovs Ovstedalen
 Ves Veskre
 Skj Skjelingahaugen
 Lav Lavisdalen
@@ -169,8 +169,8 @@ traitdata_1 <- traitdata_1 %>%
   select(-Image, -Comment, -ID, -Site_sp) %>% 
   rename(siteID = Site) %>% 
   mutate(siteID = plyr::mapvalues(siteID, from = dict_Site_2016$old, to = dict_Site_2016$new)) %>% 
-  mutate(Temp_level = as.factor(recode(siteID, Ulvehaugen = 6.5, Lavisdalen = 6.5,  Gudmedalen = 6.5, Skjelingahaugen = 6.5, Alrust = 8.5, Hogsete = 8.5, Rambera = 8.5, Veskre = 8.5, Fauske = 10.5, Vikesland = 10.5, Arhelleren = 10.5, Ovstedal = 10.5)),
-         Precip_level = as.factor(recode(siteID, Ulvehaugen = 600, Alrust = 600, Fauske = 600, Lavisdalen = 1200, Hogsete = 1200, Vikesland = 1200, Gudmedalen = 2000, Rambera = 2000, Arhelleren = 2000, Skjelingahaugen = 2700, Veskre = 2700, Ovstedal = 2700)))
+  mutate(Temp_level = as.factor(recode(siteID, Ulvehaugen = 6.5, Lavisdalen = 6.5,  Gudmedalen = 6.5, Skjelingahaugen = 6.5, Alrust = 8.5, Hogsete = 8.5, Rambera = 8.5, Veskre = 8.5, Fauske = 10.5, Vikesland = 10.5, Arhelleren = 10.5, Ovstedalen = 10.5)),
+         Precip_level = as.factor(recode(siteID, Ulvehaugen = 600, Alrust = 600, Fauske = 600, Lavisdalen = 1200, Hogsete = 1200, Vikesland = 1200, Gudmedalen = 2000, Rambera = 2000, Arhelleren = 2000, Skjelingahaugen = 2700, Veskre = 2700, Ovstedalen = 2700)))
 
 
 
@@ -178,25 +178,20 @@ traitdata_1 <- traitdata_1 %>%
 
 # Reading in and cleaning the community data 
 
-community <-read.csv2("Data/comdat_TTC.csv", header=TRUE, sep=",", stringsAsFactors = FALSE)
-
-dict_site_com <- read.table(header = TRUE, stringsAsFactors = FALSE, text = 
-                               "old new
-Skjellingahaugen Skjelingahaugen
-Ulvhaugen Ulvehaugen")
+#Old community data was community <-read.csv2("Data/comdat_TTC.csv", header=TRUE, sep=",", stringsAsFactors = FALSE)
+community <-read.csv2("Data/comdat_updated_TTC.csv", header=TRUE, sep=",", stringsAsFactors = FALSE)
 
 community <- community %>%
   mutate(latitude = as.numeric(latitude),
          longitude = as.numeric(longitude),
-         annualPrecipitation_gridded = as.numeric(annualPrecipitation_gridded),
-         summerTemperature_gridded = as.numeric(summerTemperature_gridded),
+         annualPrecipitation_gridded = as.numeric(annual_precipitation_gridded),
+         summerTemperature_gridded = as.numeric(summer_temperature_gridded),
          cover = as.numeric(cover)) %>% 
   mutate(Site= substr(siteID, 1,3)) %>% 
   select(-X) %>% 
-  mutate(siteID = plyr::mapvalues(siteID, from = dict_site_com$old, to = dict_site_com$new)) %>% 
   mutate(Site = as.character(Site, levels = c("Ulv", "Lav", "Gud", "Skj", "Alr", "Hog", "Ram", "Ves", "Fau", "Vik", "Arh", "Ovs"))) %>% 
-  mutate(Temp_level = as.factor(recode(siteID, Ulvehaugen = 6.5, Lavisdalen = 6.5,  Gudmedalen = 6.5, Skjelingahaugen = 6.5, Alrust = 8.5, Hogsete = 8.5, Rambera = 8.5, Veskre = 8.5, Fauske = 10.5, Vikesland = 10.5, Arhelleren = 10.5, Ovstedal = 10.5)),
-         Precip_level = as.factor(recode(siteID, Ulvehaugen = 600, Alrust = 600, Fauske = 600, Lavisdalen = 1200, Hogsete = 1200, Vikesland = 1200, Gudmedalen = 2000, Rambera = 2000, Arhelleren = 2000, Skjelingahaugen = 2700, Veskre = 2700, Ovstedal = 2700)))
+  mutate(Temp_level = as.factor(recode(Site, Ulv = 6.5, Lav = 6.5,  Gud = 6.5, Skj = 6.5, Alr = 8.5, Hog = 8.5, Ram = 8.5, Ves = 8.5, Fau = 10.5, Vik = 10.5, Arh = 10.5, Ovs = 10.5)),
+         Precip_level = as.factor(recode(Site, Ulv = 600, Alr = 600, Fau = 600, Lav = 1200, Hog = 1200, Vik = 1200, Gud = 2000, Ram = 2000, Arh = 2000, Skj = 2700, Ves = 2700, Ovs = 2700)))
 
 community <- community %>%
   left_join(systematics_species, by = c("species"="Species")) %>% 
@@ -246,7 +241,7 @@ community <- community %>%
    left_join(y = env_old, by = "Site") %>% 
    mutate(Temp_level = fct_relevel(Temp_level, c("6.5", "8.5", "10.5"))) %>% 
    mutate(Precip_level = fct_relevel(Precip_level, c("600", "1200", "2000", "2700"))) %>% 
-   mutate(siteID = plyr::mapvalues(Site, from = dict_Site_2016$old, to = dict_Site_2016$new))
+   mutate(siteID = plyr::mapvalues(Site, from = dict_Site_2016$old, to = dict_Site_2016$new)) 
  
  rm(CN)
  rm(dict_CN)
@@ -259,7 +254,6 @@ community <- community %>%
  rm(traitdata)
  rm(traitdata_trans)
  rm(dict_Site_2016)
- rm(dict_site_com)
  
 
 ####################  Old code #####################
