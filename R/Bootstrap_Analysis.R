@@ -29,18 +29,18 @@ set.seed(47)
 ## Community ##
 
 community <- community %>% 
-  filter(!year %in% c("2010", "2016"))
+  filter(!year == "2010")
 
-community_2011 <- community %>% 
-  filter(year == "2011")
+# community_2011 <- community %>% 
+#   filter(year == "2011")
 # community_forb <- community %>% 
 #   filter(functionalGroup %in% c("forb", "woody", "pteridophyte"))
 # 
 # community_graminoid <- community %>% 
 #   filter(functionalGroup == "graminoid")
 # 
- community_alpine <- community %>% 
-   filter(siteCode %in% c("alp1", "alp2", "alp3", "alp4"))
+# community_alpine <- community %>%  
+#   filter(siteCode %in% c("alp1", "alp2", "alp3", "alp4"))
 # 
 # community_subalpine <- community %>% 
 #   filter(siteCode %in% c("int1", "int2", "int3", "int4"))
@@ -86,15 +86,15 @@ rm(traitdata_1)
 
  Trait_impute_per_year <- function(com_dat, trait_dat){
    
-   SeedClim_traits <- trait_impute(comm = com_dat,
+   SeedClim_traits <- trait_np_bootstrap(trait_impute(comm = com_dat,
                                    traits = trait_dat, 
                                    scale_hierarchy = c("siteID", "blockID", "turfID"),
-                                   global = FALSE,
+                                   global = TRUE,
                                    taxon_col = c("Full_name", "Genus", "Family"),
                                    trait_col = "Trait_trans",
                                    value_col = "Value",
                                    other_col = "year",
-                                   abundance_col = "cover")
+                                   abundance_col = "cover"))
    
    return(SeedClim_traits)
  }
@@ -102,6 +102,7 @@ rm(traitdata_1)
 Imputed_traits_fullcommunity <- Trait_impute_per_year(com_dat = community, trait_dat = traitdata_2) %>% 
   group_by(year, siteID, blockID, turfID, Trait_trans)
 
+sum_moments_fullcommunity <- trait_summarise_boot_moments(Imputed_traits_fullcommunity)
 
 traitstrap:::autoplot.imputed_trait(Imputed_traits_fullcommunity) 
 traitstrap:::autoplot.imputed_trait(Imputed_traits_without_intra) 
@@ -109,15 +110,21 @@ traitstrap:::autoplot.imputed_trait(Imputed_traits_without_intra)
 #Write function for trait imputations without the intraspecific variability by sampling across sites instead of just from that site
 Trait_impute_without_intra <- function(com_dat, trait_dat){
   
-  SeedClim_traits <- trait_impute(comm = com_dat,
+  com_dat <- com_dat %>% 
+    mutate(random = "")
+  
+  trait_dat <- trait_dat %>% 
+    mutate(random = "")
+  
+  SeedClim_traits <- trait_np_bootstrap(trait_impute(comm = com_dat,
                                   traits = trait_dat, 
-                                  scale_hierarchy = c("Temp_level", "siteID", "blockID", "turfID"),
+                                  scale_hierarchy = c("siteID","random", "blockID", "turfID"),
                                   taxon_col = c("Full_name", "Genus", "Family"),
                                   trait_col = "Trait_trans",
                                   value_col = "Value",
                                   other_col = "year",
                                   abundance_col = "cover",
-                                  global = TRUE) 
+                                  global = TRUE)) 
   
   return(SeedClim_traits)
 }
@@ -129,11 +136,11 @@ Imputed_traits_without_intra <- Trait_impute_without_intra(com_dat = community, 
 
 #### Bootstraping community weighted means and making summarised moments of the distributions ####
 
-Moments_without_intra <- trait_np_bootstrap(imputed_traits = Imputed_traits_without_intra)
-sum_moments_without_intra <- trait_summarise_boot_moments(Moments_without_intra)
-
-Moments_fullcommunity <- trait_np_bootstrap(imputed_traits = Imputed_traits_fullcommunity)
-sum_moments_fullcommunity <- trait_summarise_boot_moments(Moments_fullcommunity)
+# Moments_without_intra <- trait_np_bootstrap(imputed_traits = Imputed_traits_without_intra)
+# sum_moments_without_intra <- trait_summarise_boot_moments(Imputed_traits_without_intra)
+# 
+# Moments_fullcommunity <- trait_np_bootstrap(imputed_traits = Imputed_traits_fullcommunity)
+# sum_moments_fullcommunity <- trait_summarise_boot_moments(Imputed_traits_fullcommunity)
 
 
 #### Adding climate info & pivoting longer ####
@@ -148,7 +155,7 @@ sum_moments_climate_without_intra = bind_rows(
 
 
 
-moments_clim_long_fullcommunity <- Moments_fullcommunity %>% 
+moments_clim_long_fullcommunity <- Imputed_traits_fullcommunity %>% 
   pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
   left_join(env, by = c("siteID" = "siteID", "year" = "Year")) %>% 
   mutate(year = as.factor(year))
@@ -239,14 +246,14 @@ moments_clim_long_without_intra <- Moments_without_intra %>%
 memodel_data_fullcommunity <- moments_clim_long_fullcommunity %>% 
   #filter(Trait_trans %in% c("CN_ratio_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "SLA_cm2_g_log")) %>% 
   ungroup() %>%
-  select(Trait_trans, moments, Site, turfID, Temp_yearly_prev, Temp_yearly_spring, Precip_yearly, value, year, n) %>% 
+  select(Trait_trans, moments, siteID, turfID, Temp_yearly_prev, Temp_yearly_spring, Precip_yearly, value, year, n) %>% 
   group_by(Trait_trans, moments, n) %>% 
   nest()
 
 memodel_data_without_intra <- moments_clim_long_without_intra %>% 
   #filter(Trait_trans %in% c("CN_ratio_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "SLA_cm2_g_log")) %>% 
   ungroup() %>%
-  select(Trait_trans, moments, Site, turfID, Temp_yearly_prev, Temp_yearly_spring, Precip_yearly, value, year, n) %>% 
+  select(Trait_trans, moments, siteID, turfID, Temp_yearly_prev, Temp_yearly_spring, Precip_yearly, value, year, n) %>% 
   group_by(Trait_trans, moments, n) %>% 
   nest()
 
@@ -289,12 +296,17 @@ memodel_data_without_intra <- moments_clim_long_without_intra %>%
 
 
 model_time<-function(df) {
-  lmer(value ~ Temp_yearly_prev * scale(Precip_yearly) + Temp_yearly_spring * scale(Precip_yearly) + (1 | Site), data = df)
+  lmer(value ~ Temp_yearly_prev * scale(Precip_yearly) + Temp_yearly_spring * scale(Precip_yearly) + (1 | siteID), data = df)
 }
 
 model_space<-function(df) {
-  lmer(value ~ Temp_yearly_prev * scale(Precip_yearly) + Temp_yearly_spring * scale(Precip_yearly) + (1 | year), data = df)
+  lmer(value ~ Temp_yearly_prev + scale(Precip_yearly) + Temp_yearly_spring * scale(Precip_yearly) + (1 | year), data = df)
 }
+
+model_space_linear<-function(df) {
+  lm(value ~ Temp_yearly_prev + scale(Precip_yearly) + Temp_yearly_spring * scale(Precip_yearly) +  year, data = df)
+}
+
 
 # model_space_1<-function(df) {
 #   lmer(value ~ Temp_yearly_prev * scale(Precip_yearly) + (1 | year), data = df)
@@ -323,6 +335,20 @@ predict_with_random<-function(model) {
 # 1) Testing with mixed effect model
 # 2) Tidying the model, giving the model output in a nice format. Making predicted values for each of the trait:moment combination along the climatic gradients. Calculating pseudo R squared values based on the method in paper Nakagawa et al 2017.
 # 3) Making a dataset with only the predicted values. Unnesting the list of the predicted values.
+
+testdata <- memodel_data_fullcommunity %>% 
+  filter(Trait_trans == "Leaf_Area_cm2_log",
+         moments == "mean",
+         n == 1) %>% 
+  unnest(data)
+
+mixed <- lmer(formula = value ~ Temp_yearly_prev * scale(Precip_yearly) + Temp_yearly_spring * scale(Precip_yearly) + (1 | year), 
+              data = testdata)
+summary(mixed)
+
+linear_space <- lm(formula = value ~ Temp_yearly_prev * scale(Precip_yearly) + Temp_yearly_spring * scale(Precip_yearly) + year, 
+              data = testdata)
+summary(linear_space)
 
 ## Space ##
 mem_results_space <- memodel_data_fullcommunity %>%
