@@ -149,18 +149,21 @@ ggarrange(SLA_density,
 
 # ggsave("Trait_distributions_over_time.jpg", width = 35 , height = 20, units = "cm")
 
-### Community weighted moments probability distributions ###
+### Community weighted skewness over time in different temp levels ###
 
 moments_clim_long_fullcommunity %>% 
-  filter(Trait_trans == "SLA_cm2_g_log") %>% 
+  filter(Trait_trans == "SLA_cm2_g_log",
+         moments == "skewness") %>% 
   mutate(year = as.factor(year)) %>% 
-  ggplot(aes(x = value, y = fct_rev(year), group = year)) +
-  geom_density_ridges() +
-  facet_grid(~moments, scales = "free") +
+  ggplot(aes(x = value, y = fct_rev(year), fill = fct_rev(as.factor(Temp_level)))) +
+  stat_density_ridges(quantile_lines = TRUE, quantiles = c(0.025, 0.5, 0.975), alpha = 0.7) +
+  geom_vline(xintercept =  0, linetype = 2, size = 1) +
+  facet_grid(~Temp_level) +
   theme_ridges() + 
   theme(legend.position = "none") +
-  labs(x = "SLA (cm2/g)", title = "Probability distribution of moments of SLA distribuion", y = "Year") +
-  theme_bw(base_size = 12)
+  labs(x = "SLA (cm2/g)", title = "Probability distribution skewness av SLA", y = "Year") +
+  theme_bw(base_size = 12) +
+  scale_fill_manual(name = "Temperature level", values = Temp_palette, labels = c("Boreal", "Sub-alpine", "Alpine"))
 
 ggsave("SLA_moments_over_time.jpg", width = 30 , height = 20, units = "cm")
 
@@ -332,7 +335,7 @@ model_output_space %>%
 
 model_output_space %>% 
   bind_rows(time) %>%
-  bind_rows(without_intra) %>% 
+  #bind_rows(without_intra) %>% 
   mutate(Trait_moment = paste0(moments, "_", Trait_trans)) %>% 
   mutate(trend_col = ifelse(effect > 0, "positive", "negative")) %>% 
   mutate(significance = ifelse(p.value > 0.05, "Non significant", "Significant")) %>% 
@@ -349,12 +352,12 @@ model_output_space %>%
   #geom_errorbar(aes(xmin = effect-std.error, xmax = effect+std.error)) +
   facet_grid(~term, scales = "free") +
   scale_color_manual(values = c("#89B7E1", "#5693CA", "#2E75B6")) +
-  scale_fill_manual(values = c("#EDEDED", "#89B7E1", "#EDEDED", "#5693CA", "#EDEDED", "#2E75B6")) +
+  scale_fill_manual(values = c("#EDEDED", "#EDEDED", "#5693CA", "#EDEDED", "#2E75B6")) +
   #scale_shape_manual(values = c(1,19)) +
   geom_hline(yintercept =  0) +
   theme_bw() +
   coord_flip() +
-  guides(fill = "none", color = "none", size = "none") +
+  #guides(fill = "none", color = "none", size = "none") +
   theme(axis.title.y=element_blank())
 
 ## Skewness ## Appendix figure?
