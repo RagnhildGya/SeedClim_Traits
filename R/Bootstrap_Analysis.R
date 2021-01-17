@@ -300,7 +300,7 @@ model_time<-function(df) {
 }
 
 model_space<-function(df) {
-  lmer(value ~ Temp_yearly_prev + scale(Precip_yearly) + Temp_yearly_spring * scale(Precip_yearly) + (1 | year), data = df)
+  lmer(value ~ Temp_yearly_prev * scale(Precip_yearly) + Temp_yearly_spring * scale(Precip_yearly) + (1 | year), data = df)
 }
 
 model_space_linear<-function(df) {
