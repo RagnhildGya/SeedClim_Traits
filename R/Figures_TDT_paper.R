@@ -192,8 +192,6 @@ fviz_contrib(pca_trait, choice = "var", axes = 2)
 
 
 fviz_eig(pca_trait, addlabels = TRUE) #Visualize eigenvalues/scree plot
-fviz_eig(pca_leaf_economic, addlabels = TRUE)
-fviz_eig(pca_size, addlabels = TRUE)
 
 # fviz_pca_var(pca_trait,
 #              col.var = "contrib", # Color by contributions to the PC
@@ -203,22 +201,24 @@ fviz_eig(pca_size, addlabels = TRUE)
 
 #### Ordination with traits ####
 
-fviz_pca_biplot(pca_trait, repel = TRUE,
+Ord_plot_traits <- fviz_pca_biplot(pca_trait, repel = TRUE,
                 col.var = "#2A2A2A", # Variables color
                 col.ind = "#AAB7B8",
                 label = "var",
                 labelsize = 5) +
-  theme_minimal(base_size = 15) +
+  theme_minimal(base_size = 14) +
   guides(shape = FALSE) +
   #scale_color_manual(name = "Summer temperature", values = c("#8DD5E1", "#FCB971", "#B93B3B")) +
-  theme(plot.title = element_blank()) +
-  coord_fixed()
+  coord_fixed() +
+  labs(title = "a) Trait spectrum") +
+  theme(plot.title = element_text(hjust = 0.1))
 
-ggsave("Ordination_LES_Size.svg", width = 22 , height = 16, units = "cm", dpi = 600)
+#ggsave("Ordination_LES_Size.svg", width = 22 , height = 16, units = "cm", dpi = 600)
 
 #### Ordination with temperature ####
 
-fviz_pca_ind(pca_trait, repel = TRUE,
+
+Ord_plot_temp <- fviz_pca_ind(pca_trait, repel = TRUE,
                 col.var = "#2A2A2A", # Variables color
                 label = "none",
                 labelsize = 5, 
@@ -226,18 +226,20 @@ fviz_pca_ind(pca_trait, repel = TRUE,
                 addEllipses = TRUE,
                 ellipse.level = 0.95,
                 palette = c("#d8c593", "#dd7631", "#bb3b0e")) +
-  theme_minimal(base_size = 15) +
+  theme_minimal(base_size = 14) +
   #scale_color_manual(name = "Summer temperature", values = c("#8DD5E1", "#FCB971", "#B93B3B")) +
   theme(legend.text=element_text(size=14), legend.title = element_text(size = 14), plot.title = element_blank(), axis.title = element_blank()) +
   labs(fill = "Summer temperature", color = "Summer temperature", shape = "Summer temperature") +
-  coord_fixed()
+  coord_fixed() +
+  labs(title = "d) Temperature") +
+  theme(plot.title = element_text(hjust = 0.1))
 
-ggsave("Ordination_Temp.svg", width = 18 , height = 11, units = "cm", dpi = 600)
+#ggsave("Ordination_Temp.svg", width = 18 , height = 11, units = "cm", dpi = 600)
 
 
 ### Ordination with precipitation ####
 
-fviz_pca_ind(pca_trait, repel = TRUE,
+Ord_plot_precip <- fviz_pca_ind(pca_trait, repel = TRUE,
               col.var = "#2A2A2A", # Variables color
               label = "none",
               labelsize = 5, 
@@ -249,9 +251,11 @@ fviz_pca_ind(pca_trait, repel = TRUE,
     #scale_color_manual(name = "Summer temperature", values = c("#8DD5E1", "#FCB971", "#B93B3B")) +
   theme(legend.text=element_text(size=14), legend.title = element_text(size = 14), plot.title = element_blank(), axis.title = element_blank()) +
   labs(fill = "Yearly precipitation", color = "Yearly precipitation", shape = "Yearly precipitation") +
-  coord_fixed()
+  coord_fixed() +
+  labs(title = "c) Precipitation") +
+  theme(plot.title = element_text(hjust = 0.1))
 
-ggsave("Ordination_Precip.svg", width = 18 , height = 11, units = "cm", dpi = 600)
+#ggsave("Ordination_Precip.svg", width = 18 , height = 11, units = "cm", dpi = 600)
   
 ## Ordination over time ##
   
@@ -259,38 +263,41 @@ ggsave("Ordination_Precip.svg", width = 18 , height = 11, units = "cm", dpi = 60
 pca_fort <- fortify(pca_trait, display = "Sites") %>% 
   bind_cols(Ord_boot_traits[1:6])
 
-pca_fort %>% 
+Ord_plot_time <- pca_fort %>% 
 ggplot(aes(x = PC1, y = PC2, colour = Temp_level, group = turfID)) +
   geom_path() + #use geom_path not geom_line
   geom_point(aes(size = if_else(year == 2009, 1, NA_real_)), show.legend = FALSE) +
   #scale_color_viridis_d() +
-  scale_color_manual(name = "Summer temperature", values = c("#8DD5E1", "#FCB971", "#B93B3B")) +
+  scale_color_manual(name = "Summer temperature", values = Temp_palette) +
   scale_size(range = 2) +
   coord_equal() +
-  theme_minimal(base_size = 12)
+  theme_minimal(base_size = 14) +
+  theme(legend.text=element_text(size=14), legend.title = element_text(size = 14), plot.title = element_text(hjust = 0.1), axis.title = element_blank()) +
+  labs(title = "b) Change over time", fill = "Yearly precipitation", color = "Yearly precipitation", shape = "Yearly precipitation") +
+  guides(color = FALSE) 
+
+
+d <- ggarrange(Ord_plot_traits, Ord_plot_time, Ord_plot_precip, Ord_plot_temp,  ncol = 2, nrow = 2, legend = "bottom")
+
+ggsave(plot = d, "Ord_time_temp_prec.jpg", width = 28 , height = 20, units = "cm")
 
 #ggsave("PCA_all_years_with_temp.jpg", width = 22 , height = 16, units = "cm")
 
 
-# fviz_pca_biplot(pca_leaf_economic, repel = TRUE,
-#                 col.var = "#2E9FDF", # Variables color
-#                 col.ind = "#696969",  # Individuals color
-#                 label = "var",
-#                 labelsize = 5,
-#                 habillage = Ord_boot_traits$Temp_level,
-#                 addEllipses = TRUE,
-#                 ellipse.level = 0.95) +
-#   theme_minimal(base_size = 20)
-# 
-# fviz_pca_biplot(pca_size, repel = TRUE,
-#                 col.var = "#2E9FDF", # Variables color
-#                 col.ind = "#696969",  # Individuals color
-#                 label = "var",
-#                 labelsize = 5,
-#                 habillage = Ord_boot_traits$Temp_level,
-#                 addEllipses = TRUE,
-#                 ellipse.level = 0.95) +
-#   theme_minimal(base_size = 20)
+### Figures with model output ###
+
+#Table with model output
+
+# write.table(<- model_output_space %>% 
+#                filter(moments %in% c("mean", "skewness")) %>% 
+#                select(-CIhigh.fit, -CIlow.fit, -Trend) %>% 
+#                mutate(effect = round(effect, digits = 3),
+#                       R2_marginal = round(R2_marginal, digits =3),
+#                       R2_conditional = round(R2_conditional, digits = 3),
+#                       std.error = round(std.error, digits = 3),
+#                       staticstic = round(staticstic, digits = 3),
+#                       df = round(df, digits = 3)),
+#   file = "model_output_space.csv")
 
 time <- model_output_time %>% 
   filter(moments == "mean") %>% 
