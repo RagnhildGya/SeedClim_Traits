@@ -241,6 +241,7 @@ community <- community %>%
    left_join(y = env_old, by = "Site") %>% 
    mutate(Temp_level = fct_relevel(Temp_level, c("6.5", "8.5", "10.5"))) %>% 
    mutate(Precip_level = fct_relevel(Precip_level, c("600", "1200", "2000", "2700"))) %>% 
+   ungroup() %>% 
    mutate(siteID = plyr::mapvalues(Site, from = dict_Site_2016$old, to = dict_Site_2016$new)) 
  
  rm(CN)
