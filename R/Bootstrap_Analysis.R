@@ -665,7 +665,7 @@ Ord_boot_traits <- sum_moments_climate_fullcommunity %>%
   rename("C % "= "C_percent", "C/N" = "CN_ratio_log", "Dry mass" = "Dry_Mass_g_log", "Leaf area" = "Leaf_Area_cm2_log", "Leaf thickness" = "Leaf_Thickness_Ave_mm", "N %" = "N_percent", "Plant height" = "Plant_Height_mm_log", "SLA" = "SLA_cm2_g_log")
 
 ### Do ordination
-pca_trait <- prcomp(Ord_boot_traits[, -(1:7)], scale = TRUE)
+pca_trait <- prcomp(Ord_boot_traits[, -(1:6)], scale = TRUE)
 
 ### Get variable
 var <- get_pca_var(pca_trait)
