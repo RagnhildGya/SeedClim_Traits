@@ -528,6 +528,58 @@ model_output_anomalies <- tidy_anomalies_model_predicted %>%
 
 #### Simpler mixed effect models on specific traits to make predicted plots ####
 
+### Making functional for simpler models on single traits 
+
+model_trait_summary <-function(dat, trait, moment) {
+  
+  
+  # Filter data for model
+  dat2 <- dat %>%
+    filter(Trait_trans == trait,
+           moments == moment,
+           n == 75) %>% 
+    unnest(data) %>% 
+    ungroup()
+  
+  # Run model
+  model <- lmer(value ~ Temp_yearly_prev * scale(Precip_yearly) + (1 | year), data = dat2)
+  
+  return(model)
+}
+
+models_trait_predictions <-function(model) {
+
+  newdata <- expand.grid(Precip_yearly=c(600, 1500, 2300, 3500), Temp_yearly_prev=seq(5.5,14, length=500), year = c(2009, 2011, 2012, 2013, 2015, 2017))
+  
+  newdata$predicted <- predict(object = model, newdata = newdata, re.form = NA, allow.new.levels=TRUE)
+  
+  return(newdata)
+}
+
+SLA_mean_sum <- model_trait_summary(memodel_data_fullcommunity, "SLA_cm2_g_log", "mean")
+SLA_mean_pred <- models_trait_predictions(SLA_mean_sum)
+SLA_skew_sum <- model_trait_summary(memodel_data_fullcommunity, "SLA_cm2_g_log", "skewness")
+SLA_skew_pred <- models_trait_predictions(SLA_skew_sum)
+
+CN_ratio_mean_sum <- model_trait_summary(memodel_data_fullcommunity, "CN_ratio_log", "mean")
+CN_ratio_mean_pred <- models_trait_predictions(memodel_data_fullcommunity, "CN_ratio_log", "mean")
+CN_ratio_skew_sum <- model_trait_summary(memodel_data_fullcommunity, "CN_ratio_log", "skewness")
+CN_ratio_skew_pred <- models_trait_predictions(memodel_data_fullcommunity, "CN_ratio_log", "skewness")
+
+LA_mean_sum <- model_trait_summary(memodel_data_fullcommunity, "Leaf_Area_cm2_log", "mean")
+LA_mean_pred <- models_trait_predictions(LA_mean_sum)
+LA_skew_sum <- model_trait_summary(memodel_data_fullcommunity, "Leaf_Area_cm2_log", "skewness")
+LA_skew_pred <- models_trait_predictions(LA_skew_sum)
+
+C_mean_sum <- model_trait_summary(memodel_data_fullcommunity, "C_percent", "mean")
+C_mean_pred <- models_trait_predictions(C_mean_sum)
+C_skew_sum <- model_trait_summary(memodel_data_fullcommunity, "C_percent", "skewness")
+C_skew_pred <- models_trait_predictions(C_skew_sum)
+
+
+
+
+
 ## Run model on one of the boostrappings of the mean of SLA to make a figure ##
 SLA_mean <- memodel_data_fullcommunity %>%
   filter(Trait_trans == "SLA_cm2_g_log",
@@ -538,7 +590,6 @@ SLA_mean <- memodel_data_fullcommunity %>%
 
 ### Space 
 mem_results_SLA_mean <- lmer(value ~ Temp_yearly_spring * scale(Precip_yearly) + (1 | year), data = SLA_mean)
-
 summary(mem_results_SLA_mean)
 
 newdata_SLA<-expand.grid(Precip_yearly=seq(400,6000, length=500), Temp_yearly_spring=c(6.5, 9.1, 10.9), year = c(2009, 2011, 2012, 2013, 2015, 2017))
@@ -546,13 +597,35 @@ newdata_SLA<-expand.grid(Precip_yearly=seq(400,6000, length=500), Temp_yearly_sp
 newdata_SLA$predicted <- predict(object = mem_results_SLA_mean, newdata = newdata_SLA, re.form = NA, allow.new.levels=TRUE)
 
 ###Time
-mem_results_time_SLA_mean <- lmer(value ~ Temp_yearly_prev * scale(Precip_yearly) + (1 | Site), data = SLA_mean)
+mem_results_time_SLA_mean <- lmer(value ~ Temp_yearly_prev * scale(Precip_yearly) + (1 | siteID), data = SLA_mean)
 
 summary(mem_results_time_SLA_mean)
 
 newdata_time_SLA<-expand.grid(Precip_yearly=seq(400,6000, length=500), Temp_yearly_prev=c(6.5, 9.1, 10.9), year = c(2009, 2011, 2012, 2013, 2015, 2017), Site = NA)
 
 newdata_time_SLA$predicted <- predict(object = mem_results_time_SLA_mean, newdata = newdata_time_SLA, re.form = NA, allow.new.levels=TRUE)
+
+
+### Skewness SLA
+
+SLA_skewness <- memodel_data_fullcommunity %>%
+  filter(Trait_trans == "SLA_cm2_g_log",
+         moments == "skewness",
+         n == 90) %>% 
+  unnest(data) %>% 
+  ungroup()
+
+### Space 
+mem_results_SLA_skewness <- lmer(value ~ Temp_yearly_spring * scale(Precip_yearly) + (1 | year), data = SLA_skewness)
+
+summary(mem_results_SLA_skewness)
+
+newdata_SLA_skewness <- expand.grid(Precip_yearly=seq(400,6000, length=500), Temp_yearly_spring=c(6.5, 9.1, 10.9), year = c(2009, 2011, 2012, 2013, 2015, 2017))
+newdata_SLA_skewness <- expand.grid(Precip_yearly=c(600, 1500, 2300, 3500), Temp_yearly_spring=seq(4,12, length=500), year = c(2009, 2011, 2012, 2013, 2015, 2017))
+
+newdata_SLA_skewness$predicted <- predict(object = mem_results_SLA_skewness, newdata = newdata_SLA_skewness, re.form = NA, allow.new.levels=TRUE)
+
+
 
 ## Run model on one of the boostrappings of the mean of LDMC to make a figure ##
 LDMC_mean <- memodel_data_fullcommunity %>%
@@ -570,6 +643,28 @@ newdata_LDMC<-expand.grid(Precip_yearly=seq(400,6000, length=500), Temp_yearly_s
 
 newdata_LDMC$predicted <- predict(object = mem_results_LDMC_mean, newdata = newdata_LDMC, re.form = NA, allow.new.levels=TRUE)
 
+
+### Skewness LDMC 
+
+LDMC_skewness <- memodel_data_fullcommunity %>%
+  filter(Trait_trans == "LDMC",
+         moments == "skewness",
+         n == 90) %>% 
+  unnest(data) %>% 
+  ungroup()
+
+### Space 
+mem_results_LDMC_skewness <- lmer(value ~ Temp_yearly_spring * scale(Precip_yearly) + (1 | year), data = LDMC_skewness)
+
+summary(mem_results_LDMC_skewness)
+
+newdata_LDMC_skewness <- expand.grid(Precip_yearly=c(600, 1500, 2300, 3500), Temp_yearly_spring=seq(4,12, length=500), year = c(2009, 2011, 2012, 2013, 2015, 2017))
+
+newdata_LDMC_skewness$predicted <- predict(object = mem_results_LDMC_skewness, newdata = newdata_LDMC_skewness, re.form = NA, allow.new.levels=TRUE)
+
+
+
+
 ## Run model on one of the boostrappings of the mean of plant height to make a figure ##
 Plant_height_mean <- memodel_data_fullcommunity %>%
   filter(Trait_trans == "Plant_Height_mm_log",
@@ -583,6 +678,25 @@ mem_results_height_mean <- lmer(value ~ Temp_yearly_spring * scale(Precip_yearly
 newdata_height<-expand.grid(Precip_yearly=seq(400,6000, length=500), Temp_yearly_spring=c(6.5, 9.1, 10.9), year = c(2009, 2011, 2012, 2013, 2015, 2017))
 
 newdata_height$predicted <- predict(object = mem_results_height_mean, newdata = newdata_height, re.form = NA, allow.new.levels=TRUE)
+
+### Skewness height 
+
+Plant_height_skewness <- memodel_data_fullcommunity %>%
+  filter(Trait_trans == "Plant_Height_mm_log",
+         moments == "skewness",
+         n == 90) %>% 
+  unnest(data) %>% 
+  ungroup()
+
+### Space 
+mem_results_height_skewness <- lmer(value ~ Temp_yearly_spring * scale(Precip_yearly) + (1 | year), data = Plant_height_skewness)
+
+summary(mem_results_height_skewness)
+
+newdata_height_skewness <- expand.grid(Precip_yearly=c(600, 1500, 2300, 3500), Temp_yearly_spring=seq(4,12, length=500), year = c(2009, 2011, 2012, 2013, 2015, 2017))
+
+newdata_height_skewness$predicted <- predict(object = mem_results_height_skewness, newdata = newdata_height_skewness, re.form = NA, allow.new.levels=TRUE)
+
 
 ## Run model on one of the boostrappings of the mean of leaf area to make a figure ##
 Leaf_area_mean <- memodel_data_fullcommunity %>%
@@ -599,6 +713,24 @@ summary(mem_results_LA_mean)
 newdata_LA<-expand.grid(Precip_yearly=seq(400,6000, length=500), Temp_yearly_spring=c(6.5, 9.1, 10.9), year = c(2009, 2011, 2012, 2013, 2015, 2017))
 
 newdata_LA$predicted <- predict(object = mem_results_LA_mean, newdata = newdata_LA, re.form = NA, allow.new.levels=TRUE)
+
+
+## Run model on one of the boostrappings of the mean of leaf area to make a figure ##
+Leaf_area_skewness <- memodel_data_fullcommunity %>%
+  filter(Trait_trans == "Leaf_Area_cm2_log",
+         moments == "skewness",
+         n == 90) %>% 
+  unnest(data) %>% 
+  ungroup()
+
+mem_results_LA_skew <- lmer(value ~ Temp_yearly_spring * scale(Precip_yearly) + (1 | year), data = Leaf_area_skewness)
+
+summary(mem_results_LA_skew)
+
+newdata_LA_skew<-expand.grid(Precip_yearly=c(600, 1500, 2300, 3500), Temp_yearly_spring=seq(4,12, length=500), year = c(2009, 2011, 2012, 2013, 2015, 2017))
+
+newdata_LA_skew$predicted <- predict(object = mem_results_LA_skew, newdata = newdata_LA_skew, re.form = NA, allow.new.levels=TRUE)
+
 
 ## Run model on one of the boostrappings of the mean of c% to make a figure ##
 C_percent_mean <- memodel_data_fullcommunity %>%
