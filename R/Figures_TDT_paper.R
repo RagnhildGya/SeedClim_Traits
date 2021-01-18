@@ -587,6 +587,7 @@ Trend_SLA_plot <- ggplot(SLA_mean, aes(x = Precip_yearly, y = value)) +
   theme_minimal(base_size = 15) +
   theme(plot.title = element_text(hjust = 0.5))
 
+
 Trend_SLA_time_plot <- ggplot(SLA_mean, aes(x = Precip_yearly, y = value)) +
   geom_point(color = "grey") +
   geom_line(aes(x = Precip_yearly, y = predicted, color = factor(Temp_yearly_prev)), data=newdata_time_SLA, size = 1, inherit.aes = FALSE, show.legend = TRUE) +
@@ -625,3 +626,71 @@ Fig_TDT_paper <- annotate_figure(Trend_figure,
 
 ggsave(filename = "Trend_figure.png", plot = Fig_TDT_paper, width = 30, height = 19, units = "cm")
 ggsave(filename = "Trend_figure_smaller.png", plot = Fig_TDT_paper, width = 24, height = 14, units = "cm")
+
+
+
+### Plots of skewness ###
+
+sum_moments_climate_fullcommunity %>% 
+  filter(Trait_trans %in% c("SLA_cm2_g_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "N_percent")) %>% 
+         #siteID %in% c("Skjelingahaugen", "Fauske")) %>% 
+  #mutate(siteID = factor(siteID, levels = c("Skjelingahaugen", "Fauske"))) %>% 
+  #group_by(Trait_trans, siteID) %>% 
+  group_by(Trait_trans) %>% 
+  mutate(skew1 = mean(skew),
+         ci_low_skew1 = mean(ci_low_skew),
+         ci_high_skew1 = mean(ci_high_skew)) %>% 
+  ggplot(aes(x = Temp_yearly_spring, y = skew)) +
+  geom_point(color = "grey") +
+  geom_line(aes(y = skew1)) +
+  geom_ribbon(aes(ymin = ci_low_skew1,
+                  ymax = ci_high_skew1), alpha = 0.3) +
+  geom_hline(yintercept = 0, color = "red") +
+  facet_grid(~Trait_trans) +
+  theme_minimal()
+
+
+plot_predictions <-function(dat, trait, moment, newdata) {
+  
+  dat2 <- dat %>%
+    filter(Trait_trans == trait,
+           moments == moment,
+           n == 75) %>% 
+    unnest(data) %>% 
+    ungroup()
+  
+  plot <- ggplot(dat2, aes(x = Temp_yearly_prev, y = value)) +
+    geom_point(color = "grey") +
+    geom_line(aes(x = Temp_yearly_prev, y = predicted, color = factor(Precip_yearly)), data=newdata, size = 1, inherit.aes = FALSE, show.legend = TRUE) +
+    scale_color_manual(values = Precip_palette) +
+    theme_minimal(base_size = 15) 
+
+  return(plot)
+}
+
+SLA_mean_plot <- plot_predictions(memodel_data_fullcommunity, "SLA_cm2_g_log", "mean", SLA_mean_pred) +
+  labs(y = "SLA (cm2/g log)", x = "", title = "Mean") +
+  theme(plot.title = element_text(hjust = 0.5))
+SLA_skew_plot <- plot_predictions(memodel_data_fullcommunity, "SLA_cm2_g_log", "skewness", SLA_skew_pred) + 
+  geom_hline(yintercept = 0, color = "black", linetype = 2) +
+  labs(y = "", x = "", title = "Skewness") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+CN_ratio_mean_plot <- plot_predictions(memodel_data_fullcommunity, "CN_ratio_log", "mean", CN_ratio_mean_pred) +
+  labs(y = "C/N ratio (log))", x = "") 
+CN_ratio_skew_plot <- plot_predictions(memodel_data_fullcommunity, "CN_ratio_log", "skewness", CN_ratio_skew_pred) + geom_hline(yintercept = 0, color = "black", linetype = 2) +
+  labs(y = "", x = "") 
+
+LA_mean_plot <- plot_predictions(memodel_data_fullcommunity, "Leaf_Area_cm2_log", "mean", LA_mean_pred) +
+  labs(y = "Leaf area (cm2 log)", x = "") 
+LA_skew_plot <- plot_predictions(memodel_data_fullcommunity, "Leaf_Area_cm2_log", "skewness", LA_skew_pred)+ geom_hline(yintercept = 0, color = "black", linetype = 2) +
+  labs(y = "", x = "") 
+
+C_mean_plot <- plot_predictions(memodel_data_fullcommunity, "C_percent", "mean", C_mean_pred) +
+  labs(y = "Carbon %", x = "") 
+C_skew_plot <- plot_predictions(memodel_data_fullcommunity, "C_percent", "skewness", C_skew_pred) + geom_hline(yintercept = 0, color = "black", linetype = 2) +
+  labs(y = "", x = "") 
+
+figure <- ggarrange(SLA_mean_plot, SLA_skew_plot, CN_ratio_mean_plot, CN_ratio_skew_plot, LA_mean_plot, LA_skew_plot, C_mean_plot, C_skew_plot, nrow = 4, ncol = 2, labels = c("a)", "b)", "c)", "d)", "e)", "f)", "g)", "h)"), common.legend = TRUE, legend = "bottom")
+
+ggsave(plot = figure, filename = "mean_skewness_figure.png",  width = 20, height = 29, units = "cm")
