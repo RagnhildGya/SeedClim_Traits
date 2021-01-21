@@ -8,6 +8,9 @@ library(corrplot)
 library(svglite)
 library(grid)
 library(gridExtra)
+library(maps)
+library(mapdata)
+library(grid)
 
 ## Color palettes ##
 Temp_palette <- c("#d8c593", "#dd7631", "#bb3b0e")
@@ -81,6 +84,89 @@ ggplot(aes(x = Year, y = Precip_yearly), data = env) +
   facet_wrap(~Precip_level)
 
 #ggsave("SeedClim_climate_deviation.jpg", width = 18 , height = 18, units = "cm")
+
+#### Climate grid on map figure ####
+
+
+dat <- read.table(header = TRUE, text = "
+siteID           latitude longitude Temperature Precipitation
+Alrust           60.8203    8.70466           2             1
+Arhelleren       60.6652    6.33738           3             3
+Fauske           61.0355    9.07876           3             1
+Gudmedalen       60.8328    7.17561           1             3
+Hogsete          60.876     7.17666           2             2
+Lavisdalen       60.8231    7.27596           1             2
+Ovstedal         60.6901    5.96487           3             4
+Rambera          61.0866    6.63028           2             3
+Skjellingahaugen 60.9335    6.41504           1             4
+Ulvhaugen        61.0243    8.12343           1             1
+Veskre           60.5445    6.51468           2             4
+Vikesland        60.8803    7.16982           3             2
+")
+
+dat <- dat %>% 
+  mutate(Precipitation = as.factor(Precipitation),
+         Temperature = as.factor(Temperature))
+
+precipLab <- c("Very dry", "Dry", "Wet", "Very wet")
+tempLab <- c("Alpine", "Intermediate", "Lowland")
+
+xlim <- range(dat$longitude) + c(-1, 0.5)
+ylim <- range(dat$latitude) + c(-0.5, 1)
+
+
+norwaymap <- map_data("world", "Norway")
+norwaymapHires <- map_data("worldHires", "Norway")
+
+
+Scandinaviamap <- map_data("world", c("Norway", "Sweden", "Finland"))
+norwaymapHires <- map_data("worldHires", "Norway")
+
+#function for theme on plots
+
+maptheme <- function(...) {
+  theme(
+    axis.text = element_text(size = 24),
+    axis.title = element_text(size = 28),
+    legend.title = element_text(size = 28),
+    legend.text = element_text(size = 24),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    panel.border = element_rect(fill = NA, colour = "black"),
+    panel.background = element_rect(fill = "white"),
+    plot.background = element_rect(fill = "white"),
+    ...
+  )
+}
+
+Norway_map <- ggplot() +
+  geom_map(data = Scandinaviamap, aes(x = long, y = lat, map_id = region, alpha = 0.6),
+           map = Scandinaviamap, colour = "black", fill = "grey60") +
+  geom_rect(data = data.frame(),
+            aes(xmin = xlim[1], xmax = xlim[2], ymin = ylim[1], ymax = ylim[2]),
+            colour = "black", fill = "#76B4FF", alpha = 0.8) +
+  coord_map(xlim = c(4, 32), ylim = c(55, 71)) +
+  labs(x = NULL, y = NULL) +
+  guides(alpha = FALSE) +
+  maptheme()
+
+Zoomed_in_map <- ggplot(dat, aes(x = longitude, y = latitude, fill = Precipitation, shape = Temperature)) +
+  geom_map(aes(x = long, y = lat, map_id = region), data = norwaymapHires, map = norwaymapHires, color = NA, fill = "grey70", inherit.aes = FALSE) +
+  geom_point(size = 11) +
+  coord_map(xlim = xlim, ylim = ylim) +
+  guides(shape = guide_legend(override.aes = list(fill = "grey70")),
+         fill = guide_legend(override.aes = list(shape = 21))) +
+  scale_shape_manual(values = c(24, 22, 25), labels = tempLab, breaks = 1:3) +
+  scale_fill_manual(values = rev(Precip_palette), labels = precipLab, breaks = 1:4) +
+  maptheme()
+
+# png("SeedClim_climate_grid.png", width = 1285, height = 861)
+# grid.newpage()
+# vp_zoomed_in_map <- viewport(width = 1, height = 1, x = 0.5, y = 0.5)  # the zoomed in map
+# vp_norway_map <- viewport(width = 0.4, height = 0.4, x = 0.685, y = 0.8)  # the inset in upper left of scandinacia
+# print(Zoomed_in_map, vp = vp_zoomed_in_map)
+# print(Norway_map, vp = vp_norway_map)
+# dev.off()
 
 ## Plotting trait distributions ##
 set.seed(47)
