@@ -159,11 +159,11 @@ model_space<-function(df) {
 }
 
 model_space_linear<-function(df) {
-  lm(value ~ Temp_yearly_prev + scale(Precip_yearly) + Temp_yearly_spring * scale(Precip_yearly) +  year, data = df)
+  lm(value ~ Temp_yearly_prev * scale(Precip_yearly) + Temp_yearly_spring * scale(Precip_yearly) +  year, data = df)
 }
 
 model_time_linear<-function(df) {
-  lm(value ~ Temp_yearly_prev + scale(Precip_yearly) + Temp_yearly_spring * scale(Precip_yearly) +  siteID, data = df)
+  lm(value ~ Temp_yearly_prev * scale(Precip_yearly) + Temp_yearly_spring * scale(Precip_yearly) +  siteID, data = df)
 }
 
 predict_without_random<-function(model) {
@@ -181,45 +181,38 @@ predict_with_random<-function(model) {
 # 2) Tidying the model, giving the model output in a nice format. Making predicted values for each of the trait:moment combination along the climatic gradients. Calculating pseudo R squared values based on the method in paper Nakagawa et al 2017.
 # 3) Making a dataset with only the predicted values. Unnesting the list of the predicted values.
 
-testdata <- memodel_data_fullcommunity %>% 
-  filter(Trait_trans == "Leaf_Area_cm2_log",
-         moments == "mean",
-         n == 1) %>% 
-  unnest(data)
-
-mixed_space <- lmer(formula = value ~ Temp_yearly_prev * scale(Precip_yearly) + Temp_yearly_spring * scale(Precip_yearly) + (1 | year), 
-              data = testdata)
-summary(mixed_space)
-
-linear_space <- lm(formula = value ~ Temp_yearly_prev * scale(Precip_yearly) + Temp_yearly_spring * scale(Precip_yearly) + year, 
-              data = testdata)
-summary(linear_space)
-
-
-mixed_time <- lmer(formula = value ~ Temp_yearly_prev * scale(Precip_yearly) + Temp_yearly_spring * scale(Precip_yearly) + (1 | siteID), 
-              data = testdata)
-summary(mixed_time)
-
-linear_time <- lm(formula = value ~ Temp_yearly_prev * scale(Precip_yearly) + Temp_yearly_spring * scale(Precip_yearly) + siteID, 
-                   data = testdata)
-summary(linear_time)
-
-
-
-## Space ##
+## Space mixed ##
 mem_results_space <- memodel_data_fullcommunity %>%
-  filter(n == 4) %>% 
-  mutate(model = map(data, model_space))
+  filter(moments %in% c("mean", "skewness"),
+         n == 4) %>% 
+  mutate(model = purrr::map(data, model_space))
 
-tidy_space_model_predicted <- mem_results_space %>%
-  mutate(model_output = map(model, tidy)) %>%
-  mutate(R_squared = map(model, rsquared))
+tidy_space_model_predicted_mixed <- mem_results_space %>%
+  mutate(model_output = purrr::map(model, tidy)) %>%
+  mutate(R_squared = purrr::map(model, rsquared))
 
-predicted_values_space_ <- tidy_space_model_predicted %>%
+predicted_values_space_mixed <- tidy_space_model_predicted %>%
   ungroup() %>%
   select(Trait_trans, moments, data, predicted) %>%
   unnest(c(data, predicted)) %>%
   rename(modeled = predicted, measured = value)
+
+## Space linear ##
+mem_results_space_linear <- memodel_data_fullcommunity %>%
+  filter(moments %in% c("mean", "skewness"),
+         n == 4) %>% 
+  mutate(model = purrr::map(data, model_space_linear))
+
+tidy_space_model_predicted_linear <- mem_results_space_linear %>%
+  mutate(model_output = purrr::map(model, tidy)) %>% 
+  mutate(predicted = purrr::map(model, predict)) %>% 
+  mutate(R_squared = purrr::map(model, rsquared))
+
+predicted_values_space_ <- tidy_space_model_predicted %>%
+   ungroup() %>%
+   select(Trait_trans, moments, data, predicted) %>%
+   unnest(c(data, predicted)) %>%
+   rename(modeled = predicted, measured = value)
 
 
 # ## Without intraspecific variability ##
@@ -239,19 +232,32 @@ predicted_values_space_ <- tidy_space_model_predicted %>%
 
 
 ## Time - Full community ##
-mem_results_time <- memodel_data_fullcommunity %>%
-  mutate(model = map(data, model_time))
+mem_results_time_mixed <- memodel_data_fullcommunity %>%
+  filter(moments %in% c("mean", "skewness"),
+         n == 4) %>% 
+  mutate(model = purrr::map(data, model_time))
 
-tidy_time_model_predicted <- mem_results_time %>%
-  mutate(model_output = map(model, tidy)) %>%
-  mutate(predicted = map(model, predict_with_random)) %>% 
-  mutate(R_squared = map(model, rsquared))
+tidy_time_model_predicted_mixed <- mem_results_time_mixed %>%
+  mutate(model_output = purrr::map(model, tidy)) %>%
+  mutate(predicted = purrr::map(model, predict_with_random)) %>% 
+  mutate(R_squared = purrr::map(model, rsquared))
 
 predicted_values_time <- tidy_time_model_predicted %>%
   ungroup() %>%
   select(Trait_trans, moments, data, predicted) %>%
   unnest(c(data, predicted)) %>%
   rename(modeled = predicted, measured = value)
+
+## Space linear ##
+mem_results_time_linear <- memodel_data_fullcommunity %>%
+  filter(moments %in% c("mean", "skewness"),
+         n == 4) %>% 
+  mutate(model = purrr::map(data, model_time_linear))
+
+tidy_time_model_predicted_linear <- mem_results_time_linear %>%
+  mutate(model_output = purrr::map(model, tidy)) %>% 
+  mutate(predicted = purrr::map(model, predict)) %>% 
+  mutate(R_squared = purrr::map(model, rsquared))
 
 
 # Making a function for AIC tests
@@ -284,7 +290,7 @@ predicted_values_time <- tidy_time_model_predicted %>%
 #write.table(x = AIC_all_models, file = "AIC_log.csv")
 
 # Making a dataset with the model output and the test-statistics (R squared), and summarizing them.
-model_output <-function(dat) {
+model_output_mixed <-function(dat) {
   
   model_output <- dat %>% 
     select(Trait_trans, moments, n, model_output, R_squared) %>% 
@@ -310,15 +316,40 @@ model_output <-function(dat) {
   return(model_output)
 }
 
-
+model_output_linear <-function(dat) {
+  
+  model_output <- dat %>% 
+    select(Trait_trans, moments, n, model_output, R_squared) %>% 
+    #filter(Trait_trans %in% c("CN_ratio_log", "SLA_cm2_g_log") & moments %in% c("mean", "variance")) %>% 
+    #filter(!Trait_trans == "CN_ratio_log" | moments == "variance") %>% 
+    unnest(c(model_output, R_squared)) %>% 
+    filter(term %in% c("Temp_yearly_prev", "scale(Precip_yearly)", "Temp_yearly_prev:scale(Precip_yearly)", "Temp_yearly_spring", "scale(Precip_yearly):Temp_yearly_spring")) %>% 
+    select(Trait_trans, moments, term, n, estimate, std.error, statistic, p.value, R.squared) %>% 
+    ungroup() %>% 
+    group_by(Trait_trans, moments, term) %>% 
+    summarize(effect = mean(estimate),
+              R2 = mean(R.squared),
+              #CIlow.fit = effect - sd(estimate),
+              #CIhigh.fit = effect + sd(estimate),
+              std.error = mean(std.error),
+              staticstic = mean(statistic),
+              p.value = mean(p.value))
+    # mutate(Trend = case_when(CIlow.fit < 0 & CIhigh.fit < 0 ~ "Negative",
+    #                          CIlow.fit > 0 & CIhigh.fit > 0 ~ "Positive",
+    #                          CIlow.fit < 0 & CIhigh.fit > 0 ~ "No"))
+  return(model_output)
+}
 
 #model_output_temp <- model_output(tidy_temp_model_predicted, c("Temp_yearly", "Temp_deviation_decade"))
 #model_output_precip <- model_output(tidy_temp_model_predicted, c("Precip_yearly", "Precip_deviation_decade"))
 #model_output_tempAddprecip <- model_output(tidy_tempAddprecip_model_predicted, c("Temp_yearly", "Temp_deviation_decade","scale(Precip_yearly)", "scale(Precip_deviation_decade)"))
-model_output_time <- model_output(tidy_time_model_predicted)
-model_output_space <- model_output(tidy_space_model_predicted)
+model_output_time_mixed <- model_output_mixed(tidy_time_model_predicted_mixed)
+model_output_time_linear <- model_output_linear(tidy_time_model_predicted_linear)
 
-model_output_space_without_intra <- model_output(tidy_space_model_predicted_without_intra)
+model_output_space_mixed <- model_output_mixed(tidy_space_model_predicted_mixed)
+model_output_space_linear <- model_output_linear(tidy_space_model_predicted_linear)
+
+#model_output_space_without_intra <- model_output(tidy_space_model_predicted_without_intra)
 
 # model_output_time_forbs <- model_output(tidy_time_model_predicted_forbs)
 # model_output_time_graminoids <- model_output(tidy_time_model_predicted_graminoids)
