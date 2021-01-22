@@ -108,9 +108,9 @@ sum_moments_climate_fullcommunity = bind_rows(
   sum_moments_fullcommunity %>% 
      left_join(env, by = c("siteID" = "siteID", "year" = "Year")))
 
-sum_moments_climate_without_intra = bind_rows(
-  sum_moments_without_intra %>% 
-    left_join(env, by = c("siteID" = "siteID", "year" = "Year")))
+# sum_moments_climate_without_intra = bind_rows(
+#   sum_moments_without_intra %>% 
+#     left_join(env, by = c("siteID" = "siteID", "year" = "Year")))
 
 
 
@@ -119,10 +119,10 @@ moments_clim_long_fullcommunity <- Imputed_traits_fullcommunity %>%
   left_join(env, by = c("siteID" = "siteID", "year" = "Year")) %>% 
   mutate(year = as.factor(year))
 
-moments_clim_long_without_intra <- Moments_without_intra %>% 
-  pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
-  left_join(env, by = c("siteID" = "siteID", "year" = "Year")) %>% 
-  mutate(year = as.factor(year))
+# moments_clim_long_without_intra <- Moments_without_intra %>% 
+#   pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
+#   left_join(env, by = c("siteID" = "siteID", "year" = "Year")) %>% 
+#   mutate(year = as.factor(year))
 
 
 #### Making data set with with summary information about moments in the data set ####
@@ -140,12 +140,12 @@ memodel_data_fullcommunity <- moments_clim_long_fullcommunity %>%
   group_by(Trait_trans, moments, n) %>% 
   nest()
 
-memodel_data_without_intra <- moments_clim_long_without_intra %>% 
-  #filter(Trait_trans %in% c("CN_ratio_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "SLA_cm2_g_log")) %>% 
-  ungroup() %>%
-  select(Trait_trans, moments, siteID, turfID, Temp_yearly_prev, Temp_yearly_spring, Precip_yearly, value, year, n) %>% 
-  group_by(Trait_trans, moments, n) %>% 
-  nest()
+# memodel_data_without_intra <- moments_clim_long_without_intra %>% 
+#   #filter(Trait_trans %in% c("CN_ratio_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "SLA_cm2_g_log")) %>% 
+#   ungroup() %>%
+#   select(Trait_trans, moments, siteID, turfID, Temp_yearly_prev, Temp_yearly_spring, Precip_yearly, value, year, n) %>% 
+#   group_by(Trait_trans, moments, n) %>% 
+#   nest()
 
 ### Funcitons for different models and model predictions later ###
 
