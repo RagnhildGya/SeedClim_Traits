@@ -440,24 +440,26 @@ model_output_space_mixed %>%
   mutate(significance = ifelse(p.value > 0.05, "Non significant", "Significant")) %>% 
   filter(moments %in% c("mean", "time")) %>% 
   mutate(moments = factor(moments, levels = c("time", "mean"))) %>% 
-  mutate(coloring = paste0(moments, "", significance)) %>% 
-  mutate(coloring = factor(coloring, levels = c("timeNon significant", "timeSignificant", "meanNon significant", "meanSignificant" ))) %>% 
+  #mutate(coloring = paste0(moments, "", significance)) %>% 
+  #mutate(coloring = factor(coloring, levels = c("timeNon significant", "timeSignificant", "meanNon significant", "meanSignificant" ))) %>% 
   mutate(term = as.factor(recode(term, "scale(Precip_yearly)" = "Precipitation", "Temp_yearly_spring" = "SpringTemp", "Temp_yearly_spring:scale(Precip_yearly)" = "SpringTemp:Precipitation"))) %>% 
-  mutate(term = factor(term, levels = c("PreviousYearTemp", "Precipitation", "SpringTemp", "SpringTemp:Precipitation"))) %>% 
+  mutate(coloring = paste0(moments, "", term)) %>% 
+  mutate(coloring = factor(coloring, levels = c("timePrecipitation","meanPrecipitation","timeSpringTemp", "meanSpringTemp", "timeSpringTemp:Precipitation", "meanSpringTemp:Precipitation"))) %>% 
   mutate(Trait_trans = factor(Trait_trans, levels = c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent", "SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))) %>%
-  ggplot(aes(x = fct_rev(Trait_trans), y = effect, fill = coloring, color = moments)) +
+  ggplot(aes(x = fct_rev(Trait_trans), y = effect, fill = coloring)) +
   geom_bar(stat = "identity", position = position_dodge(width=0.6), width = 0.7) +
+  geom_point(aes(size = if_else(p.value <0.05, 0.3, NA_real_)), position = position_dodge(width=0.6), show.legend = FALSE) +
   #geom_bar_pattern(aes(pattern = 'stripe'), stat = "identity", position = "dodge") +
   #geom_errorbar(aes(xmin = effect-std.error, xmax = effect+std.error)) +
   facet_grid(~term, scales = "free") +
-  scale_color_manual(values = c("#89B7E1", "#5693CA", "#2E75B6")) +
-  scale_fill_manual(values = c("#EDEDED", "#EDEDED", "#5693CA", "#EDEDED", "#2E75B6")) +
+  scale_fill_manual(values = c("#BAD8F7", "#2E75B6", "#d8c593","#dd7631", "#D8C4E8", "#9A86A9")) +
   #scale_shape_manual(values = c(1,19)) +
   geom_hline(yintercept =  0) +
   theme_bw() +
   coord_flip() +
   #guides(fill = "none", color = "none", size = "none") +
-  theme(axis.title.y=element_blank())
+  theme(axis.title.y=element_blank()) +
+  guides(fill = FALSE)
 
 ## Mean linear model ##
 
@@ -469,24 +471,27 @@ model_output_space_linear %>%
   mutate(significance = ifelse(p.value > 0.05, "Non significant", "Significant")) %>% 
   filter(moments %in% c("mean", "time")) %>% 
   mutate(moments = factor(moments, levels = c("time", "mean"))) %>% 
-  mutate(coloring = paste0(moments, "", significance)) %>% 
-  mutate(coloring = factor(coloring, levels = c("timeNon significant", "timeSignificant", "meanNon significant", "meanSignificant" ))) %>% 
-  mutate(term = as.factor(recode(term, "Temp_yearly_prev" = "PreviousYearTemp", "scale(Precip_yearly)" = "Precipitation", "Temp_yearly_spring" = "SpringTemp", "Temp_yearly_prev:scale(Precip_yearly)" = "PreviousYearTemp:Precipitation", "scale(Precip_yearly):Temp_yearly_spring" ="Precipitation:SpringTemp"))) %>% 
+  #mutate(coloring = paste0(moments, "", significance)) %>% 
+  #mutate(coloring = factor(coloring, levels = c("timeNon significant", "timeSignificant", "meanNon significant", "meanSignificant" ))) %>% 
   mutate(term = as.factor(recode(term, "scale(Precip_yearly)" = "Precipitation", "Temp_yearly_spring" = "SpringTemp", "Temp_yearly_spring:scale(Precip_yearly)" = "SpringTemp:Precipitation"))) %>% 
+  mutate(coloring = paste0(moments, "", term)) %>% 
+  mutate(coloring = factor(coloring, levels = c("timePrecipitation","meanPrecipitation","timeSpringTemp", "meanSpringTemp", "timeSpringTemp:Precipitation", "meanSpringTemp:Precipitation"))) %>% 
   mutate(Trait_trans = factor(Trait_trans, levels = c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent", "SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))) %>%
-  ggplot(aes(x = fct_rev(Trait_trans), y = effect, fill = coloring, color = moments)) +
+  ggplot(aes(x = fct_rev(Trait_trans), y = effect, fill = coloring)) +
   geom_bar(stat = "identity", position = position_dodge(width=0.6), width = 0.7) +
+  geom_point(aes(size = if_else(p.value <0.05, 0.3, NA_real_)), position = position_dodge(width=0.6), show.legend = FALSE) +
   #geom_bar_pattern(aes(pattern = 'stripe'), stat = "identity", position = "dodge") +
   #geom_errorbar(aes(xmin = effect-std.error, xmax = effect+std.error)) +
   facet_grid(~term, scales = "free") +
-  scale_color_manual(values = c("#89B7E1", "#5693CA", "#2E75B6")) +
-  scale_fill_manual(values = c("#EDEDED", "#5693CA", "#EDEDED", "#2E75B6")) +
+  scale_fill_manual(values = c("#BAD8F7", "#2E75B6", "#d8c593","#dd7631", "#D8C4E8", "#9A86A9")) +
   #scale_shape_manual(values = c(1,19)) +
   geom_hline(yintercept =  0) +
   theme_bw() +
   coord_flip() +
   #guides(fill = "none", color = "none", size = "none") +
-  theme(axis.title.y=element_blank())
+  theme(axis.title.y=element_blank()) +
+  guides(fill = FALSE)
+
 
 ## Skewness ## Appendix figure?
 
