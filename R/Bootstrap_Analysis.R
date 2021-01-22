@@ -162,6 +162,9 @@ model_space_linear<-function(df) {
   lm(value ~ Temp_yearly_prev + scale(Precip_yearly) + Temp_yearly_spring * scale(Precip_yearly) +  year, data = df)
 }
 
+model_time_linear<-function(df) {
+  lm(value ~ Temp_yearly_prev + scale(Precip_yearly) + Temp_yearly_spring * scale(Precip_yearly) +  siteID, data = df)
+}
 
 predict_without_random<-function(model) {
   predict(object = model, re.form=NA)
@@ -184,13 +187,24 @@ testdata <- memodel_data_fullcommunity %>%
          n == 1) %>% 
   unnest(data)
 
-mixed <- lmer(formula = value ~ Temp_yearly_prev * scale(Precip_yearly) + Temp_yearly_spring * scale(Precip_yearly) + (1 | year), 
+mixed_space <- lmer(formula = value ~ Temp_yearly_prev * scale(Precip_yearly) + Temp_yearly_spring * scale(Precip_yearly) + (1 | year), 
               data = testdata)
-summary(mixed)
+summary(mixed_space)
 
 linear_space <- lm(formula = value ~ Temp_yearly_prev * scale(Precip_yearly) + Temp_yearly_spring * scale(Precip_yearly) + year, 
               data = testdata)
 summary(linear_space)
+
+
+mixed_time <- lmer(formula = value ~ Temp_yearly_prev * scale(Precip_yearly) + Temp_yearly_spring * scale(Precip_yearly) + (1 | siteID), 
+              data = testdata)
+summary(mixed_time)
+
+linear_time <- lm(formula = value ~ Temp_yearly_prev * scale(Precip_yearly) + Temp_yearly_spring * scale(Precip_yearly) + siteID, 
+                   data = testdata)
+summary(linear_time)
+
+
 
 ## Space ##
 mem_results_space <- memodel_data_fullcommunity %>%
