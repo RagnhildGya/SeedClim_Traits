@@ -385,10 +385,16 @@ ggsave(plot = d, "Ord_time_temp_prec.jpg", width = 28 , height = 20, units = "cm
 #                       df = round(df, digits = 3)),
 #   file = "model_output_space.csv")
 
-time <- model_output_time %>% 
+time_mixed <- model_output_time_mixed %>% 
   filter(moments == "mean") %>% 
   select(Trait_trans, moments, term, effect, std.error, p.value) %>% 
   mutate(moments = "time")
+
+time_linear <- model_output_time_linear %>% 
+  filter(moments == "mean") %>% 
+  select(Trait_trans, moments, term, effect, std.error, p.value) %>% 
+  mutate(moments = "time")
+
 
 without_intra <- model_output_space_without_intra %>% 
   filter(moments == "mean") %>% 
@@ -424,20 +430,20 @@ model_output_space %>%
   geom_vline(xintercept =  0) +
   theme_bw()
 
-## Mean ##
+## Mean mixed effect model ##
 
-model_output_space %>% 
-  bind_rows(time) %>%
+model_output_space_mixed %>% 
+  bind_rows(time_mixed) %>%
   #bind_rows(without_intra) %>% 
   mutate(Trait_moment = paste0(moments, "_", Trait_trans)) %>% 
   mutate(trend_col = ifelse(effect > 0, "positive", "negative")) %>% 
   mutate(significance = ifelse(p.value > 0.05, "Non significant", "Significant")) %>% 
-  filter(moments %in% c("mean", "time", "without_intra")) %>% 
-  mutate(moments = factor(moments, levels = c("time", "without_intra", "mean"))) %>% 
+  filter(moments %in% c("mean", "time")) %>% 
+  mutate(moments = factor(moments, levels = c("time", "mean"))) %>% 
   mutate(coloring = paste0(moments, "", significance)) %>% 
-  mutate(coloring = factor(coloring, levels = c("timeNon significant", "timeSignificant", "without_intraNon significant", "without_intraSignificant", "meanNon significant", "meanSignificant" ))) %>% 
-  mutate(term = as.factor(recode(term, "Temp_yearly_prev" = "PreviousYearTemp", "scale(Precip_yearly)" = "Precipitation", "Temp_yearly_spring" = "SpringTemp", "Temp_yearly_prev:scale(Precip_yearly)" = "PreviousYearTemp:Precipitation", "scale(Precip_yearly):Temp_yearly_spring" ="Precipitation:SpringTemp"))) %>% 
-  mutate(term = factor(term, levels = c("PreviousYearTemp", "Precipitation", "SpringTemp", "PreviousYearTemp:Precipitation", "Precipitation:SpringTemp"))) %>% 
+  mutate(coloring = factor(coloring, levels = c("timeNon significant", "timeSignificant", "meanNon significant", "meanSignificant" ))) %>% 
+  mutate(term = as.factor(recode(term, "scale(Precip_yearly)" = "Precipitation", "Temp_yearly_spring" = "SpringTemp", "Temp_yearly_spring:scale(Precip_yearly)" = "SpringTemp:Precipitation"))) %>% 
+  mutate(term = factor(term, levels = c("PreviousYearTemp", "Precipitation", "SpringTemp", "SpringTemp:Precipitation"))) %>% 
   mutate(Trait_trans = factor(Trait_trans, levels = c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent", "SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))) %>%
   ggplot(aes(x = fct_rev(Trait_trans), y = effect, fill = coloring, color = moments)) +
   geom_bar(stat = "identity", position = position_dodge(width=0.6), width = 0.7) +
@@ -446,6 +452,35 @@ model_output_space %>%
   facet_grid(~term, scales = "free") +
   scale_color_manual(values = c("#89B7E1", "#5693CA", "#2E75B6")) +
   scale_fill_manual(values = c("#EDEDED", "#EDEDED", "#5693CA", "#EDEDED", "#2E75B6")) +
+  #scale_shape_manual(values = c(1,19)) +
+  geom_hline(yintercept =  0) +
+  theme_bw() +
+  coord_flip() +
+  #guides(fill = "none", color = "none", size = "none") +
+  theme(axis.title.y=element_blank())
+
+## Mean linear model ##
+
+model_output_space_linear %>% 
+  bind_rows(time_linear) %>%
+  #bind_rows(without_intra) %>% 
+  mutate(Trait_moment = paste0(moments, "_", Trait_trans)) %>% 
+  mutate(trend_col = ifelse(effect > 0, "positive", "negative")) %>% 
+  mutate(significance = ifelse(p.value > 0.05, "Non significant", "Significant")) %>% 
+  filter(moments %in% c("mean", "time")) %>% 
+  mutate(moments = factor(moments, levels = c("time", "mean"))) %>% 
+  mutate(coloring = paste0(moments, "", significance)) %>% 
+  mutate(coloring = factor(coloring, levels = c("timeNon significant", "timeSignificant", "meanNon significant", "meanSignificant" ))) %>% 
+  mutate(term = as.factor(recode(term, "Temp_yearly_prev" = "PreviousYearTemp", "scale(Precip_yearly)" = "Precipitation", "Temp_yearly_spring" = "SpringTemp", "Temp_yearly_prev:scale(Precip_yearly)" = "PreviousYearTemp:Precipitation", "scale(Precip_yearly):Temp_yearly_spring" ="Precipitation:SpringTemp"))) %>% 
+  mutate(term = as.factor(recode(term, "scale(Precip_yearly)" = "Precipitation", "Temp_yearly_spring" = "SpringTemp", "Temp_yearly_spring:scale(Precip_yearly)" = "SpringTemp:Precipitation"))) %>% 
+  mutate(Trait_trans = factor(Trait_trans, levels = c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent", "SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))) %>%
+  ggplot(aes(x = fct_rev(Trait_trans), y = effect, fill = coloring, color = moments)) +
+  geom_bar(stat = "identity", position = position_dodge(width=0.6), width = 0.7) +
+  #geom_bar_pattern(aes(pattern = 'stripe'), stat = "identity", position = "dodge") +
+  #geom_errorbar(aes(xmin = effect-std.error, xmax = effect+std.error)) +
+  facet_grid(~term, scales = "free") +
+  scale_color_manual(values = c("#89B7E1", "#5693CA", "#2E75B6")) +
+  scale_fill_manual(values = c("#EDEDED", "#5693CA", "#EDEDED", "#2E75B6")) +
   #scale_shape_manual(values = c(1,19)) +
   geom_hline(yintercept =  0) +
   theme_bw() +
