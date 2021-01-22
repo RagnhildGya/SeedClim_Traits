@@ -31,23 +31,6 @@ set.seed(47)
 community <- community %>% 
   filter(!year == "2010")
 
-# community_2011 <- community %>% 
-#   filter(year == "2011")
-# community_forb <- community %>% 
-#   filter(functionalGroup %in% c("forb", "woody", "pteridophyte"))
-# 
-# community_graminoid <- community %>% 
-#   filter(functionalGroup == "graminoid")
-# 
-# community_alpine <- community %>%  
-#   filter(siteCode %in% c("alp1", "alp2", "alp3", "alp4"))
-# 
-# community_subalpine <- community %>% 
-#   filter(siteCode %in% c("int1", "int2", "int3", "int4"))
-# 
-# community_boreal <- community %>% 
-#   filter(siteCode %in% c("low1", "low2", "low3", "low4"))
-
 ## Trait data ##
 
 traitdata_2 <- traitdata_1 %>% 
@@ -55,30 +38,6 @@ traitdata_2 <- traitdata_1 %>%
          turfID = "") 
 
 rm(traitdata_1)
-# trait_forb <- traitdata_2 %>% 
-#   filter(functionalGroup %in% c("forb", "woody", "pteridophyte"))
-# 
-# trait_graminoid <- traitdata_2 %>% 
-#   filter(functionalGroup == "graminoid")
-
-# env <- env %>% 
-#   select(-Temp_se, -Precip_se)
-
-## Make a drake plan DOES NOT WORK YET ##
-
-# ComYearList <- drake_plan(
-#   
-#   # make a list with all years data
-# YearList = list(com2009 = community2009,
-#                 com2011 = community2011,
-#                 com2012 = community2012,
-#                 com2013 = community2013,
-#                 com2015 = community2015,
-#                 com2016 = community2016,
-#                 com2017 = community2017) %>% 
-# map(Trait_impute_per_year(trait_dat = traitdata_2, com_dat = .)),
-# 
-# ) 
 
 #### Trait impute ####
 
@@ -104,8 +63,8 @@ Imputed_traits_fullcommunity <- Trait_impute_per_year(com_dat = community, trait
 
 sum_moments_fullcommunity <- trait_summarise_boot_moments(Imputed_traits_fullcommunity)
 
-traitstrap:::autoplot.imputed_trait(Imputed_traits_fullcommunity) 
-traitstrap:::autoplot.imputed_trait(Imputed_traits_without_intra) 
+#traitstrap:::autoplot.imputed_trait(Imputed_traits_fullcommunity) 
+#traitstrap:::autoplot.imputed_trait(Imputed_traits_without_intra) 
 
 #Write function for trait imputations without the intraspecific variability by sampling across sites instead of just from that site
 Trait_impute_without_intra <- function(com_dat, trait_dat){
@@ -165,30 +124,6 @@ moments_clim_long_without_intra <- Moments_without_intra %>%
   left_join(env, by = c("siteID" = "siteID", "year" = "Year")) %>% 
   mutate(year = as.factor(year))
 
-# moments_clim_long_forbs <- Moments_forbs %>% 
-#   pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
-#   left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
-#   mutate(year = as.factor(year))
-# 
-# moments_clim_long_graminoids <- Moments_graminoids %>% 
-#   pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
-#   left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
-#   mutate(year = as.factor(year))
-# 
-# moments_clim_long_alpine <- Moments_alpine %>% 
-#   pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
-#   left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
-#   mutate(year = as.factor(year))
-# 
-# moments_clim_long_subalpine <- Moments_subalpine %>% 
-#   pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
-#   left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
-#   mutate(year = as.factor(year))
-# 
-# moments_clim_long_boreal <- Moments_boreal %>% 
-#   pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
-#   left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
-#   mutate(year = as.factor(year))
 
 #### Making data set with with summary information about moments in the data set ####
 
@@ -196,51 +131,6 @@ moments_clim_long_without_intra <- Moments_without_intra %>%
 
 
 #### Mixed effect model testing ####
-
-# mixed_model_temp_precip<-function(df) {
-#   lmer(value ~ Temp * scale(Precip) +  (1 | Site), data = df)
-# }
-# 
-# mixed_model_clim_year<-function(df) {
-#   lmer(value ~ year + (1 | Site), data = df)
-# }
-# 
-# mixed_model_clim_year<-function(df) {
-#   lmer(value ~ year + (1 | Site), data = df)
-# }
-# 
-# predict_without_random<-function(model) {
-#   predict(object = model, re.form=NA)
-# }
-# 
-# predict_with_random<-function(model) {
-#   predict(object = model, re.form=NULL)
-# }
-# Making  dataset ready for model 
-
-# memodel_data <-function(dat) {
-#   dat2 <- dat %>% 
-#     select(Trait_trans, moments, Site, blockID, turfID, Temp, Precip, value) %>% 
-#     group_by(Trait_trans, moments, turfID) %>% 
-#     mutate(n = 1:n()) %>% 
-#     ungroup() %>%
-#     select(-turfID) %>% 
-#     group_by(Trait_trans, moments, n) %>% 
-#     nest()
-#   return(dat2)
-# }
-# 
-# me_year_model_data <-function(dat) {
-#   dat2 <- dat %>% 
-#     ungroup() %>% 
-#     select(Trait_trans, moments, Site, turfID, n, Temp, Precip, value, year) %>% 
-#     # group_by(Trait_trans, moments, turfID) %>% 
-#     # mutate(n = 1:n()) %>% 
-#     # select(-turfID) %>% 
-#     group_by(Trait_trans, moments, n) %>% 
-#     nest()
-#   return(dat2)
-# }
 
 ### Making dataset for models ###
 memodel_data_fullcommunity <- moments_clim_long_fullcommunity %>% 
@@ -257,41 +147,6 @@ memodel_data_without_intra <- moments_clim_long_without_intra %>%
   group_by(Trait_trans, moments, n) %>% 
   nest()
 
-# memodel_data_forbs <- moments_clim_long_forbs %>% 
-#   #filter(Trait_trans %in% c("CN_ratio_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "SLA_cm2_g_log")) %>% 
-#   ungroup() %>%
-#   select(Trait_trans, moments, Site, turfID, Temp_yearly_prev, Temp_yearly_spring,  Precip_yearly, Temp_deviation_decade, Precip_deviation_decade, value, year, n) %>% 
-#   group_by(Trait_trans, moments, n) %>% 
-#   nest()
-# 
-# memodel_data_graminoids <- moments_clim_long_graminoids %>% 
-#   #filter(Trait_trans %in% c("CN_ratio_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "SLA_cm2_g_log")) %>% 
-#   ungroup() %>%
-#   select(Trait_trans, moments, Site, turfID, Temp_yearly_prev, Temp_yearly_spring,  Precip_yearly, Temp_deviation_decade, Precip_deviation_decade, value, year, n) %>% 
-#   group_by(Trait_trans, moments, n) %>% 
-#   nest()
-# 
-# memodel_data_alpine <- moments_clim_long_alpine %>% 
-#   #filter(Trait_trans %in% c("CN_ratio_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "SLA_cm2_g_log")) %>% 
-#   ungroup() %>%
-#   select(Trait_trans, moments, Site, turfID, Temp_yearly_prev, Temp_yearly_spring,  Precip_yearly, Temp_deviation_decade, Precip_deviation_decade, value, year, n) %>% 
-#   group_by(Trait_trans, moments, n) %>% 
-#   nest()
-# 
-# memodel_data_subalpine <- moments_clim_long_subalpine %>% 
-#   #filter(Trait_trans %in% c("CN_ratio_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "SLA_cm2_g_log")) %>% 
-#   ungroup() %>%
-#   select(Trait_trans, moments, Site, turfID, Temp_yearly_prev, Temp_yearly_spring,  Precip_yearly, Temp_deviation_decade, Precip_deviation_decade, value, year, n) %>% 
-#   group_by(Trait_trans, moments, n) %>% 
-#   nest()
-# 
-# memodel_data_boreal <- moments_clim_long_boreal %>% 
-#   #filter(Trait_trans %in% c("CN_ratio_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "SLA_cm2_g_log")) %>% 
-#   ungroup() %>%
-#   select(Trait_trans, moments, Site, turfID, Temp_yearly_prev, Temp_yearly_spring, Precip_yearly, Temp_deviation_decade, Precip_deviation_decade, value, year, n) %>% 
-#   group_by(Trait_trans, moments, n) %>% 
-#   nest()
-
 ### Funcitons for different models and model predictions later ###
 
 
@@ -306,19 +161,6 @@ model_space<-function(df) {
 model_space_linear<-function(df) {
   lm(value ~ Temp_yearly_prev + scale(Precip_yearly) + Temp_yearly_spring * scale(Precip_yearly) +  year, data = df)
 }
-
-
-# model_space_1<-function(df) {
-#   lmer(value ~ Temp_yearly_prev * scale(Precip_yearly) + (1 | year), data = df)
-# }
-# 
-# model_space_2 <- function(df) {
-#   lmer(value ~ Temp_yearly_spring * scale(Precip_yearly) + (1 | year), data = df)
-# }
-# 
-# model_time_anomalies<-function(df) {
-#   lmer(value ~ Temp_deviation_decade * scale(Precip_deviation_decade) + (1 | Site), data = df)
-# }
 
 
 predict_without_random<-function(model) {
