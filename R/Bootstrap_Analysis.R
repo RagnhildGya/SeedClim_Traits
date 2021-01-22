@@ -151,19 +151,19 @@ memodel_data_fullcommunity <- moments_clim_long_fullcommunity %>%
 
 
 model_time<-function(df) {
-  lmer(value ~ Temp_yearly_prev * scale(Precip_yearly) + Temp_yearly_spring * scale(Precip_yearly) + (1 | siteID), data = df)
+  lmer(value ~ Temp_yearly_spring * scale(Precip_yearly) + (1 | siteID), data = df)
 }
 
 model_space<-function(df) {
-  lmer(value ~ Temp_yearly_prev * scale(Precip_yearly) + Temp_yearly_spring * scale(Precip_yearly) + (1 | year), data = df)
+  lmer(value ~  Temp_yearly_spring * scale(Precip_yearly) + (1 | year), data = df)
 }
 
 model_space_linear<-function(df) {
-  lm(value ~ Temp_yearly_prev * scale(Precip_yearly) + Temp_yearly_spring * scale(Precip_yearly) +  year, data = df)
+  lm(value ~  Temp_yearly_spring * scale(Precip_yearly) +  year, data = df)
 }
 
 model_time_linear<-function(df) {
-  lm(value ~ Temp_yearly_prev * scale(Precip_yearly) + Temp_yearly_spring * scale(Precip_yearly) +  siteID, data = df)
+  lm(value ~ Temp_yearly_spring * scale(Precip_yearly) +  siteID, data = df)
 }
 
 predict_without_random<-function(model) {
@@ -297,7 +297,7 @@ model_output_mixed <-function(dat) {
     #filter(Trait_trans %in% c("CN_ratio_log", "SLA_cm2_g_log") & moments %in% c("mean", "variance")) %>% 
     #filter(!Trait_trans == "CN_ratio_log" | moments == "variance") %>% 
     unnest(c(model_output, R_squared)) %>% 
-    filter(term %in% c("Temp_yearly_prev", "scale(Precip_yearly)", "Temp_yearly_prev:scale(Precip_yearly)", "Temp_yearly_spring", "scale(Precip_yearly):Temp_yearly_spring")) %>% 
+    filter(term %in% c("scale(Precip_yearly)", "Temp_yearly_spring", "Temp_yearly_spring:scale(Precip_yearly)")) %>% 
     select(Trait_trans, moments, term, n, estimate, std.error, statistic, df, p.value, Marginal, Conditional) %>% 
     ungroup() %>% 
     group_by(Trait_trans, moments, term) %>% 
@@ -323,7 +323,7 @@ model_output_linear <-function(dat) {
     #filter(Trait_trans %in% c("CN_ratio_log", "SLA_cm2_g_log") & moments %in% c("mean", "variance")) %>% 
     #filter(!Trait_trans == "CN_ratio_log" | moments == "variance") %>% 
     unnest(c(model_output, R_squared)) %>% 
-    filter(term %in% c("Temp_yearly_prev", "scale(Precip_yearly)", "Temp_yearly_prev:scale(Precip_yearly)", "Temp_yearly_spring", "scale(Precip_yearly):Temp_yearly_spring")) %>% 
+    filter(term %in% c("scale(Precip_yearly)", "Temp_yearly_spring", "Temp_yearly_spring:scale(Precip_yearly)")) %>% 
     select(Trait_trans, moments, term, n, estimate, std.error, statistic, p.value, R.squared) %>% 
     ungroup() %>% 
     group_by(Trait_trans, moments, term) %>% 
