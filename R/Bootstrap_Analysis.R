@@ -254,22 +254,6 @@ predicted_values_time <- tidy_time_model_predicted %>%
   rename(modeled = predicted, measured = value)
 
 
-## Anomalies ##
-mem_results_anomalies <- memodel_data_fullcommunity %>%
-  mutate(model = map(data, model_time_anomalies))
-
-tidy_anomalies_model_predicted <- mem_results_anomalies %>%
-  mutate(model_output = map(model, tidy)) %>%
-  mutate(predicted = map(model, predict_with_random)) %>% 
-  mutate(R_squared = map(model, rsquared))
-
-predicted_values_anomalies <- tidy_anomalies_model_predicted %>%
-  ungroup() %>%
-  select(Trait_trans, moments, data, predicted) %>%
-  unnest(c(data, predicted)) %>%
-  rename(modeled = predicted, measured = value)
-
-
 # Making a function for AIC tests
 
  AIC_models <-function(dat, model_type) {
