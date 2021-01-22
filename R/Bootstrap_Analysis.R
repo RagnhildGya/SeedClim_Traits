@@ -208,6 +208,7 @@ summary(linear_time)
 
 ## Space ##
 mem_results_space <- memodel_data_fullcommunity %>%
+  filter(n == 4) %>% 
   mutate(model = map(data, model_space))
 
 tidy_space_model_predicted <- mem_results_space %>%
@@ -221,35 +222,20 @@ predicted_values_space_ <- tidy_space_model_predicted %>%
   rename(modeled = predicted, measured = value)
 
 
-## Without intraspecific variability ##
-mem_results_space_without_intra <- memodel_data_without_intra %>%
-  mutate(model = map(data, model_space))
-
-tidy_space_model_predicted_without_intra <- mem_results_space_without_intra %>%
-  mutate(model_output = map(model, tidy)) %>%
-  #mutate(predicted = map(model, predict_with_random)) %>% 
-  mutate(R_squared = map(model, rsquared))
-
-predicted_values_space_without_intra <- tidy_space_model_predicted_without_intra %>%
-  ungroup() %>%
-  select(Trait_trans, moments, data, predicted) %>%
-  unnest(c(data, predicted)) %>%
-  rename(modeled = predicted, measured = value)
-
-## Space without intra ##
-mem_results_space_without_intra <- memodel_data_without_intra %>%
-  mutate(model = map(data, model_space))
-
-tidy_space_model_predicted_without_intra <- mem_results_space_without_intra %>%
-  mutate(model_output = map(model, tidy)) %>%
-  #mutate(predicted = map(model, predict_with_random)) %>% 
-  mutate(R_squared = map(model, rsquared))
-
-predicted_values_space_without_intra <- tidy_space_model_predicted_without_intra %>%
-  ungroup() %>%
-  select(Trait_trans, moments, data, predicted) %>%
-  unnest(c(data, predicted)) %>%
-  rename(modeled = predicted, measured = value)
+# ## Without intraspecific variability ##
+# mem_results_space_without_intra <- memodel_data_without_intra %>%
+#   mutate(model = map(data, model_space))
+# 
+# tidy_space_model_predicted_without_intra <- mem_results_space_without_intra %>%
+#   mutate(model_output = map(model, tidy)) %>%
+#   #mutate(predicted = map(model, predict_with_random)) %>% 
+#   mutate(R_squared = map(model, rsquared))
+# 
+# predicted_values_space_without_intra <- tidy_space_model_predicted_without_intra %>%
+#   ungroup() %>%
+#   select(Trait_trans, moments, data, predicted) %>%
+#   unnest(c(data, predicted)) %>%
+#   rename(modeled = predicted, measured = value)
 
 
 ## Time - Full community ##
