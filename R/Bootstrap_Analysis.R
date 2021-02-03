@@ -67,29 +67,29 @@ sum_moments_fullcommunity <- trait_summarise_boot_moments(Imputed_traits_fullcom
 #traitstrap:::autoplot.imputed_trait(Imputed_traits_without_intra) 
 
 #Write function for trait imputations without the intraspecific variability by sampling across sites instead of just from that site
-Trait_impute_without_intra <- function(com_dat, trait_dat){
-  
-  com_dat <- com_dat %>% 
-    mutate(random = "")
-  
-  trait_dat <- trait_dat %>% 
-    mutate(random = "")
-  
-  SeedClim_traits <- trait_np_bootstrap(trait_impute(comm = com_dat,
-                                  traits = trait_dat, 
-                                  scale_hierarchy = c("siteID","random", "blockID", "turfID"),
-                                  taxon_col = c("Full_name", "Genus", "Family"),
-                                  trait_col = "Trait_trans",
-                                  value_col = "Value",
-                                  other_col = "year",
-                                  abundance_col = "cover",
-                                  global = TRUE)) 
-  
-  return(SeedClim_traits)
-}
-
-Imputed_traits_without_intra <- Trait_impute_without_intra(com_dat = community, trait_dat = traitdata_2) %>% 
-  group_by(year, siteID, blockID, turfID, Trait_trans)
+# Trait_impute_without_intra <- function(com_dat, trait_dat){
+#   
+#   com_dat <- com_dat %>% 
+#     mutate(random = "")
+#   
+#   trait_dat <- trait_dat %>% 
+#     mutate(random = "")
+#   
+#   SeedClim_traits <- trait_np_bootstrap(trait_impute(comm = com_dat,
+#                                   traits = trait_dat, 
+#                                   scale_hierarchy = c("siteID","random", "blockID", "turfID"),
+#                                   taxon_col = c("Full_name", "Genus", "Family"),
+#                                   trait_col = "Trait_trans",
+#                                   value_col = "Value",
+#                                   other_col = "year",
+#                                   abundance_col = "cover",
+#                                   global = TRUE)) 
+#   
+#   return(SeedClim_traits)
+# }
+# 
+# Imputed_traits_without_intra <- Trait_impute_without_intra(com_dat = community, trait_dat = traitdata_2) %>% 
+#   group_by(year, siteID, blockID, turfID, Trait_trans)
 
 
 
@@ -183,8 +183,7 @@ predict_with_random<-function(model) {
 
 ## Space mixed ##
 mem_results_space <- memodel_data_fullcommunity %>%
-  filter(moments %in% c("mean", "skewness"),
-         n == 4) %>% 
+  filter(moments %in% c("mean", "skewness")) %>% 
   mutate(model = purrr::map(data, model_space))
 
 tidy_space_model_predicted_mixed <- mem_results_space %>%
@@ -233,8 +232,7 @@ predicted_values_space_ <- tidy_space_model_predicted %>%
 
 ## Time - Full community ##
 mem_results_time_mixed <- memodel_data_fullcommunity %>%
-  filter(moments %in% c("mean", "skewness"),
-         n == 4) %>% 
+  filter(moments %in% c("mean", "skewness")) %>% 
   mutate(model = purrr::map(data, model_time))
 
 tidy_time_model_predicted_mixed <- mem_results_time_mixed %>%
@@ -248,7 +246,7 @@ predicted_values_time <- tidy_time_model_predicted %>%
   unnest(c(data, predicted)) %>%
   rename(modeled = predicted, measured = value)
 
-## Space linear ##
+## Time linear ##
 mem_results_time_linear <- memodel_data_fullcommunity %>%
   filter(moments %in% c("mean", "skewness"),
          n == 4) %>% 
