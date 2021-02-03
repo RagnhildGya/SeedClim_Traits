@@ -625,33 +625,6 @@ var <- get_pca_var(pca_trait)
 ### Get results
 pca_trait_results <- get_pca_ind(pca_trait)
 
-### Pull out axis values for different ordinations
-Ord_site_env_dat <- Moments_fullcommunity %>% 
-  left_join(env, by = c("Site" = "Site", "year" = "Year")) %>% 
-  ungroup() %>% 
-  mutate(uniqueID = paste0(turfID,"_", year, "_", Site)) %>% 
-  select(uniqueID, Site, year, turfID, Temp_yearly, Precip_yearly, Temp_decade, Precip_decade, Temp_deviation_decade, Precip_deviation_decade, Temp_level, Precip_level) %>%
-  unique()
-
-Ord_axis_values_leaf_economic <- as.data.frame(pca_leaf_economic$x) %>% 
-  select(PC1) %>% 
-  rownames_to_column("uniqueID") %>% 
-  rename(Leaf_economic_PC1 = PC1)
-
-Ord_axis_values_size <- as.data.frame(pca_size$x) %>% 
-  select(PC1) %>% 
-  rownames_to_column("uniqueID") %>% 
-  rename(Size_PC1 = PC1)
-
-Ord_axis_values <- as.data.frame(pca_trait$x) %>% 
-  select(PC1, PC2) %>% 
-  rownames_to_column("uniqueID") %>% 
-  rename(Full_ord_PC1 = PC1, Full_ord_PC2 = PC2) %>% 
-  left_join(Ord_axis_values_leaf_economic, by = c("uniqueID" = "uniqueID")) %>% 
-  left_join(Ord_axis_values_size, by = c("uniqueID" = "uniqueID")) %>% 
-  left_join(Ord_site_env_dat, by = c("uniqueID" = "uniqueID"))
-
-
 #### Constrained ordination ####
 
 # RDA <- rda(Ord_boot_traits[, -(1:3)]~ Temp+Precip, scale = TRUE, data = Ord_boot_traits)
