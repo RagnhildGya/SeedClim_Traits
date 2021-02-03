@@ -160,6 +160,8 @@ Zoomed_in_map <- ggplot(dat, aes(x = longitude, y = latitude, fill = Precipitati
   scale_fill_manual(values = rev(Precip_palette), labels = precipLab, breaks = 1:4) +
   maptheme()
 
+## Code for saving the figure
+
 # png("SeedClim_climate_grid.png", width = 1285, height = 861)
 # grid.newpage()
 # vp_zoomed_in_map <- viewport(width = 1, height = 1, x = 0.5, y = 0.5)  # the zoomed in map
