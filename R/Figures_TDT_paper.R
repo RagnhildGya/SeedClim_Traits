@@ -282,10 +282,16 @@ Ord_plot_precip <- fviz_pca_ind(pca_trait, repel = TRUE,
   
   
 pca_fort <- fortify(pca_trait, display = "Sites") %>% 
-  bind_cols(Ord_boot_traits[1:6])
+  bind_cols(Ord_boot_traits[1:6]) %>% 
+  group_by(Site, year) %>% 
+  summarise(PC1, PC2, Temp_level) %>% 
+  mutate(PC1 = mean(PC1),
+         PC2 = mean(PC2)) %>% 
+  unique()
+  
 
 Ord_plot_time <- pca_fort %>% 
-ggplot(aes(x = PC1, y = PC2, colour = Temp_level, group = turfID)) +
+ggplot(aes(x = PC1, y = PC2, colour = Temp_level, group = Site)) +
   geom_path() + #use geom_path not geom_line
   geom_point(aes(size = if_else(year == 2009, 1, NA_real_)), show.legend = FALSE) +
   #scale_color_viridis_d() +
@@ -300,7 +306,7 @@ ggplot(aes(x = PC1, y = PC2, colour = Temp_level, group = turfID)) +
 
 d <- ggarrange(Ord_plot_traits, Ord_plot_time, Ord_plot_precip, Ord_plot_temp,  ncol = 2, nrow = 2, legend = "bottom")
 
-ggsave(plot = d, "Ord_time_temp_prec.jpg", width = 28 , height = 20, units = "cm")
+ggsave(plot = d, "Ord_timemean_temp_prec.jpg", width = 28 , height = 20, units = "cm")
 
 #ggsave("PCA_all_years_with_temp.jpg", width = 22 , height = 16, units = "cm")
 
