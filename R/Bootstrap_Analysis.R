@@ -338,47 +338,12 @@ model_output_linear <-function(dat) {
   return(model_output)
 }
 
-#model_output_temp <- model_output(tidy_temp_model_predicted, c("Temp_yearly", "Temp_deviation_decade"))
-#model_output_precip <- model_output(tidy_temp_model_predicted, c("Precip_yearly", "Precip_deviation_decade"))
-#model_output_tempAddprecip <- model_output(tidy_tempAddprecip_model_predicted, c("Temp_yearly", "Temp_deviation_decade","scale(Precip_yearly)", "scale(Precip_deviation_decade)"))
+
 model_output_time_mixed <- model_output_mixed(tidy_time_model_predicted_mixed)
 model_output_time_linear <- model_output_linear(tidy_time_model_predicted_linear)
 
 model_output_space_mixed <- model_output_mixed(tidy_space_model_predicted_mixed)
 model_output_space_linear <- model_output_linear(tidy_space_model_predicted_linear)
-
-#model_output_space_without_intra <- model_output(tidy_space_model_predicted_without_intra)
-
-# model_output_time_forbs <- model_output(tidy_time_model_predicted_forbs)
-# model_output_time_graminoids <- model_output(tidy_time_model_predicted_graminoids)
-# 
-# model_output_time_alpine <- model_output(tidy_time_model_predicted_alpine)
-# model_output_time_subalpine <- model_output(tidy_time_model_predicted_subalpine)
-# model_output_time_boreal <- model_output(tidy_time_model_predicted_boreal)
-
-model_output_anomalies <- tidy_anomalies_model_predicted %>% 
-  select(Trait_trans, moments, n, model_output, R_squared) %>% 
-  #filter(Trait_trans %in% c("CN_ratio_log", "SLA_cm2_g_log") & moments %in% c("mean", "variance")) %>% 
-  #filter(!Trait_trans == "CN_ratio_log" | moments == "variance") %>% 
-  unnest(c(model_output, R_squared)) %>% 
-  filter(term %in% c("Temp_deviation_decade", "scale(Precip_deviation_decade)", "Temp_deviation_decade:scale(Precip_deviation_decade)")) %>% 
-  select(Trait_trans, moments, term, n, estimate, std.error, statistic, df, p.value, Marginal, Conditional) %>% 
-  ungroup() %>% 
-  group_by(Trait_trans, moments, term) %>% 
-  summarize(effect = mean(estimate),
-            R2_marginal = mean(Marginal),
-            R2_conditional = mean(Conditional),
-            CIlow.fit = effect - sd(estimate),
-            CIhigh.fit = effect + sd(estimate),
-            std.error = mean(std.error),
-            staticstic = mean(statistic),
-            df = mean(df),
-            p.value = mean(p.value)) %>% 
-  mutate(Trend = case_when(CIlow.fit < 0 & CIhigh.fit < 0 ~ "Negative",
-                           CIlow.fit > 0 & CIhigh.fit > 0 ~ "Positive",
-                           CIlow.fit < 0 & CIhigh.fit > 0 ~ "No"))
-
-#write.table(x = model_output, file = "model_output_TDT.csv")
 
 
 #### Simpler mixed effect models on specific traits to make predicted plots ####
