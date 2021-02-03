@@ -2,7 +2,7 @@
 library("tidyverse")
 library("lubridate")
 #library("mosaic")
-library(forcats)
+#library(forcats)
 
 #### Load trait data ####
 
@@ -226,6 +226,7 @@ community <- community %>%
    mutate(Precip_yearly = sum(Precipitation)) %>% 
    filter(Month %in% c(5:7)) %>% 
    mutate(Temp_yearly_spring = mean(Temperature)) %>% 
+   mutate(Precip_yearly_spring = mean(Precipitation)) %>% 
    ungroup() %>% 
    select(Site, Year, Precip_yearly, Temp_yearly_spring) %>% 
    unique() %>% 
