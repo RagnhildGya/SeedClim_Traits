@@ -167,31 +167,31 @@ Zoomed_in_map <- ggplot(dat, aes(x = Longitude, y = Latitude, fill = Precipitati
   maptheme()
 ## Code for saving the figure
 
- png("SeedClim_climate_grid.png", width = 1285, height = 861)
- grid.newpage()
- vp_zoomed_in_map <- viewport(width = 1, height = 1, x = 0.5, y = 0.5)  # the zoomed in map
- vp_norway_map <- viewport(width = 0.4, height = 0.4, x = 0.685, y = 0.8)  # the inset in upper left of scandinacia
- print(Zoomed_in_map, vp = vp_zoomed_in_map)
- print(Norway_map, vp = vp_norway_map)
- dev.off()
+ # png("SeedClim_climate_grid.png", width = 1285, height = 861)
+ # grid.newpage()
+ # vp_zoomed_in_map <- viewport(width = 1, height = 1, x = 0.5, y = 0.5)  # the zoomed in map
+ # vp_norway_map <- viewport(width = 0.4, height = 0.4, x = 0.685, y = 0.8)  # the inset in upper left of scandinacia
+ # print(Zoomed_in_map, vp = vp_zoomed_in_map)
+ # print(Norway_map, vp = vp_norway_map)
+ # dev.off()
 
 ### Community weighted skewness over time in different temp levels ###
 
-moments_clim_long_fullcommunity %>% 
-  filter(Trait_trans == "SLA_cm2_g_log",
-         moments == "skewness") %>% 
-  mutate(year = as.factor(year)) %>% 
-  ggplot(aes(x = value, y = fct_rev(year), fill = fct_rev(as.factor(Temp_level)))) +
-  stat_density_ridges(quantile_lines = TRUE, quantiles = c(0.025, 0.5, 0.975), alpha = 0.7) +
-  geom_vline(xintercept =  0, linetype = 2, size = 1) +
-  facet_grid(~Temp_level) +
-  theme_ridges() + 
-  theme(legend.position = "none") +
-  labs(x = "SLA (cm2/g)", title = "Probability distribution skewness av SLA", y = "Year") +
-  theme_bw(base_size = 12) +
-  scale_fill_manual(name = "Temperature level", values = Temp_palette, labels = c("Boreal", "Sub-alpine", "Alpine"))
-
-ggsave("SLA_moments_over_time.jpg", width = 30 , height = 20, units = "cm")
+# moments_clim_long_fullcommunity %>% 
+#   filter(Trait_trans == "SLA_cm2_g_log",
+#          moments == "skewness") %>% 
+#   mutate(year = as.factor(year)) %>% 
+#   ggplot(aes(x = value, y = fct_rev(year), fill = fct_rev(as.factor(Temp_level)))) +
+#   stat_density_ridges(quantile_lines = TRUE, quantiles = c(0.025, 0.5, 0.975), alpha = 0.7) +
+#   geom_vline(xintercept =  0, linetype = 2, size = 1) +
+#   facet_grid(~Temp_level) +
+#   theme_ridges() + 
+#   theme(legend.position = "none") +
+#   labs(x = "SLA (cm2/g)", title = "Probability distribution skewness av SLA", y = "Year") +
+#   theme_bw(base_size = 12) +
+#   scale_fill_manual(name = "Temperature level", values = Temp_palette, labels = c("Boreal", "Sub-alpine", "Alpine"))
+# 
+# ggsave("SLA_moments_over_time.jpg", width = 30 , height = 20, units = "cm")
 
 
 #### Ordination ####
