@@ -125,18 +125,10 @@ moments_clim_long_fullcommunity <- Imputed_traits_fullcommunity %>%
 
 ### Making dataset for models ###
 memodel_data_fullcommunity <- moments_clim_long_fullcommunity %>% 
-  #filter(Trait_trans %in% c("CN_ratio_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "SLA_cm2_g_log")) %>% 
   ungroup() %>%
   select(Trait_trans, moments, siteID, turfID, Temp_yearly_prev, Temp_yearly_spring, Precip_yearly, value, year, n) %>% 
   group_by(Trait_trans, moments, n) %>% 
   nest()
-
-# memodel_data_without_intra <- moments_clim_long_without_intra %>% 
-#   #filter(Trait_trans %in% c("CN_ratio_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "SLA_cm2_g_log")) %>% 
-#   ungroup() %>%
-#   select(Trait_trans, moments, siteID, turfID, Temp_yearly_prev, Temp_yearly_spring, Precip_yearly, value, year, n) %>% 
-#   group_by(Trait_trans, moments, n) %>% 
-#   nest()
 
 ### Funcitons for different models and model predictions later ###
 
