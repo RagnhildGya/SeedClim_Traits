@@ -583,7 +583,7 @@ Corr_traits <- sum_moments_climate_fullcommunity %>%
 
 # Correlations 
 
-corr <- round(cor(Corr_traits), 3) 
+corr <- round(cor(Corr_traits), 1) 
 head(corr[, 1:6])
 
 # P-values 
@@ -594,7 +594,7 @@ p.mat <- cor_pmat(Corr_traits)
 # Correlation plot
 
 ggcorrplot(corr, hc.order = FALSE,
-           type = "lower", p.mat = p.mat, lab = TRUE,)
+           type = "lower", lab = TRUE,)
 
 
 #### Ordination ####
