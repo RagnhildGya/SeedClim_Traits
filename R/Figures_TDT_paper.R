@@ -46,13 +46,19 @@ env %>%
   mutate(Temp_level = recode(Temp_level, "10.5" = "Boreal 2009-19",
                            "8.5" = "Sub-alpine 2009-19",
                            "6.5" = "Alpine 2009-19")) %>% 
+  mutate(Precip_level = recode(Precip_level, "600" = "Driest",
+                             "1200" = "Dry",
+                             "2000" = "Wet",
+                             "2700" = "Wettest")) %>% 
+  mutate(Temp_old = factor(Temp_old, levels = c("Alpine 1960-90", "Boreal 1960-90", "Sub-alpine 1960-90"))) %>%
+  mutate(Temp_level = factor(Temp_level, levels = c("Alpine 2009-19", "Boreal 2009-19", "Sub-alpine 2009-19"))) %>%
 ggplot(aes(x = Precip_decade, y = Temp_decade,
            color = Precip_level, fill = Precip_level, shape = Temp_level)) +
   geom_point(aes(x = Precip_century, y = Temp_century, shape = Temp_old, size = 3)) +
   geom_segment(aes(x = Precip_decade, y = Temp_decade, yend = Temp_century, xend = Precip_century)) +
   geom_pointrange(aes(ymin = Temp_decade-Temp_se, ymax = Temp_decade+Temp_se)) +
   geom_errorbarh(aes(xmin = Precip_decade-Precip_se, xmax = Precip_decade+Precip_se)) +
-  labs(x = "Annual precipitation in mm", y = "Tetraterm temperature in °C") +
+  labs(x = "Annual precipitation in mm", y = "Summer temperature in °C") +
   scale_color_manual(name = "Precipitation", values = c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")) +
   scale_fill_manual(name = "Precipitation", values = c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")) +
   scale_shape_manual(name = "Temperature", values = c(2, 24, 6, 25, 1, 21)) + 
@@ -89,7 +95,7 @@ ggplot(aes(x = Year, y = Precip_yearly), data = env) +
 
 
 dat <- read.table(header = TRUE, text = "
-siteID           latitude longitude Temperature Precipitation
+siteID           Latitude Longitude Temperature Precipitation
 Alrust           60.8203    8.70466           2             1
 Arhelleren       60.6652    6.33738           3             3
 Fauske           61.0355    9.07876           3             1
@@ -108,11 +114,11 @@ dat <- dat %>%
   mutate(Precipitation = as.factor(Precipitation),
          Temperature = as.factor(Temperature))
 
-precipLab <- c("Very dry", "Dry", "Wet", "Very wet")
-tempLab <- c("Alpine", "Intermediate", "Lowland")
+precipLab <- c("Driest", "Dry", "Wet", "Wettest")
+tempLab <- c("Alpine", "Sub-alpine", "Boreal")
 
-xlim <- range(dat$longitude) + c(-1, 0.5)
-ylim <- range(dat$latitude) + c(-0.5, 1)
+xlim <- range(dat$Longitude) + c(-1, 0.5)
+ylim <- range(dat$Latitude) + c(-0.5, 1)
 
 
 norwaymap <- map_data("world", "Norway")
@@ -150,25 +156,24 @@ Norway_map <- ggplot() +
   guides(alpha = FALSE) +
   maptheme()
 
-Zoomed_in_map <- ggplot(dat, aes(x = longitude, y = latitude, fill = Precipitation, shape = Temperature)) +
+Zoomed_in_map <- ggplot(dat, aes(x = Longitude, y = Latitude, fill = Precipitation, shape = Temperature)) +
   geom_map(aes(x = long, y = lat, map_id = region), data = norwaymapHires, map = norwaymapHires, color = NA, fill = "grey70", inherit.aes = FALSE) +
-  geom_point(size = 11) +
+  geom_point(size = 13) +
   coord_map(xlim = xlim, ylim = ylim) +
   guides(shape = guide_legend(override.aes = list(fill = "grey70")),
          fill = guide_legend(override.aes = list(shape = 21))) +
-  scale_shape_manual(values = c(24, 22, 25), labels = tempLab, breaks = 1:3) +
-  scale_fill_manual(values = rev(Precip_palette), labels = precipLab, breaks = 1:4) +
+  scale_shape_manual(values = c(24, 21, 25), labels = tempLab, breaks = 1:3) +
+  scale_fill_manual(values = Precip_palette, labels = precipLab, breaks = 1:4) +
   maptheme()
-
 ## Code for saving the figure
 
-# png("SeedClim_climate_grid.png", width = 1285, height = 861)
-# grid.newpage()
-# vp_zoomed_in_map <- viewport(width = 1, height = 1, x = 0.5, y = 0.5)  # the zoomed in map
-# vp_norway_map <- viewport(width = 0.4, height = 0.4, x = 0.685, y = 0.8)  # the inset in upper left of scandinacia
-# print(Zoomed_in_map, vp = vp_zoomed_in_map)
-# print(Norway_map, vp = vp_norway_map)
-# dev.off()
+ png("SeedClim_climate_grid.png", width = 1285, height = 861)
+ grid.newpage()
+ vp_zoomed_in_map <- viewport(width = 1, height = 1, x = 0.5, y = 0.5)  # the zoomed in map
+ vp_norway_map <- viewport(width = 0.4, height = 0.4, x = 0.685, y = 0.8)  # the inset in upper left of scandinacia
+ print(Zoomed_in_map, vp = vp_zoomed_in_map)
+ print(Norway_map, vp = vp_norway_map)
+ dev.off()
 
 ### Community weighted skewness over time in different temp levels ###
 
