@@ -394,6 +394,37 @@ model_output_space_mixed %>%
   theme(axis.title.y=element_blank()) +
   guides(fill = FALSE)
 
+model_output_space_mixed %>% 
+  bind_rows(time_mixed) %>%
+  #bind_rows(without_intra) %>% 
+  mutate(Trait_moment = paste0(moments, "_", Trait_trans)) %>% 
+  filter(moments %in% c("mean", "time")) %>% 
+  mutate(moments = factor(moments, levels = c("time", "mean"))) %>% 
+  mutate(term = as.factor(recode(term, "scale(Precip_yearly)" = "Precipitation", "Temp_yearly_spring" = "SpringTemp", "Temp_yearly_spring:scale(Precip_yearly)" = "SpringTemp:Precipitation"))) %>% 
+  mutate(Trait_trans = factor(Trait_trans, levels = c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent", "SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))) %>%
+  ggplot(aes(x = fct_rev(Trait_trans), y = effect, fill = term, alpha = rev(p.value), color = moments)) +
+  geom_bar(stat = "identity", position = position_dodge(width=0.6), width = 0.7) +
+  #geom_point(aes(size = if_else(p.value <0.05, 0.3, NA_real_)), position = position_dodge(width=0.6), show.legend = FALSE) +
+  #geom_bar_pattern(aes(pattern = 'stripe'), stat = "identity", position = "dodge") +
+  #geom_errorbar(aes(xmin = effect-std.error, xmax = effect+std.error)) +
+  facet_grid(~term, scales = "free") +
+  scale_fill_manual(values = c("#2E75B6", "#bb3b0e", "#9A86A9")) +
+  # scale_fill_gradient(low = "#213964", ##2E75B6
+  #                     high = "#BAD8F7",
+  #                     guide = "colourbar") +
+  scale_color_manual(values = c("black", "black")) +
+  scale_alpha_continuous(range = c(0.00000005, 2)) +
+  geom_hline(yintercept =  0) +
+  theme_bw() +
+  coord_flip() +
+  #guides(fill = "none", color = "none", size = "none") +
+  theme(axis.title.y=element_blank()) +
+  guides(color = FALSE, alpha = FALSE, fill = FALSE)
+
+Temp_palette <- c("#d8c593", "#dd7631", "#bb3b0e")
+Precip_palette <- c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")
+
+
 ## Mean linear model ##
 
 # model_output_space_linear %>% 
