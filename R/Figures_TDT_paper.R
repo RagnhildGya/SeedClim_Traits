@@ -482,112 +482,7 @@ model_output_space %>%
   geom_hline(yintercept =  0) +
   coord_flip()
 
-
-### Making boxplot of variance and kurtosis at temp and precip levels ####
-
-moments_clim_long_fullcommunity %>% 
-  filter(moments == "kurtosis") %>% 
-  ggplot(aes(x = Precip_level, y = value, fill = Precip_level)) +
-  geom_violin() +
-  # stat_summary(fun.data=mean_sdl, 
-  #              geom="pointrange", color="black") +
-  geom_boxplot(width=0.1, fill="white") +
-  facet_wrap(~Trait_trans, nrow = 4, scales = "free") +
-  scale_fill_manual(values = Precip_palette) +
-  ylab("Community weighted kurtosis")
-
-sum_moments_climate_fullcommunity %>% 
-  group_by(siteID, blockID, turfID, Trait_trans, year) %>% 
-  mutate(skewness = mean(skew),
-         kurtosis = mean(kurt)) %>% 
-  select(skewness, kurtosis, siteID, turfID, year, Temp_level, Temp_level) %>% 
-  unique() %>% 
-  ggplot(aes(x = skewness^2, y = kurtosis, col= Temp_level)) +
-  geom_point() +
-  facet_wrap(~Trait_trans, nrow = 4)
-
-moments_clim_long_fullcommunity %>% 
-  filter(moments == "variance") %>% 
-  ggplot(aes(x = Precip_level, y = value, fill = Precip_level)) +
-  geom_violin() +
-  stat_summary(fun.data=mean_sdl, 
-               geom="pointrange", color="black") +
-  facet_wrap(~Trait_trans, nrow = 4, scales = "free") +
-  scale_fill_manual(values = Precip_palette)
-  
-
 #### Making plots for predicted values and observed values
-
-Trend_SLA_plot <- ggplot(SLA_mean, aes(x = Precip_yearly, y = value)) +
-  geom_point(color = "grey") +
-  geom_line(aes(x = Precip_yearly, y = predicted, color = factor(Temp_yearly_spring)), data=newdata_SLA, size = 1, inherit.aes = FALSE, show.legend = TRUE) +
-  scale_color_manual(values = Temp_palette) +
-  labs(x = "", y = "", title = "Specific leaf area (cm2/g log)", color = "Spring temperature") +
-  theme_minimal(base_size = 15) +
-  theme(plot.title = element_text(hjust = 0.5))
-
-
-Trend_SLA_time_plot <- ggplot(SLA_mean, aes(x = Precip_yearly, y = value)) +
-  geom_point(color = "grey") +
-  geom_line(aes(x = Precip_yearly, y = predicted, color = factor(Temp_yearly_prev)), data=newdata_time_SLA, size = 1, inherit.aes = FALSE, show.legend = TRUE) +
-  scale_color_manual(values = Temp_palette) +
-  labs(x = "", y = "", title = "Specific leaf area (cm2/g log)", color = "Spring temperature") +
-  theme_minimal(base_size = 15) +
-  theme(plot.title = element_text(hjust = 0.5))
-
-Trend_LDMC_plot <- ggplot(LDMC_mean, aes(x = Precip_yearly, y = value)) +
-  geom_point(color = "grey") +
-  geom_line(aes(x = Precip_yearly, y = predicted, color = factor(Temp_yearly_spring)), data=newdata_LDMC, size = 1, inherit.aes = FALSE, show.legend = TRUE) +
-  scale_color_manual(values = Temp_palette) +
-  labs(x = "", y = "", title = "Leaf dry matter content (g/g)", color = "Spring temperature") +
-  theme_minimal(base_size = 15) +
-  theme(plot.title = element_text(hjust = 0.5))
-
-Trend_LA_plot <- ggplot(Leaf_area_mean, aes(x = Precip_yearly, y = value)) +
-  geom_point(color = "grey") +
-  geom_line(aes(x = Precip_yearly, y = predicted, color = factor(Temp_yearly_spring)), data=newdata_LA, size = 1, inherit.aes = FALSE, show.legend = TRUE) +
-  scale_color_manual(values = Temp_palette) +
-  labs(x = "", y = "", title = "Leaf area (cm2 log)", color = "Spring temperature") +
-  theme_minimal(base_size = 15) +
-  theme(plot.title = element_text(hjust = 0.5))
-
-Trend_C_plot <- ggplot(C_percent_mean, aes(x = Precip_yearly, y = value)) +
-  geom_point(color = "grey") +
-  geom_line(aes(x = Precip_yearly, y = predicted, color = factor(Temp_yearly_spring)), data=newdata_C, size = 1, inherit.aes = FALSE, show.legend = TRUE) +
-  scale_color_manual(values = Temp_palette) +
-  labs(x = "", y = "", title = "Carbon content of leaf (%)", color = "Spring temperature") +
-  theme_minimal(base_size = 15) +
-  theme(plot.title = element_text(hjust = 0.5))
-
-Trend_figure <- ggarrange(Trend_SLA_plot, Trend_LDMC_plot, Trend_LA_plot, Trend_C_plot, nrow = 2, ncol = 2, common.legend = TRUE, legend = "right", labels = c("A)", "B)", "C)", "D)"))
-Fig_TDT_paper <- annotate_figure(Trend_figure,
-              bottom = text_grob("Annual precipitation (mm)", hjust = 0.7, size = 13))
-
-ggsave(filename = "Trend_figure.png", plot = Fig_TDT_paper, width = 30, height = 19, units = "cm")
-ggsave(filename = "Trend_figure_smaller.png", plot = Fig_TDT_paper, width = 24, height = 14, units = "cm")
-
-
-
-### Plots of skewness ###
-
-sum_moments_climate_fullcommunity %>% 
-  filter(Trait_trans %in% c("SLA_cm2_g_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "N_percent")) %>% 
-         #siteID %in% c("Skjelingahaugen", "Fauske")) %>% 
-  #mutate(siteID = factor(siteID, levels = c("Skjelingahaugen", "Fauske"))) %>% 
-  #group_by(Trait_trans, siteID) %>% 
-  group_by(Trait_trans) %>% 
-  mutate(skew1 = mean(skew),
-         ci_low_skew1 = mean(ci_low_skew),
-         ci_high_skew1 = mean(ci_high_skew)) %>% 
-  ggplot(aes(x = Temp_yearly_spring, y = skew)) +
-  geom_point(color = "grey") +
-  geom_line(aes(y = skew1)) +
-  geom_ribbon(aes(ymin = ci_low_skew1,
-                  ymax = ci_high_skew1), alpha = 0.3) +
-  geom_hline(yintercept = 0, color = "red") +
-  facet_grid(~Trait_trans) +
-  theme_minimal()
-
 
 plot_predictions <-function(dat, trait, moment, newdata) {
   
@@ -598,9 +493,9 @@ plot_predictions <-function(dat, trait, moment, newdata) {
     unnest(data) %>% 
     ungroup()
   
-  plot <- ggplot(dat2, aes(x = Temp_yearly_prev, y = value)) +
+  plot <- ggplot(dat2, aes(x = Temp_yearly_spring, y = value)) +
     geom_point(color = "grey") +
-    geom_line(aes(x = Temp_yearly_prev, y = predicted, color = factor(Precip_yearly)), data=newdata, size = 1, inherit.aes = FALSE, show.legend = TRUE) +
+    geom_line(aes(x = Temp_yearly_spring, y = predicted, color = factor(Precip_yearly)), data=newdata, size = 1, inherit.aes = FALSE, show.legend = TRUE) +
     scale_color_manual(values = Precip_palette) +
     theme_minimal(base_size = 15) 
 
