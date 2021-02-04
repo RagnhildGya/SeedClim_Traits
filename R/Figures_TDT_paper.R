@@ -413,16 +413,13 @@ model_output_space_mixed %>%
   #                     high = "#BAD8F7",
   #                     guide = "colourbar") +
   scale_color_manual(values = c("black", "black")) +
-  scale_alpha_continuous(range = c(0.00000005, 2)) +
+  scale_alpha_continuous(range = c(0.1, 3)) +
   geom_hline(yintercept =  0) +
   theme_bw() +
   coord_flip() +
   #guides(fill = "none", color = "none", size = "none") +
   theme(axis.title.y=element_blank()) +
   guides(color = FALSE, alpha = FALSE, fill = FALSE)
-
-Temp_palette <- c("#d8c593", "#dd7631", "#bb3b0e")
-Precip_palette <- c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")
 
 
 ## Mean linear model ##
