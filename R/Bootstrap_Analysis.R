@@ -29,7 +29,8 @@ set.seed(47)
 ## Community ##
 
 community <- community %>% 
-  filter(!year == "2010")
+  filter(!year == "2010") %>% 
+  select(siteID, blockID, turfID, year, species, Full_name, Genus, Family, Order, cover)
 
 ## Trait data ##
 
@@ -577,13 +578,13 @@ newdata_C$predicted <- predict(object = mem_results_C_mean, newdata = newdata_C,
 
 Corr_traits <- sum_moments_climate_fullcommunity %>% 
   ungroup() %>% 
-  select(Site, turfID, Trait_trans, mean, Precip_yearly, Temp_yearly_spring) %>% 
+  select(Site, turfID, Trait_trans, mean, Precip_yearly, Temp_yearly_spring, Precip_yearly_spring) %>% 
   spread(key = Trait_trans, value = mean) %>% 
   select(-Site, -turfID) 
 
 # Correlations 
 
-corr <- round(cor(Corr_traits), 1) 
+corr <- round(cor(Corr_traits), 5) 
 head(corr[, 1:6])
 
 # P-values 
