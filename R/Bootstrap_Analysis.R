@@ -191,28 +191,28 @@ tidy_space_model_predicted_mixed <- mem_results_space %>%
   mutate(model_output = purrr::map(model, tidy)) %>%
   mutate(R_squared = purrr::map(model, rsquared))
 
-predicted_values_space_mixed <- tidy_space_model_predicted %>%
-  ungroup() %>%
-  select(Trait_trans, moments, data, predicted) %>%
-  unnest(c(data, predicted)) %>%
-  rename(modeled = predicted, measured = value)
+# predicted_values_space_mixed <- tidy_space_model_predicted %>%
+#   ungroup() %>%
+#   select(Trait_trans, moments, data, predicted) %>%
+#   unnest(c(data, predicted)) %>%
+#   rename(modeled = predicted, measured = value)
 
 ## Space linear ##
-mem_results_space_linear <- memodel_data_fullcommunity %>%
-  filter(moments %in% c("mean", "skewness"),
-         n == 4) %>% 
-  mutate(model = purrr::map(data, model_space_linear))
-
-tidy_space_model_predicted_linear <- mem_results_space_linear %>%
-  mutate(model_output = purrr::map(model, tidy)) %>% 
-  mutate(predicted = purrr::map(model, predict)) %>% 
-  mutate(R_squared = purrr::map(model, rsquared))
-
-predicted_values_space_ <- tidy_space_model_predicted %>%
-   ungroup() %>%
-   select(Trait_trans, moments, data, predicted) %>%
-   unnest(c(data, predicted)) %>%
-   rename(modeled = predicted, measured = value)
+# mem_results_space_linear <- memodel_data_fullcommunity %>%
+#   filter(moments %in% c("mean", "skewness"),
+#          n == 4) %>% 
+#   mutate(model = purrr::map(data, model_space_linear))
+# 
+# tidy_space_model_predicted_linear <- mem_results_space_linear %>%
+#   mutate(model_output = purrr::map(model, tidy)) %>% 
+#   mutate(predicted = purrr::map(model, predict)) %>% 
+#   mutate(R_squared = purrr::map(model, rsquared))
+# 
+# predicted_values_space_ <- tidy_space_model_predicted %>%
+#    ungroup() %>%
+#    select(Trait_trans, moments, data, predicted) %>%
+#    unnest(c(data, predicted)) %>%
+#    rename(modeled = predicted, measured = value)
 
 
 # ## Without intraspecific variability ##
@@ -241,23 +241,22 @@ tidy_time_model_predicted_mixed <- mem_results_time_mixed %>%
   mutate(predicted = purrr::map(model, predict_with_random)) %>% 
   mutate(R_squared = purrr::map(model, rsquared))
 
-predicted_values_time <- tidy_time_model_predicted %>%
-  ungroup() %>%
-  select(Trait_trans, moments, data, predicted) %>%
-  unnest(c(data, predicted)) %>%
-  rename(modeled = predicted, measured = value)
+# predicted_values_time <- tidy_time_model_predicted %>%
+#   ungroup() %>%
+#   select(Trait_trans, moments, data, predicted) %>%
+#   unnest(c(data, predicted)) %>%
+#   rename(modeled = predicted, measured = value)
 
 ## Time linear ##
-mem_results_time_linear <- memodel_data_fullcommunity %>%
-  filter(moments %in% c("mean", "skewness"),
-         n == 4) %>% 
-  mutate(model = purrr::map(data, model_time_linear))
-
-tidy_time_model_predicted_linear <- mem_results_time_linear %>%
-  mutate(model_output = purrr::map(model, tidy)) %>% 
-  mutate(predicted = purrr::map(model, predict)) %>% 
-  mutate(R_squared = purrr::map(model, rsquared))
-
+# mem_results_time_linear <- memodel_data_fullcommunity %>%
+#   filter(moments %in% c("mean", "skewness"),
+#          n == 4) %>% 
+#   mutate(model = purrr::map(data, model_time_linear))
+# 
+# tidy_time_model_predicted_linear <- mem_results_time_linear %>%
+#   mutate(model_output = purrr::map(model, tidy)) %>% 
+#   mutate(predicted = purrr::map(model, predict)) %>% 
+#   mutate(R_squared = purrr::map(model, rsquared))
 
 # Making a function for AIC tests
 
@@ -341,10 +340,10 @@ model_output_linear <-function(dat) {
 
 
 model_output_time_mixed <- model_output_mixed(tidy_time_model_predicted_mixed)
-model_output_time_linear <- model_output_linear(tidy_time_model_predicted_linear)
+#model_output_time_linear <- model_output_linear(tidy_time_model_predicted_linear)
 
 model_output_space_mixed <- model_output_mixed(tidy_space_model_predicted_mixed)
-model_output_space_linear <- model_output_linear(tidy_space_model_predicted_linear)
+#model_output_space_linear <- model_output_linear(tidy_space_model_predicted_linear)
 
 
 #### Simpler mixed effect models on specific traits to make predicted plots ####
@@ -578,13 +577,13 @@ newdata_C$predicted <- predict(object = mem_results_C_mean, newdata = newdata_C,
 
 Corr_traits <- sum_moments_climate_fullcommunity %>% 
   ungroup() %>% 
-  select(Site, turfID, Trait_trans, mean, Precip_yearly, Temp_yearly_spring, Precip_yearly_spring) %>% 
+  select(Site, turfID, Trait_trans, mean, Precip_yearly, Temp_yearly_spring, Temp_yearly_prev,  Temp_summer, Precip_yearly_spring) %>% 
   spread(key = Trait_trans, value = mean) %>% 
   select(-Site, -turfID) 
 
 # Correlations 
 
-corr <- round(cor(Corr_traits), 5) 
+corr <- round(cor(Corr_traits), 3) 
 head(corr[, 1:6])
 
 # P-values 
