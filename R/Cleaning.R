@@ -211,12 +211,19 @@ community <- community %>%
 
  env <- read.csv("Data/GriddedDailyClimateData2009-2019.csv", header=TRUE, sep = ",", stringsAsFactors = FALSE)
  
- summer <- env %>% 
+ summer_prev <- env %>% 
    group_by(Site, Year) %>% 
    filter(Month %in% c(6:9)) %>% 
    mutate(Temp_yearly_prev = mean(Temperature)) %>% 
    select(Site, Year, Temp_yearly_prev) %>% 
    mutate(Year = Year + 1) %>% 
+   unique()
+ 
+ summer <- env %>% 
+   group_by(Site, Year) %>% 
+   filter(Month %in% c(6:9)) %>% 
+   mutate(Temp_summer = mean(Temperature)) %>% 
+   select(Site, Year, Temp_summer) %>% 
    unique()
  
  env <- env %>% 
@@ -225,11 +232,12 @@ community <- community %>%
    group_by(Site, Year2) %>% 
    mutate(Precip_yearly = sum(Precipitation)) %>% 
    filter(Month %in% c(5:7)) %>% 
-   mutate(Temp_yearly_spring = mean(Temperature)) %>% 
-   mutate(Precip_yearly_spring = sum(Precipitation)) %>% 
+   mutate(Temp_yearly_spring = mean(Temperature),
+          Precip_yearly_spring = sum(Precipitation)) %>% 
    ungroup() %>% 
    select(Site, Year, Precip_yearly, Temp_yearly_spring, Precip_yearly_spring) %>% 
    unique() %>% 
+   left_join(y = summer_prev, by = c("Site" = "Site", "Year" = "Year")) %>% 
    left_join(y = summer, by = c("Site" = "Site", "Year" = "Year")) %>% 
    ungroup() %>% 
    group_by(Site) %>% 
