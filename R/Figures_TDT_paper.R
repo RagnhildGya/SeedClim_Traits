@@ -193,6 +193,22 @@ Zoomed_in_map <- ggplot(dat, aes(x = Longitude, y = Latitude, fill = Precipitati
 # 
 # ggsave("SLA_moments_over_time.jpg", width = 30 , height = 20, units = "cm")
 
+#### Correlation plot ####
+
+# Correlations 
+
+corr <- round(cor(Corr_traits), 1) 
+head(corr[, 1:6])
+
+# P-values 
+
+p.mat <- cor_pmat(Corr_traits)
+#head(p.mat_17[, 1:4])
+
+# Correlation plot
+
+ggcorrplot(corr, hc.order = FALSE,
+           type = "lower", lab = TRUE,)
 
 #### Ordination ####
 
