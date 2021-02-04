@@ -93,16 +93,6 @@ sum_moments_fullcommunity <- trait_summarise_boot_moments(Imputed_traits_fullcom
 #   group_by(year, siteID, blockID, turfID, Trait_trans)
 
 
-
-#### Bootstraping community weighted means and making summarised moments of the distributions ####
-
-# Moments_without_intra <- trait_np_bootstrap(imputed_traits = Imputed_traits_without_intra)
-# sum_moments_without_intra <- trait_summarise_boot_moments(Imputed_traits_without_intra)
-# 
-# Moments_fullcommunity <- trait_np_bootstrap(imputed_traits = Imputed_traits_fullcommunity)
-# sum_moments_fullcommunity <- trait_summarise_boot_moments(Imputed_traits_fullcommunity)
-
-
 #### Adding climate info & pivoting longer ####
 
 sum_moments_climate_fullcommunity = bind_rows(
