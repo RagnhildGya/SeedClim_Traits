@@ -226,9 +226,9 @@ community <- community %>%
    mutate(Precip_yearly = sum(Precipitation)) %>% 
    filter(Month %in% c(5:7)) %>% 
    mutate(Temp_yearly_spring = mean(Temperature)) %>% 
-   mutate(Precip_yearly_spring = mean(Precipitation)) %>% 
+   mutate(Precip_yearly_spring = sum(Precipitation)) %>% 
    ungroup() %>% 
-   select(Site, Year, Precip_yearly, Temp_yearly_spring) %>% 
+   select(Site, Year, Precip_yearly, Temp_yearly_spring, Precip_yearly_spring) %>% 
    unique() %>% 
    left_join(y = summer, by = c("Site" = "Site", "Year" = "Year")) %>% 
    ungroup() %>% 
