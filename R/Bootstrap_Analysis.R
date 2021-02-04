@@ -362,14 +362,14 @@ model_trait_summary <-function(dat, trait, moment) {
     ungroup()
   
   # Run model
-  model <- lmer(value ~ Temp_yearly_prev * scale(Precip_yearly) + (1 | year), data = dat2)
+  model <- lmer(value ~ Temp_yearly_spring * scale(Precip_yearly) + (1 | year), data = dat2)
   
   return(model)
 }
 
 models_trait_predictions <-function(model) {
 
-  newdata <- expand.grid(Precip_yearly=c(600, 1500, 2300, 3500), Temp_yearly_prev=seq(5.5,14, length=500), year = c(2009, 2011, 2012, 2013, 2015, 2017))
+  newdata <- expand.grid(Precip_yearly=c(600, 1500, 2300, 3500), Temp_yearly_spring=seq(3,12, length=500), year = c(2009, 2011, 2012, 2013, 2015, 2016, 2017, 2019))
   
   newdata$predicted <- predict(object = model, newdata = newdata, re.form = NA, allow.new.levels=TRUE)
   
@@ -382,9 +382,9 @@ SLA_skew_sum <- model_trait_summary(memodel_data_fullcommunity, "SLA_cm2_g_log",
 SLA_skew_pred <- models_trait_predictions(SLA_skew_sum)
 
 CN_ratio_mean_sum <- model_trait_summary(memodel_data_fullcommunity, "CN_ratio_log", "mean")
-CN_ratio_mean_pred <- models_trait_predictions(memodel_data_fullcommunity, "CN_ratio_log", "mean")
+CN_ratio_mean_pred <- models_trait_predictions(CN_ratio_mean_sum)
 CN_ratio_skew_sum <- model_trait_summary(memodel_data_fullcommunity, "CN_ratio_log", "skewness")
-CN_ratio_skew_pred <- models_trait_predictions(memodel_data_fullcommunity, "CN_ratio_log", "skewness")
+CN_ratio_skew_pred <- models_trait_predictions(CN_ratio_skew_sum)
 
 LA_mean_sum <- model_trait_summary(memodel_data_fullcommunity, "Leaf_Area_cm2_log", "mean")
 LA_mean_pred <- models_trait_predictions(LA_mean_sum)
@@ -580,22 +580,6 @@ Corr_traits <- sum_moments_climate_fullcommunity %>%
   select(Site, turfID, Trait_trans, mean, Precip_yearly, Temp_yearly_spring, Temp_yearly_prev,  Temp_summer, Precip_yearly_spring) %>% 
   spread(key = Trait_trans, value = mean) %>% 
   select(-Site, -turfID) 
-
-# Correlations 
-
-corr <- round(cor(Corr_traits), 1) 
-head(corr[, 1:6])
-
-# P-values 
-
-p.mat <- cor_pmat(Corr_traits)
-#head(p.mat_17[, 1:4])
-
-# Correlation plot
-
-ggcorrplot(corr, hc.order = FALSE,
-           type = "lower", lab = TRUE,)
-
 
 #### Ordination ####
 
