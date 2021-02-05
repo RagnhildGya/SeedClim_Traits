@@ -144,6 +144,7 @@ com_data <- community %>%
   pivot_longer(cols = c("species_richness", "graminoid_cover", "forb_cover", "other_cover"), names_to = "community_properties", values_to = "value") %>% 
   select(siteID, turfID, Temp_yearly_spring, Precip_yearly, year, value, community_properties) %>% 
   group_by(community_properties) %>% 
+  unique() %>% 
   nest()
 
 ### Funcitons for different models and model predictions later ###
@@ -157,13 +158,13 @@ model_space<-function(df) {
   lmer(value ~  Temp_yearly_spring * scale(Precip_yearly) + (1 | year), data = df)
 }
 
-model_space_linear<-function(df) {
-  lm(value ~  Temp_yearly_spring * scale(Precip_yearly) +  year, data = df)
-}
-
-model_time_linear<-function(df) {
-  lm(value ~ Temp_yearly_spring * scale(Precip_yearly) +  siteID, data = df)
-}
+# model_space_linear<-function(df) {
+#   lm(value ~  Temp_yearly_spring * scale(Precip_yearly) +  year, data = df)
+# }
+# 
+# model_time_linear<-function(df) {
+#   lm(value ~ Temp_yearly_spring * scale(Precip_yearly) +  siteID, data = df)
+# }
 
 predict_without_random<-function(model) {
   predict(object = model, re.form=NA)
@@ -189,11 +190,46 @@ tidy_space_model_predicted_mixed <- mem_results_space %>%
   mutate(model_output = purrr::map(model, tidy)) %>%
   mutate(R_squared = purrr::map(model, rsquared))
 
+## Space community mixed ##
+mem_results_com_space <- com_data %>%
+  mutate(model = purrr::map(data, model_space))
+
+tidy_com_space_model_predicted_mixed <- mem_results_com_space %>%
+  mutate(model_output = purrr::map(model, tidy)) %>%
+  mutate(R_squared = purrr::map(model, rsquared))
+
+
+## Time community mixed model ##
+mem_results_com_time_mixed <- com_data %>%
+  mutate(model = purrr::map(data, model_time))
+
+tidy_com_time_model_predicted_mixed <- mem_results_com_time_mixed %>%
+  mutate(model_output = purrr::map(model, tidy)) %>%
+  mutate(predicted = purrr::map(model, predict_with_random)) %>% 
+  mutate(R_squared = purrr::map(model, rsquared))
+
 # predicted_values_space_mixed <- tidy_space_model_predicted %>%
 #   ungroup() %>%
 #   select(Trait_trans, moments, data, predicted) %>%
 #   unnest(c(data, predicted)) %>%
 #   rename(modeled = predicted, measured = value)
+
+## Time - Full community mixed ##
+mem_results_time_mixed <- memodel_data_fullcommunity %>%
+  filter(moments %in% c("mean", "skewness")) %>% 
+  mutate(model = purrr::map(data, model_time))
+
+tidy_time_model_predicted_mixed <- mem_results_time_mixed %>%
+  mutate(model_output = purrr::map(model, tidy)) %>%
+  mutate(predicted = purrr::map(model, predict_with_random)) %>% 
+  mutate(R_squared = purrr::map(model, rsquared))
+
+# predicted_values_time <- tidy_time_model_predicted %>%
+#   ungroup() %>%
+#   select(Trait_trans, moments, data, predicted) %>%
+#   unnest(c(data, predicted)) %>%
+#   rename(modeled = predicted, measured = value)
+
 
 ## Space linear ##
 # mem_results_space_linear <- memodel_data_fullcommunity %>%
@@ -228,22 +264,6 @@ tidy_space_model_predicted_mixed <- mem_results_space %>%
 #   unnest(c(data, predicted)) %>%
 #   rename(modeled = predicted, measured = value)
 
-
-## Time - Full community ##
-mem_results_time_mixed <- memodel_data_fullcommunity %>%
-  filter(moments %in% c("mean", "skewness")) %>% 
-  mutate(model = purrr::map(data, model_time))
-
-tidy_time_model_predicted_mixed <- mem_results_time_mixed %>%
-  mutate(model_output = purrr::map(model, tidy)) %>%
-  mutate(predicted = purrr::map(model, predict_with_random)) %>% 
-  mutate(R_squared = purrr::map(model, rsquared))
-
-# predicted_values_time <- tidy_time_model_predicted %>%
-#   ungroup() %>%
-#   select(Trait_trans, moments, data, predicted) %>%
-#   unnest(c(data, predicted)) %>%
-#   rename(modeled = predicted, measured = value)
 
 ## Time linear ##
 # mem_results_time_linear <- memodel_data_fullcommunity %>%
