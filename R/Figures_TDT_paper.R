@@ -397,37 +397,6 @@ time_mixed_size_notax <- model_output_time_mixed_notax %>%
 ## Mean mixed effect model ##
 
 model_output_space_mixed %>% 
-  bind_rows(time_mixed) %>%
-  #bind_rows(without_intra) %>% 
-  mutate(Trait_moment = paste0(moments, "_", Trait_trans)) %>% 
-  mutate(trend_col = ifelse(effect > 0, "positive", "negative")) %>% 
-  mutate(significance = ifelse(p.value > 0.05, "Non significant", "Significant")) %>% 
-  filter(moments %in% c("mean", "time")) %>% 
-  mutate(moments = factor(moments, levels = c("time", "mean"))) %>% 
-  #mutate(coloring = paste0(moments, "", significance)) %>% 
-  #mutate(coloring = factor(coloring, levels = c("timeNon significant", "timeSignificant", "meanNon significant", "meanSignificant" ))) %>% 
-  mutate(term = as.factor(recode(term, "scale(Precip_yearly)" = "Precipitation", "Temp_yearly_spring" = "SpringTemp", "Temp_yearly_spring:scale(Precip_yearly)" = "SpringTemp:Precipitation"))) %>% 
-  mutate(coloring = paste0(moments, "", term)) %>% 
-  mutate(coloring = factor(coloring, levels = c("timePrecipitation","meanPrecipitation","timeSpringTemp", "meanSpringTemp", "timeSpringTemp:Precipitation", "meanSpringTemp:Precipitation"))) %>% 
-  mutate(Trait_trans = factor(Trait_trans, levels = c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent", "SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))) %>%
-  ggplot(aes(x = fct_rev(Trait_trans), y = effect, fill = coloring)) +
-  geom_bar(stat = "identity", position = position_dodge(width=0.6), width = 0.7) +
-  geom_point(aes(size = if_else(p.value <0.05, 0.3, NA_real_)), position = position_dodge(width=0.6), show.legend = FALSE) +
-  #geom_bar_pattern(aes(pattern = 'stripe'), stat = "identity", position = "dodge") +
-  #geom_errorbar(aes(xmin = effect-std.error, xmax = effect+std.error)) +
-  facet_grid(~term, scales = "free") +
-  scale_fill_manual(values = c("#BAD8F7", "#2E75B6", "#d8c593","#dd7631", "#D8C4E8", "#9A86A9")) +
-  #scale_shape_manual(values = c(1,19)) +
-  geom_hline(yintercept =  0) +
-  theme_bw() +
-  coord_flip() +
-  #guides(fill = "none", color = "none", size = "none") +
-  theme(axis.title.y=element_blank()) +
-  guides(fill = FALSE)
-
-
-
-model_output_space_mixed %>% 
   ungroup() %>% 
   filter(Trait_trans %in% c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent")) %>% 
   bind_rows(time_mixed_size) %>%
@@ -466,7 +435,7 @@ model_output_space_mixed %>%
   mutate(Trait_moment = paste0(moments, "_", Trait_trans)) %>% 
   filter(moments %in% c("mean", "time")) %>% 
   mutate(moments = factor(moments, levels = c("time", "mean"))) %>% 
-  mutate(term = as.factor(recode(term, "scale(Precip_yearly)" = "Precipitation", "Temp_yearly_spring" = "SummerTemp", "Temp_yearly_spring:scale(Precip_yearly)" = "SummerTemp:Precipitation"))) %>% 
+  mutate(term = as.factor(recode(term, "Precip_yearly" = "Precipitation", "Temp_yearly_spring" = "SummerTemp", "Temp_yearly_spring:Precip_yearly" = "SummerTemp:Precipitation"))) %>% 
   mutate(Trait_trans = factor(Trait_trans, levels = c("SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))) %>%
   ggplot(aes(x = fct_rev(Trait_trans), y = effect, fill = term, color = moments)) +
   geom_bar(aes(alpha = rev(p.value)), stat = "identity", position = position_dodge(width=0.7), width = 0.7) +
@@ -495,7 +464,7 @@ model_output_space_mixed_notax %>%
   mutate(Trait_moment = paste0(moments, "_", Trait_trans)) %>% 
   filter(moments %in% c("mean", "time")) %>% 
   mutate(moments = factor(moments, levels = c("time", "mean"))) %>% 
-  mutate(term = as.factor(recode(term, "scale(Precip_yearly)" = "Precipitation", "Temp_yearly_spring" = "SummerTemp", "Temp_yearly_spring:scale(Precip_yearly)" = "SummerTemp:Precipitation"))) %>% 
+  mutate(term = as.factor(recode(term, "Precip_yearly" = "Precipitation", "Temp_yearly_spring" = "SummerTemp", "Temp_yearly_spring:Precip_yearly" = "SummerTemp:Precipitation"))) %>% 
   mutate(Trait_trans = factor(Trait_trans, levels = c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent"))) %>%
   ggplot(aes(x = fct_rev(Trait_trans), y = effect, fill = term, color = moments)) +
   geom_bar(aes(alpha = rev(p.value)), stat = "identity", position = position_dodge(width=0.7), width = 0.7) +
@@ -526,7 +495,7 @@ model_output_space_mixed_notax %>%
   mutate(Trait_moment = paste0(moments, "_", Trait_trans)) %>% 
   filter(moments %in% c("mean", "time")) %>% 
   mutate(moments = factor(moments, levels = c("time", "mean"))) %>% 
-  mutate(term = as.factor(recode(term, "scale(Precip_yearly)" = "Precipitation", "Temp_yearly_spring" = "SummerTemp", "Temp_yearly_spring:scale(Precip_yearly)" = "SummerTemp:Precipitation"))) %>% 
+  mutate(term = as.factor(recode(term, "Precip_yearly" = "Precipitation", "Temp_yearly_spring" = "SummerTemp", "Temp_yearly_spring:Precip_yearly" = "SummerTemp:Precipitation"))) %>% 
   mutate(Trait_trans = factor(Trait_trans, levels = c("SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))) %>%
   ggplot(aes(x = fct_rev(Trait_trans), y = effect, fill = term, color = moments)) +
   geom_bar(aes(alpha = rev(p.value)), stat = "identity", position = position_dodge(width=0.7), width = 0.7) +
@@ -558,7 +527,7 @@ time_com_mixed <- model_output_com_time_mixed %>%
 model_output_com_space_mixed %>% 
   mutate(moments = "space") %>% 
   bind_rows(time_com_mixed) %>%
-  mutate(term = as.factor(recode(term, "scale(Precip_yearly)" = "Precipitation", "Temp_yearly_spring" = "SpringTemp", "Temp_yearly_spring:scale(Precip_yearly)" = "SpringTemp:Precipitation"))) %>% 
+  mutate(term = as.factor(recode(term, "Precip_yearly" = "Precipitation", "Temp_yearly_spring" = "SpringTemp", "Temp_yearly_spring:Precip_yearly" = "SpringTemp:Precipitation"))) %>% 
   mutate(moments = factor(moments, levels = c("time", "space"))) %>% 
   ggplot(aes(x = community_properties, y = estimate, fill = term, color = moments)) +
   geom_bar(aes(alpha = rev(p.value)), stat = "identity", position = position_dodge(width=0.7), width = 0.7) +
@@ -592,7 +561,7 @@ model_output_com_space_mixed %>%
 #   mutate(moments = factor(moments, levels = c("time", "mean"))) %>% 
 #   #mutate(coloring = paste0(moments, "", significance)) %>% 
 #   #mutate(coloring = factor(coloring, levels = c("timeNon significant", "timeSignificant", "meanNon significant", "meanSignificant" ))) %>% 
-#   mutate(term = as.factor(recode(term, "scale(Precip_yearly)" = "Precipitation", "Temp_yearly_spring" = "SpringTemp", "Temp_yearly_spring:scale(Precip_yearly)" = "SpringTemp:Precipitation"))) %>% 
+#   mutate(term = as.factor(recode(term, "Precip_yearly" = "Precipitation", "Temp_yearly_spring" = "SpringTemp", "Temp_yearly_spring:Precip_yearly" = "SpringTemp:Precipitation"))) %>% 
 #   mutate(coloring = paste0(moments, "", term)) %>% 
 #   mutate(coloring = factor(coloring, levels = c("timePrecipitation","meanPrecipitation","timeSpringTemp", "meanSpringTemp", "timeSpringTemp:Precipitation", "meanSpringTemp:Precipitation"))) %>% 
 #   mutate(Trait_trans = factor(Trait_trans, levels = c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent", "SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))) %>%
@@ -613,35 +582,27 @@ model_output_com_space_mixed %>%
 
 ### Mean compared to skewness figures ###
 
+heatplot <-function(dat, trait, moment) {
+  
+  plot <- dat %>%
+    group_by(Precip_yearly, Temp_yearly_spring) %>% 
+    mutate(predicted = mean(predicted)) %>% 
+    select(-year) %>% 
+    unique() %>% 
+    ggplot(aes(as.factor(Precip_yearly), as.factor(Temp_yearly_spring), fill = predicted)) +
+    geom_tile() +
+    scale_fill_gradient(low = "#2E75B6", high = "#bb3b0e") +
+    ggtitle(paste0(trait, " ", moment))
+  
+  return(plot)
+}
 
 
+SLA_mean_heatplot <- heatplot(SLA_mean_pred_heatmap, "SLA", "mean")
+SLA_skew_heatplot <- heatplot(SLA_skew_pred_heatmap, "SLA", "skewness")
 
-mean_direction_shift <- model_output_space_mixed %>% 
-  filter(moments == "mean") %>% 
-  mutate(mean_direction_shift = ifelse(effect > 0, "positive", "negative")) %>%
-  ungroup() %>% 
-  select(Trait_trans, term, mean_direction_shift) 
-
-skewness_direction_shift_time <- model_output_time_mixed %>% 
-  filter(moments == "skewness") %>% 
-  mutate(skewness_direction_shift_time = ifelse(effect > 0, "positive", "negative")) %>%
-  ungroup() %>% 
-  select(Trait_trans, term, skewness_direction_shift_time) 
-
-### Directional change in skewness compared to the mean, and timely changes with skewness ###
-
-model_output_space_mixed %>% 
-  filter(moments == "skewness") %>% 
-  left_join(mean_direction_shift, by = c("Trait_trans" = "Trait_trans", "term" = "term")) %>% 
-  left_join(skewness_direction_shift_time, by = c("Trait_trans" = "Trait_trans", "term" = "term")) %>% 
-  mutate(Trait_trans = factor(Trait_trans, levels = c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent", "SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))) %>%
-  filter(term %in% c("Temp_yearly_prev", "Temp_yearly_spring")) %>% 
-  ggplot(aes(x = fct_rev(Trait_trans), y = effect, col = skewness_direction_shift_time)) +
-  geom_point() +
-  facet_wrap(term ~ mean_direction_shift, nrow = 2, scales = "free_x") +
-  #geom_vline(xintercept =  0) +
-  geom_hline(yintercept =  0) +
-  coord_flip()
+SLA_mean_heatplot <- heatplot(CN_ratio_mean_pred_heatmap, "C/N ratio", "mean")
+SLA_skew_heatplot <- heatplot(CN_ratio_skew_pred_heatmap, "C/N ratio", "skewness")
 
 #### Making plots for predicted values and observed values
 
