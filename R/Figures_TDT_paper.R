@@ -334,7 +334,10 @@ ggplot(aes(x = PC1, y = PC2, colour = Temp_level, group = turfID)) +
   guides(color = FALSE) 
 
 
-d <- ggarrange(Ord_plot_traits, Ord_plot_time, Ord_plot_precip, Ord_plot_temp,  ncol = 2, nrow = 2, legend = "bottom")
+d <- ggarrange(Ord_plot_traits, 
+               ggarrange(Ord_plot_precip, Ord_plot_temp,  Ord_plot_time, ncol = 3, nrow = 1, labels = c("B", "C", "D"), legend = "bottom"), 
+               nrow = 2, ncol = 1,
+               labels = "A")
 
 ggsave(plot = d, "Ord_timemean_temp_prec.jpg", width = 28 , height = 20, units = "cm")
 
