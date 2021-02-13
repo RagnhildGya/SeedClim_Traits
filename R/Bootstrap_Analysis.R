@@ -21,8 +21,15 @@ library(vegan)
 library(ggvegan)
 #library(drake)
 #library(default)
+library(conflicted)
 
 set.seed(47)
+
+#### Setting conflict standards ####
+
+conflict_prefer("map", winner="purrr")
+conflict_prefer("filter", winner = "dplyr")
+
 
 #### Making data ready for traitstrap and merging ####
 
@@ -184,7 +191,7 @@ predict_with_random<-function(model) {
 ## Space mixed ##
 mem_results_space <- memodel_data_fullcommunity %>%
   filter(moments %in% c("mean", "skewness")) %>% 
-  mutate(model = purrr::map(data, model_space))
+  mutate(model = map(data, model_space))
 
 tidy_space_model_predicted_mixed <- mem_results_space %>%
   mutate(model_output = purrr::map(model, tidy)) %>%
