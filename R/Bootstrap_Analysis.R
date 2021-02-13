@@ -202,11 +202,11 @@ com_data <- community %>%
 
 
 model_time<-function(df) {
-  lmer(value ~ Temp_yearly_spring * scale(Precip_yearly) + (1 | siteID), data = df)
+  lmer(value ~ Temp_yearly_spring * Precip_yearly + (1 | siteID), data = df)
 }
 
 model_space<-function(df) {
-  lmer(value ~  Temp_yearly_spring * scale(Precip_yearly) + (1 | year), data = df)
+  lmer(value ~  Temp_yearly_spring * Precip_yearly + (1 | year), data = df)
 }
 
 # model_space_linear<-function(df) {
@@ -382,7 +382,7 @@ model_output_mixed <-function(dat) {
     #filter(Trait_trans %in% c("CN_ratio_log", "SLA_cm2_g_log") & moments %in% c("mean", "variance")) %>% 
     #filter(!Trait_trans == "CN_ratio_log" | moments == "variance") %>% 
     unnest(c(model_output, R_squared)) %>% 
-    filter(term %in% c("scale(Precip_yearly)", "Temp_yearly_spring", "Temp_yearly_spring:scale(Precip_yearly)")) %>% 
+    filter(term %in% c("Precip_yearly", "Temp_yearly_spring", "Temp_yearly_spring:Precip_yearly")) %>% 
     select(Trait_trans, moments, term, n, estimate, std.error, statistic, df, p.value, Marginal, Conditional) %>% 
     ungroup() %>% 
     group_by(Trait_trans, moments, term) %>% 
@@ -406,7 +406,7 @@ model_output_com_mixed <-function(dat) {
   model_output <- dat %>% 
     select(community_properties, model_output, R_squared) %>% 
     unnest(c(model_output, R_squared)) %>% 
-    filter(term %in% c("scale(Precip_yearly)", "Temp_yearly_spring", "Temp_yearly_spring:scale(Precip_yearly)")) %>% 
+    filter(term %in% c("Precip_yearly", "Temp_yearly_spring", "Temp_yearly_spring:Precip_yearly")) %>% 
     select(community_properties, term, estimate, std.error, statistic, df, p.value, Marginal, Conditional) %>% 
     ungroup() 
     # group_by(community_properties, term) %>% 
@@ -433,7 +433,7 @@ model_output_linear <-function(dat) {
     #filter(Trait_trans %in% c("CN_ratio_log", "SLA_cm2_g_log") & moments %in% c("mean", "variance")) %>% 
     #filter(!Trait_trans == "CN_ratio_log" | moments == "variance") %>% 
     unnest(c(model_output, R_squared)) %>% 
-    filter(term %in% c("scale(Precip_yearly)", "Temp_yearly_spring", "Temp_yearly_spring:scale(Precip_yearly)")) %>% 
+    filter(term %in% c("Precip_yearly", "Temp_yearly_spring", "Temp_yearly_spring:Precip_yearly")) %>% 
     select(Trait_trans, moments, term, n, estimate, std.error, statistic, p.value, R.squared) %>% 
     ungroup() %>% 
     group_by(Trait_trans, moments, term) %>% 
@@ -478,14 +478,14 @@ model_trait_summary <-function(dat, trait, moment) {
     ungroup()
   
   # Run model
-  model <- lmer(value ~ Temp_yearly_spring * scale(Precip_yearly) + (1 | year), data = dat2)
+  model <- lmer(value ~ Temp_yearly_spring * Precip_yearly + (1 | year), data = dat2)
   
   return(model)
 }
 
 models_trait_predictions <-function(model) {
 
-  newdata <- expand.grid(Precip_yearly=c(600, 1500, 2300, 3500), Temp_yearly_spring=seq(3,12, length=500), year = c(2009, 2011, 2012, 2013, 2015, 2016, 2017, 2019))
+  newdata <- expand.grid(Precip_yearly=c(0.6, 1.5, 2.3, 3.5), Temp_yearly_spring=seq(3,12, length=500), year = c(2009, 2011, 2012, 2013, 2015, 2016, 2017, 2019))
   
   newdata$predicted <- predict(object = model, newdata = newdata, re.form = NA, allow.new.levels=TRUE)
   
@@ -495,7 +495,7 @@ models_trait_predictions <-function(model) {
 
 models_trait_predictions_for_heatmap <-function(model) {
   
-  newdata <- expand.grid(Precip_yearly=c(600, 1500, 2300, 3500), Temp_yearly_spring=c(5.5, 7.5, 10.5), year = c(2009, 2011, 2012, 2013, 2015, 2016, 2017, 2019))
+  newdata <- expand.grid(Precip_yearly=c(0.6, 1.5, 2.3, 3.5), Temp_yearly_spring=c(5.5, 7.5, 10.5), year = c(2009, 2011, 2012, 2013, 2015, 2016, 2017, 2019))
   
   newdata$predicted <- predict(object = model, newdata = newdata, re.form = NA, allow.new.levels=TRUE)
   
