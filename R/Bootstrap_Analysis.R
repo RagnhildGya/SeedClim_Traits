@@ -21,14 +21,14 @@ library(vegan)
 library(ggvegan)
 #library(drake)
 #library(default)
-library(conflicted)
+#library(conflicted)
 
 set.seed(47)
 
 #### Setting conflict standards ####
 
-conflict_prefer("map", winner="purrr")
-conflict_prefer("filter", winner = "dplyr")
+# conflict_prefer("map", winner="purrr")
+# conflict_prefer("filter", winner = "dplyr")
 
 
 #### Making data ready for traitstrap and merging ####
@@ -48,9 +48,18 @@ traitdata_2 <- traitdata_1 %>%
 
 rm(traitdata_1)
 
+## Climate data - transform precipitation from mm to m ##
+
+env <- env %>% 
+  mutate(Precip_yearly = Precip_yearly/1000,
+         Precip_yearly_spring = Precip_yearly_spring/1000,
+         Precip_decade = Precip_decade/1000,
+         Precip_se = Precip_se/1000,
+         Precip_deviation_decade = Precip_deviation_decade/1000,
+         Precip_century = Precip_century/1000)
+
+
 #### Trait impute ####
-
-
 
  Trait_impute_per_year <- function(com_dat, trait_dat){
    
@@ -67,10 +76,29 @@ rm(traitdata_1)
    return(SeedClim_traits)
  }
 
+Trait_impute_per_year_notax <- function(com_dat, trait_dat){
+  
+  SeedClim_traits <- trait_np_bootstrap(trait_impute(comm = com_dat,
+                                                     traits = trait_dat, 
+                                                     scale_hierarchy = c("siteID", "blockID", "turfID"),
+                                                     global = TRUE,
+                                                     taxon_col = "Full_name",
+                                                     trait_col = "Trait_trans",
+                                                     value_col = "Value",
+                                                     other_col = "year",
+                                                     abundance_col = "cover"))
+  
+  return(SeedClim_traits)
+}
+
 Imputed_traits_fullcommunity <- Trait_impute_per_year(com_dat = community, trait_dat = traitdata_2) %>% 
   group_by(year, siteID, blockID, turfID, Trait_trans)
 
+Imputed_traits_fullcommunity_notax <- Trait_impute_per_year_notax(com_dat = community, trait_dat = traitdata_2) %>% 
+  group_by(year, siteID, blockID, turfID, Trait_trans)
+
 sum_moments_fullcommunity <- trait_summarise_boot_moments(Imputed_traits_fullcommunity)
+sum_moments_fullcommunity_notax <- trait_summarise_boot_moments(Imputed_traits_fullcommunity_notax)
 
 #traitstrap:::autoplot.imputed_trait(Imputed_traits_fullcommunity) 
 #traitstrap:::autoplot.imputed_trait(Imputed_traits_without_intra) 
@@ -107,6 +135,10 @@ sum_moments_climate_fullcommunity = bind_rows(
   sum_moments_fullcommunity %>% 
      left_join(env, by = c("siteID" = "siteID", "year" = "Year")))
 
+sum_moments_climate_fullcommunity_notax = bind_rows(
+  sum_moments_fullcommunity_notax %>% 
+    left_join(env, by = c("siteID" = "siteID", "year" = "Year")))
+
 # sum_moments_climate_without_intra = bind_rows(
 #   sum_moments_without_intra %>% 
 #     left_join(env, by = c("siteID" = "siteID", "year" = "Year")))
@@ -117,6 +149,12 @@ moments_clim_long_fullcommunity <- Imputed_traits_fullcommunity %>%
   pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
   left_join(env, by = c("siteID" = "siteID", "year" = "Year")) %>% 
   mutate(year = as.factor(year))
+
+moments_clim_long_fullcommunity_notax <- Imputed_traits_fullcommunity_notax %>% 
+  pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
+  left_join(env, by = c("siteID" = "siteID", "year" = "Year")) %>% 
+  mutate(year = as.factor(year))
+
 
 # moments_clim_long_without_intra <- Moments_without_intra %>% 
 #   pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
@@ -133,6 +171,12 @@ moments_clim_long_fullcommunity <- Imputed_traits_fullcommunity %>%
 
 ### Making dataset for models ###
 memodel_data_fullcommunity <- moments_clim_long_fullcommunity %>% 
+  ungroup() %>%
+  select(Trait_trans, moments, siteID, turfID, Temp_yearly_prev, Temp_yearly_spring, Precip_yearly, value, year, n) %>% 
+  group_by(Trait_trans, moments, n) %>% 
+  nest()
+
+memodel_data_fullcommunity_notax <- moments_clim_long_fullcommunity_notax %>% 
   ungroup() %>%
   select(Trait_trans, moments, siteID, turfID, Temp_yearly_prev, Temp_yearly_spring, Precip_yearly, value, year, n) %>% 
   group_by(Trait_trans, moments, n) %>% 
@@ -191,9 +235,18 @@ predict_with_random<-function(model) {
 ## Space mixed ##
 mem_results_space <- memodel_data_fullcommunity %>%
   filter(moments %in% c("mean", "skewness")) %>% 
-  mutate(model = map(data, model_space))
+  mutate(model = purrr::map(data, model_space))
 
 tidy_space_model_predicted_mixed <- mem_results_space %>%
+  mutate(model_output = purrr::map(model, tidy)) %>%
+  mutate(R_squared = purrr::map(model, rsquared))
+
+## Space mixed ##
+mem_results_space_notax <- memodel_data_fullcommunity_notax %>%
+  filter(moments %in% c("mean", "skewness")) %>% 
+  mutate(model = purrr::map(data, model_space))
+
+tidy_space_model_predicted_mixed_notax <- mem_results_space_notax %>%
   mutate(model_output = purrr::map(model, tidy)) %>%
   mutate(R_squared = purrr::map(model, rsquared))
 
@@ -227,6 +280,15 @@ mem_results_time_mixed <- memodel_data_fullcommunity %>%
   mutate(model = purrr::map(data, model_time))
 
 tidy_time_model_predicted_mixed <- mem_results_time_mixed %>%
+  mutate(model_output = purrr::map(model, tidy)) %>%
+  mutate(predicted = purrr::map(model, predict_with_random)) %>% 
+  mutate(R_squared = purrr::map(model, rsquared))
+
+mem_results_time_mixed_notax <- memodel_data_fullcommunity_notax %>%
+  filter(moments %in% c("mean", "skewness")) %>% 
+  mutate(model = purrr::map(data, model_time))
+
+tidy_time_model_predicted_mixed_notax <- mem_results_time_mixed_notax %>%
   mutate(model_output = purrr::map(model, tidy)) %>%
   mutate(predicted = purrr::map(model, predict_with_random)) %>% 
   mutate(R_squared = purrr::map(model, rsquared))
@@ -284,31 +346,31 @@ tidy_time_model_predicted_mixed <- mem_results_time_mixed %>%
 #   mutate(R_squared = purrr::map(model, rsquared))
 
 # Making a function for AIC tests
-
- AIC_models <-function(dat, model_type) {
-   
-   dat2 <- dat %>% 
-     mutate(AIC = map(model, AIC)) %>% 
-     select(Trait_trans, moments, n, AIC) %>% 
-     unnest(c(AIC)) %>% 
-     ungroup() %>% 
-     group_by(Trait_trans, moments) %>% 
-     mutate(AIC = mean(AIC)) %>% 
-     select(-n) %>% 
-     unique()
-   
-   return(dat2)
- }
- 
- # Get AIC for all models and compare which is better
- 
- AIC_lastyeartemp <- AIC_models(tidy_space_model_predicted_lastyeartemp, "Last year temp") %>% rename(Lastyeartemp_AIC = AIC)
- AIC_springtemp <- AIC_models(tidy_space_model_predicted_springtemp, "Spring temp") %>% rename(Springtemp_AIC = AIC)
- AIC_alltemp <- AIC_models(tidy_space_model_predicted, "full temp") %>% rename(full_AIC = AIC)
- 
- AIC_all_models <- AIC_lastyeartemp %>%
-   left_join(AIC_springtemp, by = c("Trait_trans" = "Trait_trans", "moments" = "moments")) %>% 
-   left_join(AIC_alltemp, by = c("Trait_trans" = "Trait_trans", "moments" = "moments"))
+# 
+#  AIC_models <-function(dat, model_type) {
+#    
+#    dat2 <- dat %>% 
+#      mutate(AIC = map(model, AIC)) %>% 
+#      select(Trait_trans, moments, n, AIC) %>% 
+#      unnest(c(AIC)) %>% 
+#      ungroup() %>% 
+#      group_by(Trait_trans, moments) %>% 
+#      mutate(AIC = mean(AIC)) %>% 
+#      select(-n) %>% 
+#      unique()
+#    
+#    return(dat2)
+#  }
+#  
+#  # Get AIC for all models and compare which is better
+#  
+#  AIC_lastyeartemp <- AIC_models(tidy_space_model_predicted_lastyeartemp, "Last year temp") %>% rename(Lastyeartemp_AIC = AIC)
+#  AIC_springtemp <- AIC_models(tidy_space_model_predicted_springtemp, "Spring temp") %>% rename(Springtemp_AIC = AIC)
+#  AIC_alltemp <- AIC_models(tidy_space_model_predicted, "full temp") %>% rename(full_AIC = AIC)
+#  
+#  AIC_all_models <- AIC_lastyeartemp %>%
+#    left_join(AIC_springtemp, by = c("Trait_trans" = "Trait_trans", "moments" = "moments")) %>% 
+#    left_join(AIC_alltemp, by = c("Trait_trans" = "Trait_trans", "moments" = "moments"))
   
 #write.table(x = AIC_all_models, file = "AIC_log.csv")
 
