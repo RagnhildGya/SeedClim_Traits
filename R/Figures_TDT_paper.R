@@ -424,7 +424,7 @@ model_output_space_mixed %>%
   #                     high = "#BAD8F7",
   #                     guide = "colourbar") +
   scale_color_manual(values = c("black", "black")) +
-  scale_alpha_continuous(range = c(0.1, 1)) +
+  scale_alpha_continuous(range = c(0.1, 3)) +
   geom_hline(yintercept =  0) +
   theme_bw() +
   coord_flip() +
