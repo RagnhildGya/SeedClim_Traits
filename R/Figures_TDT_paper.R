@@ -365,7 +365,19 @@ time_mixed_LES <- model_output_time_mixed %>%
   mutate(moments = "time") %>% 
   filter(Trait_trans %in% c("SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))
 
+time_mixed_LES_notax <- model_output_time_mixed_notax %>% 
+  filter(moments == "mean") %>% 
+  select(Trait_trans, moments, term, effect, std.error, p.value) %>% 
+  mutate(moments = "time") %>% 
+  filter(Trait_trans %in% c("SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))
+
 time_mixed_size <- model_output_time_mixed %>% 
+  filter(moments == "mean") %>% 
+  select(Trait_trans, moments, term, effect, std.error, p.value) %>% 
+  mutate(moments = "time") %>% 
+  filter(Trait_trans %in% c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent"))
+
+time_mixed_size_notax <- model_output_time_mixed_notax %>% 
   filter(moments == "mean") %>% 
   select(Trait_trans, moments, term, effect, std.error, p.value) %>% 
   mutate(moments = "time") %>% 
@@ -475,6 +487,68 @@ model_output_space_mixed %>%
   theme(axis.title.y=element_blank()) +
   guides(color = FALSE, alpha = FALSE, fill = FALSE)
 
+model_output_space_mixed_notax %>% 
+  ungroup() %>% 
+  filter(Trait_trans %in% c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent")) %>% 
+  bind_rows(time_mixed_size_notax) %>%
+  #bind_rows(without_intra) %>% 
+  mutate(Trait_moment = paste0(moments, "_", Trait_trans)) %>% 
+  filter(moments %in% c("mean", "time")) %>% 
+  mutate(moments = factor(moments, levels = c("time", "mean"))) %>% 
+  mutate(term = as.factor(recode(term, "scale(Precip_yearly)" = "Precipitation", "Temp_yearly_spring" = "SummerTemp", "Temp_yearly_spring:scale(Precip_yearly)" = "SummerTemp:Precipitation"))) %>% 
+  mutate(Trait_trans = factor(Trait_trans, levels = c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent"))) %>%
+  ggplot(aes(x = fct_rev(Trait_trans), y = effect, fill = term, color = moments)) +
+  geom_bar(aes(alpha = rev(p.value)), stat = "identity", position = position_dodge(width=0.7), width = 0.7) +
+  #geom_point(aes(size = if_else(p.value <0.05, 0.3, NA_real_)), position = position_dodge(width=0.6), show.legend = FALSE) +
+  #geom_bar_pattern(aes(pattern = 'stripe'), stat = "identity", position = "dodge") +
+  geom_errorbar(aes(ymin = effect-std.error, ymax = effect+std.error), position = position_dodge(width=0.7), width = 0.2) +
+  facet_grid(~term, scales = "free") +
+  scale_fill_manual(values = c("#2E75B6", "#bb3b0e", "#9A86A9")) +
+  # scale_fill_gradient(low = "#213964", ##2E75B6
+  #                     high = "#BAD8F7",
+  #                     guide = "colourbar") +
+  scale_color_manual(values = c("black", "black")) +
+  scale_alpha_continuous(range = c(0.1, 3)) +
+  geom_hline(yintercept =  0) +
+  theme_bw() +
+  coord_flip() +
+  #guides(fill = "none", color = "none", size = "none") +
+  theme(axis.title.y=element_blank()) +
+  guides(color = FALSE, alpha = FALSE, fill = FALSE)
+
+
+
+
+model_output_space_mixed_notax %>% 
+  filter(Trait_trans %in% c("SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm")) %>% 
+  bind_rows(time_mixed_LES_notax) %>%
+  #bind_rows(without_intra) %>% 
+  mutate(Trait_moment = paste0(moments, "_", Trait_trans)) %>% 
+  filter(moments %in% c("mean", "time")) %>% 
+  mutate(moments = factor(moments, levels = c("time", "mean"))) %>% 
+  mutate(term = as.factor(recode(term, "scale(Precip_yearly)" = "Precipitation", "Temp_yearly_spring" = "SummerTemp", "Temp_yearly_spring:scale(Precip_yearly)" = "SummerTemp:Precipitation"))) %>% 
+  mutate(Trait_trans = factor(Trait_trans, levels = c("SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))) %>%
+  ggplot(aes(x = fct_rev(Trait_trans), y = effect, fill = term, color = moments)) +
+  geom_bar(aes(alpha = rev(p.value)), stat = "identity", position = position_dodge(width=0.7), width = 0.7) +
+  #geom_point(aes(size = if_else(p.value <0.05, 0.3, NA_real_)), position = position_dodge(width=0.6), show.legend = FALSE) +
+  #geom_bar_pattern(aes(pattern = 'stripe'), stat = "identity", position = "dodge") +
+  geom_errorbar(aes(ymin = effect-std.error, ymax = effect+std.error), position = position_dodge(width=0.7), width = 0.2) +
+  facet_grid(~term, scales = "free") +
+  scale_fill_manual(values = c("#2E75B6", "#bb3b0e", "#9A86A9")) +
+  # scale_fill_gradient(low = "#213964", ##2E75B6
+  #                     high = "#BAD8F7",
+  #                     guide = "colourbar") +
+  scale_color_manual(values = c("black", "black")) +
+  scale_alpha_continuous(range = c(0.1, 3)) +
+  geom_hline(yintercept =  0) +
+  theme_bw() +
+  coord_flip() +
+  #guides(fill = "none", color = "none", size = "none") +
+  theme(axis.title.y=element_blank()) +
+  guides(color = FALSE, alpha = FALSE, fill = FALSE)
+
+
+
 ## Community model output figure ##
 
 time_com_mixed <- model_output_com_time_mixed %>% 
@@ -539,13 +613,16 @@ model_output_com_space_mixed %>%
 
 ### Mean compared to skewness figures ###
 
-mean_direction_shift <- model_output_space %>% 
+
+
+
+mean_direction_shift <- model_output_space_mixed %>% 
   filter(moments == "mean") %>% 
   mutate(mean_direction_shift = ifelse(effect > 0, "positive", "negative")) %>%
   ungroup() %>% 
   select(Trait_trans, term, mean_direction_shift) 
 
-skewness_direction_shift_time <- model_output_time %>% 
+skewness_direction_shift_time <- model_output_time_mixed %>% 
   filter(moments == "skewness") %>% 
   mutate(skewness_direction_shift_time = ifelse(effect > 0, "positive", "negative")) %>%
   ungroup() %>% 
@@ -553,7 +630,7 @@ skewness_direction_shift_time <- model_output_time %>%
 
 ### Directional change in skewness compared to the mean, and timely changes with skewness ###
 
-model_output_space %>% 
+model_output_space_mixed %>% 
   filter(moments == "skewness") %>% 
   left_join(mean_direction_shift, by = c("Trait_trans" = "Trait_trans", "term" = "term")) %>% 
   left_join(skewness_direction_shift_time, by = c("Trait_trans" = "Trait_trans", "term" = "term")) %>% 
