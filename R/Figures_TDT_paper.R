@@ -11,6 +11,7 @@ library(gridExtra)
 library(maps)
 library(mapdata)
 library(grid)
+library(ggvegan)
 
 ## Color palettes ##
 Temp_palette <- c("#d8c593", "#dd7631", "#bb3b0e")
@@ -59,7 +60,7 @@ ggplot(aes(x = Precip_decade, y = Temp_decade,
   geom_segment(aes(x = Precip_decade, y = Temp_decade, yend = Temp_century, xend = Precip_century)) +
   geom_pointrange(aes(ymin = Temp_decade-Temp_se, ymax = Temp_decade+Temp_se)) +
   geom_errorbarh(aes(xmin = Precip_decade-Precip_se, xmax = Precip_decade+Precip_se)) +
-  labs(x = "Annual precipitation in mm", y = "Summer temperature in °C") +
+  labs(x = "Annual precipitation in m", y = "Summer temperature in °C") +
   scale_color_manual(name = "Precipitation", values = c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")) +
   scale_fill_manual(name = "Precipitation", values = c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")) +
   scale_shape_manual(name = "Temperature", values = c(2, 24, 6, 25, 1, 21)) + 
@@ -242,6 +243,15 @@ fviz_eig(pca_trait, addlabels = TRUE) #Visualize eigenvalues/scree plot
 #              repel = TRUE     # Avoid text overlapping
 # )
 
+### Test environmental data from ordination ###
+
+envfit_data <- env %>% 
+  mutate(year = Year) %>% 
+  select(Site, year, Temp_yearly_spring, Precip_yearly) %>% 
+  bind_rows(Ord_boot_traits, by = c("Site" = "Site", "year" = "year"))
+
+envfit(pca_trait, envfit_data)
+
 #### Ordination with traits ####
 
 Ord_plot_traits <- fviz_pca_biplot(pca_trait, repel = TRUE,
@@ -253,7 +263,9 @@ Ord_plot_traits <- fviz_pca_biplot(pca_trait, repel = TRUE,
   guides(shape = FALSE) +
   #scale_color_manual(name = "Summer temperature", values = c("#8DD5E1", "#FCB971", "#B93B3B")) +
   coord_fixed() +
-  labs(title = "a) Trait spectrum") +
+  labs(title = "a") +
+  xlab("PCA1 (44.8%)") +
+  ylab("PCA2 (21.3%)") +
   theme(plot.title = element_text(hjust = 0.1))
 
 #ggsave("Ordination_LES_Size.svg", width = 22 , height = 16, units = "cm", dpi = 600)
@@ -274,7 +286,7 @@ Ord_plot_temp <- fviz_pca_ind(pca_trait, repel = TRUE,
   theme(legend.text=element_text(size=14), legend.title = element_text(size = 14), plot.title = element_blank(), axis.title = element_blank()) +
   labs(fill = "Summer temperature", color = "Summer temperature", shape = "Summer temperature") +
   coord_fixed() +
-  labs(title = "d) Temperature") +
+  labs(title = "d)") +
   theme(plot.title = element_text(hjust = 0.1))
 
 #ggsave("Ordination_Temp.svg", width = 18 , height = 11, units = "cm", dpi = 600)
@@ -295,7 +307,7 @@ Ord_plot_precip <- fviz_pca_ind(pca_trait, repel = TRUE,
   theme(legend.text=element_text(size=14), legend.title = element_text(size = 14), plot.title = element_blank(), axis.title = element_blank()) +
   labs(fill = "Yearly precipitation", color = "Yearly precipitation", shape = "Yearly precipitation") +
   coord_fixed() +
-  labs(title = "c) Precipitation") +
+  labs(title = "c)") +
   theme(plot.title = element_text(hjust = 0.1))
 
 #ggsave("Ordination_Precip.svg", width = 18 , height = 11, units = "cm", dpi = 600)
@@ -305,15 +317,11 @@ Ord_plot_precip <- fviz_pca_ind(pca_trait, repel = TRUE,
   
 pca_fort <- fortify(pca_trait, display = "Sites") %>% 
   bind_cols(Ord_boot_traits[1:6]) %>% 
-  group_by(Site, year) %>% 
-  summarise(PC1, PC2, Temp_level) %>% 
-  mutate(PC1 = mean(PC1),
-         PC2 = mean(PC2)) %>% 
-  unique()
+  filter(year %in% c(2009, 2019)) 
   
 
 Ord_plot_time <- pca_fort %>% 
-ggplot(aes(x = PC1, y = PC2, colour = Temp_level, group = Site)) +
+ggplot(aes(x = PC1, y = PC2, colour = Temp_level, group = turfID)) +
   geom_path() + #use geom_path not geom_line
   geom_point(aes(size = if_else(year == 2009, 1, NA_real_)), show.legend = FALSE) +
   #scale_color_viridis_d() +
