@@ -492,25 +492,43 @@ models_trait_predictions <-function(model) {
   return(newdata)
 }
 
+
+models_trait_predictions_for_heatmap <-function(model) {
+  
+  newdata <- expand.grid(Precip_yearly=c(600, 1500, 2300, 3500), Temp_yearly_spring=c(5.5, 7.5, 10.5), year = c(2009, 2011, 2012, 2013, 2015, 2016, 2017, 2019))
+  
+  newdata$predicted <- predict(object = model, newdata = newdata, re.form = NA, allow.new.levels=TRUE)
+  
+  return(newdata)
+}
+
 SLA_mean_sum <- model_trait_summary(memodel_data_fullcommunity, "SLA_cm2_g_log", "mean")
 SLA_mean_pred <- models_trait_predictions(SLA_mean_sum)
+SLA_mean_pred_heatmap <- models_trait_predictions_for_heatmap(SLA_mean_sum)
 SLA_skew_sum <- model_trait_summary(memodel_data_fullcommunity, "SLA_cm2_g_log", "skewness")
 SLA_skew_pred <- models_trait_predictions(SLA_skew_sum)
+SLA_skew_pred_heatmap <- models_trait_predictions_for_heatmap(SLA_skew_sum)
 
 CN_ratio_mean_sum <- model_trait_summary(memodel_data_fullcommunity, "CN_ratio_log", "mean")
 CN_ratio_mean_pred <- models_trait_predictions(CN_ratio_mean_sum)
+CN_ratio_mean_pred_heatmap <- models_trait_predictions_for_heatmap(CN_ratio_mean_sum)
 CN_ratio_skew_sum <- model_trait_summary(memodel_data_fullcommunity, "CN_ratio_log", "skewness")
 CN_ratio_skew_pred <- models_trait_predictions(CN_ratio_skew_sum)
+CN_ratio_skew_pred_heatmap <- models_trait_predictions_for_heatmap(CN_ratio_skew_sum)
 
 LA_mean_sum <- model_trait_summary(memodel_data_fullcommunity, "Leaf_Area_cm2_log", "mean")
 LA_mean_pred <- models_trait_predictions(LA_mean_sum)
+LA_mean_pred_heatmap <- models_trait_predictions_for_heatmap(LA_mean_sum)
 LA_skew_sum <- model_trait_summary(memodel_data_fullcommunity, "Leaf_Area_cm2_log", "skewness")
 LA_skew_pred <- models_trait_predictions(LA_skew_sum)
+LA_skew_pred_heatmap <- models_trait_predictions_for_heatmap(LA_skew_sum)
 
 C_mean_sum <- model_trait_summary(memodel_data_fullcommunity, "C_percent", "mean")
 C_mean_pred <- models_trait_predictions(C_mean_sum)
+C_mean_pred_heatmap <- models_trait_predictions_for_heatmap(C_mean_sum)
 C_skew_sum <- model_trait_summary(memodel_data_fullcommunity, "C_percent", "skewness")
 C_skew_pred <- models_trait_predictions(C_skew_sum)
+C_skew_pred_heatmap <- models_trait_predictions_for_heatmap(C_skew_sum)
 
 
 
