@@ -359,29 +359,29 @@ ggsave(plot = d, "Ord_timemean_temp_prec.jpg", width = 28 , height = 20, units =
 #                       df = round(df, digits = 3)),
 #   file = "model_output_space.csv")
 
-time_mixed_LES <- model_output_time_mixed %>% 
+time_mixed <- model_output_time_mixed %>% 
   filter(moments == "mean") %>% 
   select(Trait_trans, moments, term, effect, std.error, p.value) %>% 
-  mutate(moments = "time") %>% 
-  filter(Trait_trans %in% c("SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))
-
-time_mixed_LES_notax <- model_output_time_mixed_notax %>% 
-  filter(moments == "mean") %>% 
-  select(Trait_trans, moments, term, effect, std.error, p.value) %>% 
-  mutate(moments = "time") %>% 
-  filter(Trait_trans %in% c("SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))
+  mutate(moments = "time")
+  #filter(Trait_trans %in% c("SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))
+# 
+# time_mixed_LES_notax <- model_output_time_mixed_notax %>% 
+#   filter(moments == "mean") %>% 
+#   select(Trait_trans, moments, term, effect, std.error, p.value) %>% 
+#   mutate(moments = "time") %>% 
+#   filter(Trait_trans %in% c("SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))
 
 time_mixed_size <- model_output_time_mixed %>% 
   filter(moments == "mean") %>% 
   select(Trait_trans, moments, term, effect, std.error, p.value) %>% 
   mutate(moments = "time") %>% 
   filter(Trait_trans %in% c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent"))
-
-time_mixed_size_notax <- model_output_time_mixed_notax %>% 
-  filter(moments == "mean") %>% 
-  select(Trait_trans, moments, term, effect, std.error, p.value) %>% 
-  mutate(moments = "time") %>% 
-  filter(Trait_trans %in% c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent"))
+# 
+# time_mixed_size_notax <- model_output_time_mixed_notax %>% 
+#   filter(moments == "mean") %>% 
+#   select(Trait_trans, moments, term, effect, std.error, p.value) %>% 
+#   mutate(moments = "time") %>% 
+#   filter(Trait_trans %in% c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent"))
 
 # time_skewness <- model_output_time_mixed %>% 
 #   filter(moments == "skewness") %>% 
@@ -398,14 +398,14 @@ time_mixed_size_notax <- model_output_time_mixed_notax %>%
 
 model_output_space_mixed %>% 
   ungroup() %>% 
-  filter(Trait_trans %in% c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent")) %>% 
-  bind_rows(time_mixed_size) %>%
+  #filter(Trait_trans %in% c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent")) %>% 
+  bind_rows(time_mixed) %>%
   #bind_rows(without_intra) %>% 
   mutate(Trait_moment = paste0(moments, "_", Trait_trans)) %>% 
   filter(moments %in% c("mean", "time")) %>% 
   mutate(moments = factor(moments, levels = c("time", "mean"))) %>% 
   mutate(term = as.factor(recode(term, "scale(Precip_yearly)" = "Precipitation", "Temp_yearly_spring" = "SummerTemp", "Temp_yearly_spring:scale(Precip_yearly)" = "SummerTemp:Precipitation"))) %>% 
-  mutate(Trait_trans = factor(Trait_trans, levels = c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent"))) %>%
+  mutate(Trait_trans = factor(Trait_trans, levels = c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent", "SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))) %>%
   ggplot(aes(x = fct_rev(Trait_trans), y = effect, fill = term, color = moments)) +
   geom_bar(aes(alpha = rev(p.value)), stat = "identity", position = position_dodge(width=0.7), width = 0.7) +
   #geom_point(aes(size = if_else(p.value <0.05, 0.3, NA_real_)), position = position_dodge(width=0.6), show.legend = FALSE) +
