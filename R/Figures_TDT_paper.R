@@ -624,27 +624,27 @@ plot_predictions <-function(dat, trait, moment, newdata) {
   return(plot)
 }
 
-SLA_mean_plot <- plot_predictions(memodel_data_fullcommunity, "SLA_cm2_g_log", "mean", SLA_mean_pred) +
+SLA_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", SLA_mean_pred) +
   labs(y = "SLA (cm2/g log)", x = "", title = "Mean") +
   theme(plot.title = element_text(hjust = 0.5))
-SLA_skew_plot <- plot_predictions(memodel_data_fullcommunity, "SLA_cm2_g_log", "skewness", SLA_skew_pred) + 
+SLA_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "skewness", SLA_skew_pred) + 
   geom_hline(yintercept = 0, color = "black", linetype = 2) +
   labs(y = "", x = "", title = "Skewness") +
   theme(plot.title = element_text(hjust = 0.5))
 
-CN_ratio_mean_plot <- plot_predictions(memodel_data_fullcommunity, "CN_ratio_log", "mean", CN_ratio_mean_pred) +
+CN_ratio_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "CN_ratio_log", "mean", CN_ratio_mean_pred) +
   labs(y = "C/N ratio (log))", x = "") 
-CN_ratio_skew_plot <- plot_predictions(memodel_data_fullcommunity, "CN_ratio_log", "skewness", CN_ratio_skew_pred) + geom_hline(yintercept = 0, color = "black", linetype = 2) +
+CN_ratio_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "CN_ratio_log", "skewness", CN_ratio_skew_pred) + geom_hline(yintercept = 0, color = "black", linetype = 2) +
   labs(y = "", x = "") 
 
-LA_mean_plot <- plot_predictions(memodel_data_fullcommunity, "Leaf_Area_cm2_log", "mean", LA_mean_pred) +
+LA_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "Leaf_Area_cm2_log", "mean", LA_mean_pred) +
   labs(y = "Leaf area (cm2 log)", x = "") 
-LA_skew_plot <- plot_predictions(memodel_data_fullcommunity, "Leaf_Area_cm2_log", "skewness", LA_skew_pred)+ geom_hline(yintercept = 0, color = "black", linetype = 2) +
+LA_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "Leaf_Area_cm2_log", "skewness", LA_skew_pred)+ geom_hline(yintercept = 0, color = "black", linetype = 2) +
   labs(y = "", x = "") 
 
-C_mean_plot <- plot_predictions(memodel_data_fullcommunity, "C_percent", "mean", C_mean_pred) +
+C_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "C_percent", "mean", C_mean_pred) +
   labs(y = "Carbon %", x = "") 
-C_skew_plot <- plot_predictions(memodel_data_fullcommunity, "C_percent", "skewness", C_skew_pred) + geom_hline(yintercept = 0, color = "black", linetype = 2) +
+C_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "C_percent", "skewness", C_skew_pred) + geom_hline(yintercept = 0, color = "black", linetype = 2) +
   labs(y = "", x = "") 
 
 figure <- ggarrange(SLA_mean_plot, SLA_skew_plot, CN_ratio_mean_plot, CN_ratio_skew_plot, LA_mean_plot, LA_skew_plot, C_mean_plot, C_skew_plot, nrow = 4, ncol = 2, labels = c("a)", "b)", "c)", "d)", "e)", "f)", "g)", "h)"), common.legend = TRUE, legend = "bottom")
