@@ -249,6 +249,15 @@ tidy_space_model_predicted_mixed <- mem_results_space %>%
   mutate(R_squared = purrr::map(model, rsquared))
 
 ## Space mixed ##
+mem_results_space <- memodel_data_fullcommunity %>%
+  filter(moments %in% c("mean", "skewness")) %>% 
+  mutate(model = purrr::map(data, model_space))
+
+tidy_space_model_predicted_mixed <- mem_results_space %>%
+  mutate(model_output = purrr::map(model, tidy)) %>%
+  mutate(R_squared = purrr::map(model, rsquared))
+
+## Space mixed ##
 # mem_results_space_notax <- memodel_data_fullcommunity_notax %>%
 #   filter(moments %in% c("mean", "skewness")) %>% 
 #   mutate(model = purrr::map(data, model_space))
