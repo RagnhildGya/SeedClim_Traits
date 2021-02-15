@@ -72,7 +72,8 @@ ggplot(aes(x = Precip_decade, y = Temp_decade,
 
 env %>% 
   mutate(Year = as.factor(Year)) %>% 
-  #filter(Year %in% c("2009", "2011", "2012", "2013", "2015", "2017")) %>% 
+  filter(Year %in% c("2009", "2011", "2012", "2013", "2015", "2016", "2017", "2019")) %>% 
+  filter(Year %in% c("2015", "2013")) %>% 
 ggplot(aes(x = Precip_deviation_decade, y = Temp_deviation_decade, color = as.factor(Year))) +
   geom_point() +
   geom_vline(xintercept =  0) +
@@ -82,7 +83,7 @@ ggplot(aes(x = Precip_deviation_decade, y = Temp_deviation_decade, color = as.fa
 
 env %>% 
   mutate(Year = as.factor(Year)) %>% 
-  #filter(Year %in% c("2009", "2011", "2012", "2013", "2015", "2017")) %>% 
+  filter(Year %in% c("2009", "2011", "2012", "2013", "2015", "2016", "2017", "2019")) %>% 
 ggplot(aes(x = Year, y = Temp_yearly_prev)) +
   geom_point() +
   facet_wrap(~Temp_level)
@@ -263,7 +264,7 @@ Ord_plot_traits <- fviz_pca_biplot(pca_trait, repel = TRUE,
   guides(shape = FALSE) +
   #scale_color_manual(name = "Summer temperature", values = c("#8DD5E1", "#FCB971", "#B93B3B")) +
   coord_fixed() +
-  labs(title = "a") +
+  labs(title = "") +
   xlab("PCA1 (44.8%)") +
   ylab("PCA2 (21.3%)") +
   theme(plot.title = element_text(hjust = 0.1))
@@ -284,9 +285,8 @@ Ord_plot_temp <- fviz_pca_ind(pca_trait, repel = TRUE,
   theme_minimal(base_size = 14) +
   #scale_color_manual(name = "Summer temperature", values = c("#8DD5E1", "#FCB971", "#B93B3B")) +
   theme(legend.text=element_text(size=14), legend.title = element_text(size = 14), plot.title = element_blank(), axis.title = element_blank()) +
-  labs(fill = "Summer temperature", color = "Summer temperature", shape = "Summer temperature") +
+  labs(title = "", fill = "Summer temperature", color = "Summer temperature", shape = "Summer temperature") +
   coord_fixed() +
-  labs(title = "d)") +
   theme(plot.title = element_text(hjust = 0.1))
 
 #ggsave("Ordination_Temp.svg", width = 18 , height = 11, units = "cm", dpi = 600)
@@ -305,9 +305,8 @@ Ord_plot_precip <- fviz_pca_ind(pca_trait, repel = TRUE,
   theme_minimal(base_size = 15) +
     #scale_color_manual(name = "Summer temperature", values = c("#8DD5E1", "#FCB971", "#B93B3B")) +
   theme(legend.text=element_text(size=14), legend.title = element_text(size = 14), plot.title = element_blank(), axis.title = element_blank()) +
-  labs(fill = "Yearly precipitation", color = "Yearly precipitation", shape = "Yearly precipitation") +
+  labs(title = "", fill = "Yearly precipitation", color = "Yearly precipitation", shape = "Yearly precipitation") +
   coord_fixed() +
-  labs(title = "c)") +
   theme(plot.title = element_text(hjust = 0.1))
 
 #ggsave("Ordination_Precip.svg", width = 18 , height = 11, units = "cm", dpi = 600)
@@ -330,14 +329,21 @@ ggplot(aes(x = PC1, y = PC2, colour = Temp_level, group = turfID)) +
   coord_equal() +
   theme_minimal(base_size = 14) +
   theme(legend.text=element_text(size=14), legend.title = element_text(size = 14), plot.title = element_text(hjust = 0.1), axis.title = element_blank()) +
-  labs(title = "b) Change over time", fill = "Yearly precipitation", color = "Yearly precipitation", shape = "Yearly precipitation") +
+  labs(fill = "Yearly precipitation", color = "Yearly precipitation", shape = "Yearly precipitation") +
   guides(color = FALSE) 
 
 
 d <- ggarrange(Ord_plot_traits, 
-               ggarrange(Ord_plot_precip, Ord_plot_temp,  Ord_plot_time, ncol = 3, nrow = 1, labels = c("B", "C", "D"), legend = "bottom"), 
+               ggarrange(Ord_plot_precip, Ord_plot_temp,  Ord_plot_time, ncol = 3, nrow = 1, labels = c("B", "C", "D"),legend = "bottom"), 
                nrow = 2, ncol = 1,
-               labels = "A")
+               labels = "A",
+               widths = c(3,2), 
+               heights = c(2, 1))
+
+grid.arrange(Ord_plot_traits,
+             ggarrange(Ord_plot_precip, Ord_plot_temp,  Ord_plot_time, ncol = 3, nrow = 1, labels = c("B", "C", "D"), legend = "bottom"),
+             ncol = 3, nrow = 3, 
+             layout_matrix = rbind(c(1:2,1:2), c(2,3)))
 
 ggsave(plot = d, "Ord_timemean_temp_prec.jpg", width = 28 , height = 20, units = "cm")
 
@@ -410,7 +416,7 @@ model_output_space_mixed %>%
   geom_bar(aes(alpha = rev(p.value)), stat = "identity", position = position_dodge(width=0.7), width = 0.7) +
   #geom_point(aes(size = if_else(p.value <0.05, 0.3, NA_real_)), position = position_dodge(width=0.6), show.legend = FALSE) +
   #geom_bar_pattern(aes(pattern = 'stripe'), stat = "identity", position = "dodge") +
-  geom_errorbar(aes(ymin = effect-std.error, ymax = effect+std.error), position = position_dodge(width=0.7), width = 0.2) +
+  geom_errorbar(aes(ymin = effect-std.error, ymax = effect+std.error), position = position_dodge(width=0.7), width = 0.3) +
   facet_grid(~term, scales = "free") +
   scale_fill_manual(values = c("#2E75B6", "#bb3b0e", "#9A86A9")) +
   # scale_fill_gradient(low = "#213964", ##2E75B6
@@ -419,14 +425,13 @@ model_output_space_mixed %>%
   scale_color_manual(values = c("black", "black")) +
   scale_alpha_continuous(range = c(0.1, 3)) +
   geom_hline(yintercept =  0) +
-  theme_bw() +
+  theme_bw(base_size = 18) +
   coord_flip() +
   #guides(fill = "none", color = "none", size = "none") +
   theme(axis.title.y=element_blank()) +
   guides(color = FALSE, alpha = FALSE, fill = FALSE)
 
-
-
+ggsave(filename = "trends_over_time.pdf",  width = 34, height = 23, units = "cm")
 
 model_output_space_mixed %>% 
   filter(Trait_trans %in% c("SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm")) %>% 
