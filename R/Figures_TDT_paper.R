@@ -334,18 +334,13 @@ ggplot(aes(x = PC1, y = PC2, colour = Temp_level, group = turfID)) +
 
 
 d <- ggarrange(Ord_plot_traits, 
-               ggarrange(Ord_plot_precip, Ord_plot_temp,  Ord_plot_time, ncol = 3, nrow = 1, labels = c("B", "C", "D"),legend = "bottom"), 
+               ggarrange(Ord_plot_precip, Ord_plot_temp,  Ord_plot_time, ncol = 3, nrow = 1, labels = c("B", "C", "D"),legend = "none"), 
                nrow = 2, ncol = 1,
                labels = "A",
-               widths = c(3,2), 
+               widths = c(6, 2), 
                heights = c(2, 1))
 
-grid.arrange(Ord_plot_traits,
-             ggarrange(Ord_plot_precip, Ord_plot_temp,  Ord_plot_time, ncol = 3, nrow = 1, labels = c("B", "C", "D"), legend = "bottom"),
-             ncol = 3, nrow = 3, 
-             layout_matrix = rbind(c(1:2,1:2), c(2,3)))
-
-ggsave(plot = d, "Ord_timemean_temp_prec.jpg", width = 28 , height = 20, units = "cm")
+ggsave(plot = d, "Ord_timemean_temp_prec_new.jpg", width = 28 , height = 20, units = "cm")
 
 #ggsave("PCA_all_years_with_temp.jpg", width = 22 , height = 16, units = "cm")
 
@@ -587,7 +582,28 @@ model_output_com_space_mixed %>%
 
 ### Mean compared to skewness figures ###
 
-heatplot <-function(dat, trait, moment) {
+heatmap_data <- SLA_mean_pred_heatmap %>% 
+  bind_rows(SLA_skew_pred_heatmap) %>% 
+  bind_rows(CN_ratio_mean_pred_heatmap) %>% 
+  bind_rows(CN_ratio_skew_pred_heatmap) %>% 
+  bind_rows(LA_mean_pred_heatmap) %>% 
+  bind_rows(LA_skew_pred_heatmap) %>% 
+  bind_rows(C_mean_pred_heatmap) %>% 
+  bind_rows(C_skew_pred_heatmap)
+
+limits <- range(heatmap_data$predicted)
+
+heatmap_data %>% 
+  group_by(trait, moment, Precip_yearly, Temp_yearly_spring) %>% 
+  mutate(predicted = mean(predicted)) %>% 
+  select(-year) %>% 
+  unique() %>% 
+  ggplot(aes(as.factor(Precip_yearly), as.factor(Temp_yearly_spring), fill = predicted)) +
+  geom_tile() +
+  scale_fill_gradient(low = "#DFD3EA", high = "#9B87AA") +
+  facet_grid(trait ~ moment, scales = "free")
+
+heatplot <-function(dat) {
   
   plot <- dat %>%
     group_by(Precip_yearly, Temp_yearly_spring) %>% 
@@ -596,18 +612,46 @@ heatplot <-function(dat, trait, moment) {
     unique() %>% 
     ggplot(aes(as.factor(Precip_yearly), as.factor(Temp_yearly_spring), fill = predicted)) +
     geom_tile() +
-    scale_fill_gradient(low = "#2E75B6", high = "#bb3b0e") +
-    ggtitle(paste0(trait, " ", moment))
+    scale_fill_gradient(low = "#DFD3EA", high = "#9B87AA") +
+    xlab(label = "") +
+    ylab(label = "") +
+    theme_minimal()
   
   return(plot)
 }
 
+heatplot_skewness <-function(dat) {
+  
+  plot <- dat %>%
+    group_by(Precip_yearly, Temp_yearly_spring) %>% 
+    mutate(predicted = mean(predicted)) %>% 
+    select(-year) %>% 
+    unique() %>% 
+    ggplot(aes(as.factor(Precip_yearly), as.factor(Temp_yearly_spring), fill = predicted)) +
+    geom_tile() +
+    scale_fill_gradientn(colours = c("#8C8C8C", "#D3D3D3", "#FFFFFF", "#DFD3EA", "#9B87AA"), values = c(-0.5, -0.00001, 0, 0.0001, 1)) +
+    xlab(label = "") +
+    ylab(label = "") +
+    theme_minimal()
+  
+  return(plot)
+}
 
-SLA_mean_heatplot <- heatplot(SLA_mean_pred_heatmap, "SLA", "mean")
-SLA_skew_heatplot <- heatplot(SLA_skew_pred_heatmap, "SLA", "skewness")
+SLA_mean_heatplot <- heatplot(SLA_mean_pred_heatmap)
+SLA_skew_heatplot <- heatplot_skewness(SLA_skew_pred_heatmap)
 
-SLA_mean_heatplot <- heatplot(CN_ratio_mean_pred_heatmap, "C/N ratio", "mean")
-SLA_skew_heatplot <- heatplot(CN_ratio_skew_pred_heatmap, "C/N ratio", "skewness")
+CN_mean_heatplot <- heatplot(CN_ratio_mean_pred_heatmap)
+CN_skew_heatplot <- heatplot_skewness(CN_ratio_skew_pred_heatmap)
+
+LA_mean_heatplot <- heatplot(LA_mean_pred_heatmap)
+LA_skew_heatplot <- heatplot_skewness(LA_skew_pred_heatmap)
+
+C_mean_heatplot <- heatplot(C_mean_pred_heatmap)
+C_skew_heatplot <- heatplot_skewness(C_skew_pred_heatmap)
+
+heatplot <- ggarrange(SLA_mean_heatplot, SLA_skew_heatplot, CN_mean_heatplot, CN_skew_heatplot, LA_mean_heatplot, LA_skew_heatplot, C_mean_heatplot, C_skew_heatplot, nrow = 4, ncol = 2, labels = c("a)", "b)", "c)", "d)", "e)", "f)", "g)", "h)"), common.legend = TRUE, legend = "bottom")
+
+ggsave(plot = heatplot, filename = "mean_skewness_heatplot.png",  width = 20, height = 29, units = "cm")
 
 #### Making plots for predicted values and observed values
 
