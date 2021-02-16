@@ -248,6 +248,14 @@ tidy_space_model_predicted_mixed <- mem_results_space %>%
   mutate(model_output = purrr::map(model, tidy)) %>%
   mutate(R_squared = purrr::map(model, rsquared))
 
+mem_results_space_nottrans <- memodel_data_fullcommunity_nottransformed %>%
+  filter(moments %in% c("mean", "skewness")) %>% 
+  mutate(model = purrr::map(data, model_space))
+
+tidy_space_model_predicted_mixed_nottrans <- mem_results_space_nottrans %>%
+  mutate(model_output = purrr::map(model, tidy)) %>%
+  mutate(R_squared = purrr::map(model, rsquared))
+
 ## Space mixed ##
 # mem_results_space_notax <- memodel_data_fullcommunity_notax %>%
 #   filter(moments %in% c("mean", "skewness")) %>% 
@@ -287,6 +295,15 @@ mem_results_time_mixed <- memodel_data_fullcommunity %>%
   mutate(model = purrr::map(data, model_time))
 
 tidy_time_model_predicted_mixed <- mem_results_time_mixed %>%
+  mutate(model_output = purrr::map(model, tidy)) %>%
+  mutate(predicted = purrr::map(model, predict_with_random)) %>% 
+  mutate(R_squared = purrr::map(model, rsquared))
+
+mem_results_time_mixed_nottrans <- memodel_data_fullcommunity_nottransformed %>%
+  filter(moments %in% c("mean", "skewness")) %>% 
+  mutate(model = purrr::map(data, model_time))
+
+tidy_time_model_predicted_mixed_nottrans <- mem_results_time_mixed_nottrans %>%
   mutate(model_output = purrr::map(model, tidy)) %>%
   mutate(predicted = purrr::map(model, predict_with_random)) %>% 
   mutate(R_squared = purrr::map(model, rsquared))
@@ -459,11 +476,13 @@ model_output_linear <-function(dat) {
 
 
 model_output_time_mixed <- model_output_mixed(tidy_time_model_predicted_mixed)
+model_output_time_mixed_nottrans <- model_output_mixed(tidy_time_model_predicted_mixed_nottrans)
 #model_output_time_mixed_notax <- model_output_mixed(tidy_time_model_predicted_mixed_notax)
 #model_output_time_linear <- model_output_linear(tidy_time_model_predicted_linear)
 model_output_com_time_mixed <- model_output_com_mixed(tidy_com_time_model_predicted_mixed)
 
 model_output_space_mixed <- model_output_mixed(tidy_space_model_predicted_mixed)
+model_output_space_mixed_nottrans <- model_output_mixed(tidy_space_model_predicted_mixed_nottrans)
 #model_output_space_mixed_notax <- model_output_mixed(tidy_space_model_predicted_mixed_notax)
 #model_output_space_linear <- model_output_linear(tidy_space_model_predicted_linear)
 model_output_com_space_mixed <- model_output_com_mixed(tidy_com_space_model_predicted_mixed)
