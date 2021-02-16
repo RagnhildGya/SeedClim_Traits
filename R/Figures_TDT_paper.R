@@ -340,7 +340,7 @@ d <- ggarrange(Ord_plot_traits,
                widths = c(6, 2), 
                heights = c(2, 1))
 
-ggsave(plot = d, "Ord_timemean_temp_prec_new.jpg", width = 28 , height = 20, units = "cm")
+#ggsave(plot = d, "Ord_timemean_temp_prec_new.jpg", width = 28 , height = 20, units = "cm")
 
 #ggsave("PCA_all_years_with_temp.jpg", width = 22 , height = 16, units = "cm")
 
@@ -365,7 +365,12 @@ time_mixed <- model_output_time_mixed %>%
   select(Trait_trans, moments, term, effect, std.error, p.value) %>% 
   mutate(moments = "time")
   #filter(Trait_trans %in% c("SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))
-# 
+
+time_mixed_nottrans <- model_output_time_mixed_nottrans %>% 
+  filter(moments == "mean") %>% 
+  select(Trait_trans, moments, term, effect, std.error, p.value) %>% 
+  mutate(moments = "time")
+
 # time_mixed_LES_notax <- model_output_time_mixed_notax %>% 
 #   filter(moments == "mean") %>% 
 #   select(Trait_trans, moments, term, effect, std.error, p.value) %>% 
@@ -401,6 +406,35 @@ model_output_space_mixed %>%
   ungroup() %>% 
   #filter(Trait_trans %in% c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent")) %>% 
   bind_rows(time_mixed) %>%
+  #bind_rows(without_intra) %>% 
+  mutate(Trait_moment = paste0(moments, "_", Trait_trans)) %>% 
+  filter(moments %in% c("mean", "time")) %>% 
+  mutate(moments = factor(moments, levels = c("time", "mean"))) %>% 
+  mutate(term = as.factor(recode(term, "scale(Precip_yearly)" = "Precipitation", "Temp_yearly_spring" = "SummerTemp", "Temp_yearly_spring:scale(Precip_yearly)" = "SummerTemp:Precipitation"))) %>% 
+  mutate(Trait_trans = factor(Trait_trans, levels = c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent", "SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))) %>%
+  ggplot(aes(x = fct_rev(Trait_trans), y = effect, fill = term, color = moments)) +
+  geom_bar(aes(alpha = rev(p.value)), stat = "identity", position = position_dodge(width=0.7), width = 0.7) +
+  #geom_point(aes(size = if_else(p.value <0.05, 0.3, NA_real_)), position = position_dodge(width=0.6), show.legend = FALSE) +
+  #geom_bar_pattern(aes(pattern = 'stripe'), stat = "identity", position = "dodge") +
+  geom_errorbar(aes(ymin = effect-std.error, ymax = effect+std.error), position = position_dodge(width=0.7), width = 0.3) +
+  facet_grid(~term, scales = "free") +
+  scale_fill_manual(values = c("#2E75B6", "#bb3b0e", "#9A86A9")) +
+  # scale_fill_gradient(low = "#213964", ##2E75B6
+  #                     high = "#BAD8F7",
+  #                     guide = "colourbar") +
+  scale_color_manual(values = c("black", "black")) +
+  scale_alpha_continuous(range = c(0.1, 3)) +
+  geom_hline(yintercept =  0) +
+  theme_bw(base_size = 18) +
+  coord_flip() +
+  #guides(fill = "none", color = "none", size = "none") +
+  theme(axis.title.y=element_blank()) +
+  guides(color = FALSE, alpha = FALSE, fill = FALSE)
+
+model_output_space_mixed_nottrans %>% 
+  ungroup() %>% 
+  #filter(Trait_trans %in% c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent")) %>% 
+  bind_rows(time_mixed_nottrans) %>%
   #bind_rows(without_intra) %>% 
   mutate(Trait_moment = paste0(moments, "_", Trait_trans)) %>% 
   filter(moments %in% c("mean", "time")) %>% 
@@ -620,6 +654,10 @@ heatplot <-function(dat) {
   return(plot)
 }
 
+# scale_fill_gradient2(name= "logit(cover %)",low = "purple", mid = "white", high = "forest green", 
+#                      midpoint = mean(bryocov$estimate))+
+  
+
 heatplot_skewness <-function(dat) {
   
   plot <- dat %>%
@@ -629,7 +667,7 @@ heatplot_skewness <-function(dat) {
     unique() %>% 
     ggplot(aes(as.factor(Precip_yearly), as.factor(Temp_yearly_spring), fill = predicted)) +
     geom_tile() +
-    scale_fill_gradientn(colours = c("#8C8C8C", "#D3D3D3", "#FFFFFF", "#DFD3EA", "#9B87AA"), values = c(-0.5, -0.00001, 0, 0.0001, 1)) +
+    scale_fill_gradient2(low ="#8C8C8C", mid = "#FFFFFF", high = "#9B87AA", midpoint = 0) +
     xlab(label = "") +
     ylab(label = "") +
     theme_minimal()
@@ -649,7 +687,7 @@ LA_skew_heatplot <- heatplot_skewness(LA_skew_pred_heatmap)
 C_mean_heatplot <- heatplot(C_mean_pred_heatmap)
 C_skew_heatplot <- heatplot_skewness(C_skew_pred_heatmap)
 
-heatplot <- ggarrange(SLA_mean_heatplot, SLA_skew_heatplot, CN_mean_heatplot, CN_skew_heatplot, LA_mean_heatplot, LA_skew_heatplot, C_mean_heatplot, C_skew_heatplot, nrow = 4, ncol = 2, labels = c("a)", "b)", "c)", "d)", "e)", "f)", "g)", "h)"), common.legend = TRUE, legend = "bottom")
+heatplot <- ggarrange(SLA_mean_heatplot, SLA_skew_heatplot, CN_mean_heatplot, CN_skew_heatplot, LA_mean_heatplot, LA_skew_heatplot, C_mean_heatplot, C_skew_heatplot, nrow = 4, ncol = 2, labels = c("a)", "b)", "c)", "d)", "e)", "f)", "g)", "h)"), legend = "bottom")
 
 ggsave(plot = heatplot, filename = "mean_skewness_heatplot.png",  width = 20, height = 29, units = "cm")
 
