@@ -156,8 +156,8 @@ systematics_species<- read.csv2("Data/systematics_species.csv", sep=";", strings
 species_info<- read.csv2("Data/species_info.csv", sep=";", stringsAsFactors = FALSE)
 
 species_info <- species_info%>%
-  select(species, functionalGroup, lifeSpan, occurrence)%>%
-  mutate(species=gsub("\\.", "_", species))
+  select(species, functionalGroup, lifeSpan, occurrence) %>% 
+  mutate(species = gsub("\\.", "_", species))
 
 
 
@@ -186,7 +186,11 @@ community <- community %>%
          longitude = as.numeric(longitude),
          annualPrecipitation_gridded = as.numeric(annual_precipitation_gridded),
          summerTemperature_gridded = as.numeric(summer_temperature_gridded),
-         cover = as.numeric(cover)) %>% 
+         cover = as.numeric(cover),
+         total_vascular = as.numeric(total_vascular),
+         total_bryophytes = as.numeric(total_bryophytes),
+         vegetation_height = as.numeric(vegetation_height),
+         moss_height = as.numeric(moss_height)) %>% 
   mutate(Site= substr(siteID, 1,3)) %>% 
   select(-X) %>% 
   mutate(Site = as.character(Site, levels = c("Ulv", "Lav", "Gud", "Skj", "Alr", "Hog", "Ram", "Ves", "Fau", "Vik", "Arh", "Ovs"))) %>% 
