@@ -180,7 +180,7 @@ com_data <- community_for_analysis %>%
          forb_cover = sum(forb, na.rm = TRUE),
          other_cover = sum(woody, pteridophyte, `NA`, na.rm = TRUE)) %>% 
   left_join(env, by = c("siteID" = "siteID", "year" = "Year")) %>% 
-  pivot_longer(cols = c("species_richness", "graminoid_cover", "forb_cover", "other_cover"), names_to = "community_properties", values_to = "value") %>% 
+  pivot_longer(cols = c("species_richness", "graminoid_cover", "forb_cover", "other_cover", "total_vascular", "total_bryophytes", "vegetation_height", "moss_height"), names_to = "community_properties", values_to = "value") %>% 
   select(siteID, turfID, Temp_yearly_spring, Precip_yearly, year, value, community_properties) %>% 
   group_by(community_properties) %>% 
   unique() %>% 
