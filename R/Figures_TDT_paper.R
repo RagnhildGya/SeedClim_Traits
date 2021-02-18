@@ -64,35 +64,11 @@ ggplot(aes(x = Precip_decade, y = Temp_decade,
   scale_color_manual(name = "Precipitation", values = c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")) +
   scale_fill_manual(name = "Precipitation", values = c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")) +
   scale_shape_manual(name = "Temperature", values = c(2, 24, 6, 25, 1, 21)) + 
-  guides(fill = "none", size = "none") +
+  guides(fill = "none", size = "none", shape = "none") +
   theme_minimal(base_size = 20)
 
 
 #ggsave("SeedClim_climate_over_time.jpg", width = 22 , height = 14, units = "cm")
-
-env %>% 
-  mutate(Year = as.factor(Year)) %>% 
-  filter(Year %in% c("2009", "2011", "2012", "2013", "2015", "2016", "2017", "2019")) %>% 
-  filter(Year %in% c("2015", "2013")) %>% 
-ggplot(aes(x = Precip_deviation_decade, y = Temp_deviation_decade, color = as.factor(Year))) +
-  geom_point() +
-  geom_vline(xintercept =  0) +
-  geom_hline(yintercept =  0) +
-  labs(x = "Deviation from the decade mean annual precipitation (mm)", y = "Deviation from the devade mean tetraterm temperature (°C)", color = "Year") +
-  theme_minimal(base_size = 15)
-
-env %>% 
-  mutate(Year = as.factor(Year)) %>% 
-  filter(Year %in% c("2009", "2011", "2012", "2013", "2015", "2016", "2017", "2019")) %>% 
-ggplot(aes(x = Year, y = Temp_yearly_prev)) +
-  geom_point() +
-  facet_wrap(~Temp_level)
-
-ggplot(aes(x = Year, y = Precip_yearly), data = env) +
-  geom_point() +
-  facet_wrap(~Precip_level)
-
-#ggsave("SeedClim_climate_deviation.jpg", width = 18 , height = 18, units = "cm")
 
 #### Climate grid on map figure ####
 
