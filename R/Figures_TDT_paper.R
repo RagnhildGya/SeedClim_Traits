@@ -146,13 +146,13 @@ Zoomed_in_map <- ggplot(dat, aes(x = Longitude, y = Latitude, fill = Precipitati
 
 ## Code for saving the figure
 
-  png("SeedClim_climate_grid.png", width = 1285, height = 861)
-  grid.newpage()
-  vp_zoomed_in_map <- viewport(width = 1, height = 1, x = 0.5, y = 0.5)  # the zoomed in map
-  vp_norway_map <- viewport(width = 0.4, height = 0.4, x = 0.685, y = 0.8)  # the inset in upper left of scandinacia
-  print(Zoomed_in_map, vp = vp_zoomed_in_map)
-  print(Norway_map, vp = vp_norway_map)
-  dev.off()
+  # png("SeedClim_climate_grid.png", width = 1285, height = 861)
+  # grid.newpage()
+  # vp_zoomed_in_map <- viewport(width = 1, height = 1, x = 0.5, y = 0.5)  # the zoomed in map
+  # vp_norway_map <- viewport(width = 0.4, height = 0.4, x = 0.685, y = 0.8)  # the inset in upper left of scandinacia
+  # print(Zoomed_in_map, vp = vp_zoomed_in_map)
+  # print(Norway_map, vp = vp_norway_map)
+  # dev.off()
 
 ### Community weighted skewness over time in different temp levels ###
 
@@ -188,6 +188,8 @@ p.mat <- cor_pmat(Corr_traits)
 
 ggcorrplot(corr, hc.order = FALSE,
            type = "lower", lab = TRUE,)
+
+#ggsave("Correlation_plot.jpg", width = 30 , height = 20, units = "cm")
 
 #### Ordination ####
 
@@ -241,8 +243,8 @@ Ord_plot_traits <- fviz_pca_biplot(pca_trait, repel = TRUE,
   #scale_color_manual(name = "Summer temperature", values = c("#8DD5E1", "#FCB971", "#B93B3B")) +
   coord_fixed() +
   labs(title = "") +
-  xlab("PCA1 (44.8%)") +
-  ylab("PCA2 (21.3%)") +
+  xlab("PCA1 (44.1%)") +
+  ylab("PCA2 (19.5%)") +
   theme(plot.title = element_text(hjust = 0.1))
 
 #ggsave("Ordination_LES_Size.svg", width = 22 , height = 16, units = "cm", dpi = 600)
@@ -316,9 +318,15 @@ d <- ggarrange(Ord_plot_traits,
                widths = c(6, 2), 
                heights = c(2, 1))
 
+
+c <- ggarrange(Ord_plot_traits, Ord_plot_time, Ord_plot_precip, Ord_plot_temp,   
+               nrow = 2, ncol = 2,
+               labels = c("A","B", "C", "D"),
+               legend = "none")
+
 #ggsave(plot = d, "Ord_timemean_temp_prec_new.jpg", width = 28 , height = 20, units = "cm")
 
-#ggsave("PCA_all_years_with_temp.jpg", width = 22 , height = 16, units = "cm")
+#ggsave(plot = c, "Ord_timemean_temp_prec_four.jpg", width = 28 , height = 20, units = "cm")
 
 
 ### Figures with model output ###
