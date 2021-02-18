@@ -457,13 +457,13 @@ model_output_linear <-function(dat) {
 
 
 model_output_time_mixed <- model_output_mixed(tidy_time_model_predicted_mixed)
-model_output_time_mixed_nottrans <- model_output_mixed(tidy_time_model_predicted_mixed_nottrans)
+#model_output_time_mixed_nottrans <- model_output_mixed(tidy_time_model_predicted_mixed_nottrans)
 #model_output_time_mixed_notax <- model_output_mixed(tidy_time_model_predicted_mixed_notax)
 #model_output_time_linear <- model_output_linear(tidy_time_model_predicted_linear)
 model_output_com_time_mixed <- model_output_com_mixed(tidy_com_time_model_predicted_mixed)
 
 model_output_space_mixed <- model_output_mixed(tidy_space_model_predicted_mixed)
-model_output_space_mixed_nottrans <- model_output_mixed(tidy_space_model_predicted_mixed_nottrans)
+#model_output_space_mixed_nottrans <- model_output_mixed(tidy_space_model_predicted_mixed_nottrans)
 #model_output_space_mixed_notax <- model_output_mixed(tidy_space_model_predicted_mixed_notax)
 #model_output_space_linear <- model_output_linear(tidy_space_model_predicted_linear)
 model_output_com_space_mixed <- model_output_com_mixed(tidy_com_space_model_predicted_mixed)
