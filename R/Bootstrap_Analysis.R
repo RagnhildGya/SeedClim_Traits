@@ -37,7 +37,7 @@ set.seed(47)
 
 community <- community %>% 
   filter(!year == "2010") %>% 
-  select(siteID, blockID, turfID, year, species, Full_name, Genus, Family, Order, cover, functionalGroup)
+  select(siteID, blockID, turfID, year, species, Full_name, Genus, Family, Order, cover, total_vascular, total_bryophytes,vegetation_height, moss_height, functionalGroup)
 
 
 ## Trait data ##
@@ -63,7 +63,7 @@ env <- env %>%
 
  Trait_impute_per_year <- function(com_dat, trait_dat){
    
-   SeedClim_traits <- trait_np_bootstrap(trait_impute(comm = com_dat,
+   SeedClim_traits <- (trait_impute(comm = com_dat,
                                    traits = trait_dat, 
                                    scale_hierarchy = c("siteID", "blockID", "turfID"),
                                    global = TRUE,
