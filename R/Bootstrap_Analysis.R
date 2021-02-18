@@ -229,13 +229,13 @@ tidy_space_model_predicted_mixed <- mem_results_space %>%
   mutate(model_output = purrr::map(model, tidy)) %>%
   mutate(R_squared = purrr::map(model, rsquared))
 
-mem_results_space_nottrans <- memodel_data_fullcommunity_nottransformed %>%
-  filter(moments %in% c("mean", "skewness")) %>% 
-  mutate(model = purrr::map(data, model_space))
-
-tidy_space_model_predicted_mixed_nottrans <- mem_results_space_nottrans %>%
-  mutate(model_output = purrr::map(model, tidy)) %>%
-  mutate(R_squared = purrr::map(model, rsquared))
+# mem_results_space_nottrans <- memodel_data_fullcommunity_nottransformed %>%
+#   filter(moments %in% c("mean", "skewness")) %>% 
+#   mutate(model = purrr::map(data, model_space))
+# 
+# tidy_space_model_predicted_mixed_nottrans <- mem_results_space_nottrans %>%
+#   mutate(model_output = purrr::map(model, tidy)) %>%
+#   mutate(R_squared = purrr::map(model, rsquared))
 
 ## Space mixed ##
 # mem_results_space_notax <- memodel_data_fullcommunity_notax %>%
@@ -280,14 +280,14 @@ tidy_time_model_predicted_mixed <- mem_results_time_mixed %>%
   mutate(predicted = purrr::map(model, predict_with_random)) %>% 
   mutate(R_squared = purrr::map(model, rsquared))
 
-mem_results_time_mixed_nottrans <- memodel_data_fullcommunity_nottransformed %>%
-  filter(moments %in% c("mean", "skewness")) %>% 
-  mutate(model = purrr::map(data, model_time))
-
-tidy_time_model_predicted_mixed_nottrans <- mem_results_time_mixed_nottrans %>%
-  mutate(model_output = purrr::map(model, tidy)) %>%
-  mutate(predicted = purrr::map(model, predict_with_random)) %>% 
-  mutate(R_squared = purrr::map(model, rsquared))
+# mem_results_time_mixed_nottrans <- memodel_data_fullcommunity_nottransformed %>%
+#   filter(moments %in% c("mean", "skewness")) %>% 
+#   mutate(model = purrr::map(data, model_time))
+# 
+# tidy_time_model_predicted_mixed_nottrans <- mem_results_time_mixed_nottrans %>%
+#   mutate(model_output = purrr::map(model, tidy)) %>%
+#   mutate(predicted = purrr::map(model, predict_with_random)) %>% 
+#   mutate(R_squared = purrr::map(model, rsquared))
 
 # mem_results_time_mixed_notax <- memodel_data_fullcommunity_notax %>%
 #   filter(moments %in% c("mean", "skewness")) %>% 
