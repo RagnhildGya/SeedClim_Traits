@@ -40,7 +40,6 @@ Precip_palette <- c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")
 
 
 ## Climate figure ##
-
 env %>% 
   mutate(Temp_old = recode(Temp_level, "10.5" = "Boreal 1960-90",
                            "8.5" = "Sub-alpine 1960-90",
@@ -56,7 +55,7 @@ env %>%
   mutate(Temp_level = factor(Temp_level, levels = c("Alpine 2009-19", "Boreal 2009-19", "Sub-alpine 2009-19"))) %>%
 ggplot(aes(x = Precip_decade, y = Temp_decade,
            color = Precip_level, fill = Precip_level, shape = Temp_level)) +
-  geom_point(aes(x = Precip_century, y = Temp_century, shape = Temp_old, size = 3)) +
+  geom_point(aes(x = Precip_century, y = Temp_century, shape = Temp_old, size = 6)) +
   geom_segment(aes(x = Precip_decade, y = Temp_decade, yend = Temp_century, xend = Precip_century)) +
   geom_pointrange(aes(ymin = Temp_decade-Temp_se, ymax = Temp_decade+Temp_se)) +
   geom_errorbarh(aes(xmin = Precip_decade-Precip_se, xmax = Precip_decade+Precip_se)) +
@@ -64,8 +63,8 @@ ggplot(aes(x = Precip_decade, y = Temp_decade,
   scale_color_manual(name = "Precipitation", values = c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")) +
   scale_fill_manual(name = "Precipitation", values = c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")) +
   scale_shape_manual(name = "Temperature", values = c(2, 24, 6, 25, 1, 21)) + 
-  guides(fill = "none", size = "none", shape = "none") +
-  theme_minimal(base_size = 20)
+  guides(fill = "none", size = "none", shape = "none", color = "none") +
+  theme_minimal(base_size = 26)
 
 
 #ggsave("SeedClim_climate_over_time.jpg", width = 22 , height = 14, units = "cm")
@@ -147,13 +146,13 @@ Zoomed_in_map <- ggplot(dat, aes(x = Longitude, y = Latitude, fill = Precipitati
 
 ## Code for saving the figure
 
- # png("SeedClim_climate_grid.png", width = 1285, height = 861)
- # grid.newpage()
- # vp_zoomed_in_map <- viewport(width = 1, height = 1, x = 0.5, y = 0.5)  # the zoomed in map
- # vp_norway_map <- viewport(width = 0.4, height = 0.4, x = 0.685, y = 0.8)  # the inset in upper left of scandinacia
- # print(Zoomed_in_map, vp = vp_zoomed_in_map)
- # print(Norway_map, vp = vp_norway_map)
- # dev.off()
+  png("SeedClim_climate_grid.png", width = 1285, height = 861)
+  grid.newpage()
+  vp_zoomed_in_map <- viewport(width = 1, height = 1, x = 0.5, y = 0.5)  # the zoomed in map
+  vp_norway_map <- viewport(width = 0.4, height = 0.4, x = 0.685, y = 0.8)  # the inset in upper left of scandinacia
+  print(Zoomed_in_map, vp = vp_zoomed_in_map)
+  print(Norway_map, vp = vp_norway_map)
+  dev.off()
 
 ### Community weighted skewness over time in different temp levels ###
 
