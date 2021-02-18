@@ -350,34 +350,6 @@ time_mixed <- model_output_time_mixed %>%
   mutate(moments = "time")
   #filter(Trait_trans %in% c("SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))
 
-# time_mixed_nottrans <- model_output_time_mixed_nottrans %>% 
-#   filter(moments == "mean") %>% 
-#   select(Trait_trans, moments, term, effect, std.error, p.value) %>% 
-#   mutate(moments = "time")
-
-# time_mixed_LES_notax <- model_output_time_mixed_notax %>% 
-#   filter(moments == "mean") %>% 
-#   select(Trait_trans, moments, term, effect, std.error, p.value) %>% 
-#   mutate(moments = "time") %>% 
-#   filter(Trait_trans %in% c("SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))
-
-# time_mixed_size <- model_output_time_mixed %>% 
-#   filter(moments == "mean") %>% 
-#   select(Trait_trans, moments, term, effect, std.error, p.value) %>% 
-#   mutate(moments = "time") %>% 
-#   filter(Trait_trans %in% c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent"))
-# 
-# time_mixed_size_notax <- model_output_time_mixed_notax %>% 
-#   filter(moments == "mean") %>% 
-#   select(Trait_trans, moments, term, effect, std.error, p.value) %>% 
-#   mutate(moments = "time") %>% 
-#   filter(Trait_trans %in% c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent"))
-
-# time_skewness <- model_output_time_mixed %>% 
-#   filter(moments == "skewness") %>% 
-#   select(Trait_trans, moments, term, effect, std.error, p.value) %>% 
-#   mutate(moments = "time")
-
 # time_linear <- model_output_time_linear %>% 
 #   filter(moments == "mean") %>% 
 #   select(Trait_trans, moments, term, effect, std.error, p.value) %>% 
