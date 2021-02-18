@@ -184,6 +184,7 @@ com_data <- community_for_analysis %>%
   select(siteID, turfID, Temp_yearly_spring, Precip_yearly, year, value, community_properties) %>% 
   group_by(community_properties) %>% 
   unique() %>% 
+  mutate(value = scale(value)) %>% 
   nest()
 
 ### Funcitons for different models and model predictions later ###
