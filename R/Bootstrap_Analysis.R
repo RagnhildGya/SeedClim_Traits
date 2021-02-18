@@ -35,11 +35,15 @@ set.seed(47)
 
 ## Community ##
 
-community <- community %>% 
+community_for_boostrapping <- community %>% 
+  filter(!year == "2010") %>% 
+  select(siteID, blockID, turfID, year, species, Full_name, Genus, Family, Order, cover)
+
+community_for_analysis <- community %>% 
   filter(!year == "2010") %>% 
   select(siteID, blockID, turfID, year, species, Full_name, Genus, Family, Order, cover, total_vascular, total_bryophytes,vegetation_height, moss_height, functionalGroup)
 
-
+rm(community)
 ## Trait data ##
 
 traitdata_2 <- traitdata_1 %>% 
@@ -63,7 +67,7 @@ env <- env %>%
 
  Trait_impute_per_year <- function(com_dat, trait_dat){
    
-   SeedClim_traits <- (trait_impute(comm = com_dat,
+   SeedClim_traits <- trait_np_bootstrap(trait_impute(comm = com_dat,
                                    traits = trait_dat, 
                                    scale_hierarchy = c("siteID", "blockID", "turfID"),
                                    global = TRUE,
@@ -76,57 +80,34 @@ env <- env %>%
    return(SeedClim_traits)
  }
 
-# Trait_impute_per_year_notax <- function(com_dat, trait_dat){
-#   
-#   SeedClim_traits <- trait_np_bootstrap(trait_impute(comm = com_dat,
-#                                                      traits = trait_dat, 
-#                                                      scale_hierarchy = c("siteID", "blockID", "turfID"),
-#                                                      global = TRUE,
-#                                                      taxon_col = "Full_name",
-#                                                      trait_col = "Trait_trans",
-#                                                      value_col = "Value",
-#                                                      other_col = "year",
-#                                                      abundance_col = "cover"))
-#   
-#   return(SeedClim_traits)
-# }
 
-Imputed_traits_fullcommunity <- Trait_impute_per_year(com_dat = community, trait_dat = traitdata_2) %>% 
-  group_by(year, siteID, blockID, turfID, Trait_trans)
-
-# Imputed_traits_fullcommunity_notax <- Trait_impute_per_year_notax(com_dat = community, trait_dat = traitdata_2) %>% 
-#   group_by(year, siteID, blockID, turfID, Trait_trans)
+Imputed_traits_fullcommunity <- Trait_impute_per_year(com_dat = community_for_boostrapping, trait_dat = traitdata_2)
 
 sum_moments_fullcommunity <- trait_summarise_boot_moments(Imputed_traits_fullcommunity)
-#sum_moments_fullcommunity_notax <- trait_summarise_boot_moments(Imputed_traits_fullcommunity_notax)
 
 #traitstrap:::autoplot.imputed_trait(Imputed_traits_fullcommunity) 
 #traitstrap:::autoplot.imputed_trait(Imputed_traits_without_intra) 
 
-#Write function for trait imputations without the intraspecific variability by sampling across sites instead of just from that site
-# Trait_impute_without_intra <- function(com_dat, trait_dat){
-#   
-#   com_dat <- com_dat %>% 
-#     mutate(random = "")
-#   
-#   trait_dat <- trait_dat %>% 
-#     mutate(random = "")
-#   
-#   SeedClim_traits <- trait_np_bootstrap(trait_impute(comm = com_dat,
-#                                   traits = trait_dat, 
-#                                   scale_hierarchy = c("siteID","random", "blockID", "turfID"),
-#                                   taxon_col = c("Full_name", "Genus", "Family"),
-#                                   trait_col = "Trait_trans",
-#                                   value_col = "Value",
-#                                   other_col = "year",
-#                                   abundance_col = "cover",
-#                                   global = TRUE)) 
-#   
-#   return(SeedClim_traits)
-# }
-# 
-# Imputed_traits_without_intra <- Trait_impute_without_intra(com_dat = community, trait_dat = traitdata_2) %>% 
-#   group_by(year, siteID, blockID, turfID, Trait_trans)
+
+ # Trait_impute_without_intra <- function(com_dat, trait_dat){
+ #   
+ #   trait_dat <- trait_dat %>% 
+ #     select(-siteID, -blockID, turfID)
+ #   
+ #   SeedClim_traits <- trait_np_bootstrap(trait_impute(comm = com_dat,
+ #                                   traits = trait_dat, 
+ #                                   scale_hierarchy = c("siteID","blockID", "turfID"),
+ #                                   taxon_col = c("Full_name", "Genus", "Family"),
+ #                                   trait_col = "Trait_trans",
+ #                                   value_col = "Value",
+ #                                   other_col = "year",
+ #                                   abundance_col = "cover",
+ #                                   global = TRUE)) 
+ #   
+ #   return(SeedClim_traits)
+ # }
+ # 
+ # Imputed_traits_without_intra <- Trait_impute_without_intra(com_dat = community_for_boostrapping, trait_dat = traitdata_2)
 
 
 #### Adding climate info & pivoting longer ####
@@ -189,7 +170,7 @@ memodel_data_fullcommunity_nottransformed <- moments_clim_long_fullcommunity %>%
 #   group_by(Trait_trans, moments, n) %>% 
 #   nest()
 
-com_data <- community %>%
+com_data <- community_for_analysis %>%
   group_by(turfID, year) %>% 
   mutate(species_richness = n()) %>% 
   unique() %>% 
