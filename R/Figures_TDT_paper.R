@@ -38,9 +38,57 @@ Precip_palette <- c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")
 # 
 # ggarrange(plot1, plot2, ncol = 2)
 
+env_shift <- env %>% 
+  group_by(Site) %>% 
+  mutate(shift_temp = Temp_decade - Temp_century,
+         shift_precip = Precip_decade - Precip_century) %>% 
+  select(Site, shift_temp, shift_precip) %>% 
+  unique() %>% 
+  ungroup() %>% 
+  mutate(mean_shift_temp = mean(shift_temp),
+         sd_shift_temp = sd(shift_temp),
+         mean_shift_precip = mean(shift_precip),
+         sd_shift_precip = sd(shift_precip))
+
 
 ## Climate figure ##
+
 env %>% 
+  mutate(Temp_level = recode(Temp_level, "10.5" = "Boreal",
+                           "8.5" = "Sub-alpine",
+                           "6.5" = "Alpine")) %>% 
+  ggplot(aes(x = Year, y = Temp_summer)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  facet_grid(~Temp_level) +
+  theme_bw(base_size = 18) +
+  theme(axis.text.x = element_text(angle = 45)) +
+  ylab("Summer temperature (°C)") +
+  xlab("Year") +
+  scale_x_continuous(breaks = c(2009, 2011, 2013, 2015, 2017, 2019))
+
+ggsave("Temperature_over_time.pdf", width = 20 , height = 11, units = "cm")
+  
+
+env %>% 
+  mutate(Precip_level = recode(Precip_level, "600" = "Driest",
+                               "1200" = "Dry",
+                               "2000" = "Wet",
+                               "2700" = "Wettest")) %>% 
+  ggplot(aes(x = Year, y = Precip_yearly)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  facet_grid(~Precip_level) +
+  theme_bw(base_size = 18) +
+  theme(axis.text.x = element_text(angle = 45)) +
+  ylab("Annual precipitation (m)") +
+  xlab("Year") +
+  scale_x_continuous(breaks = c(2009, 2011, 2013, 2015, 2017, 2019))
+
+ggsave("Precipitation_over_time.png", width = 22 , height = 11, units = "cm")
+
+
+climate <- env %>% 
   mutate(Temp_old = recode(Temp_level, "10.5" = "Boreal 1960-90",
                            "8.5" = "Sub-alpine 1960-90",
                            "6.5" = "Alpine 1960-90")) %>% 
@@ -64,7 +112,7 @@ ggplot(aes(x = Precip_decade, y = Temp_decade,
   scale_fill_manual(name = "Precipitation", values = c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")) +
   scale_shape_manual(name = "Temperature", values = c(2, 24, 6, 25, 1, 21)) + 
   guides(fill = "none", size = "none", shape = "none", color = "none") +
-  theme_minimal(base_size = 26)
+  theme_bw(base_size = 15)
 
 
 #ggsave("SeedClim_climate_over_time.jpg", width = 22 , height = 14, units = "cm")
@@ -110,10 +158,10 @@ norwaymapHires <- map_data("worldHires", "Norway")
 
 maptheme <- function(...) {
   theme(
-    axis.text = element_text(size = 24),
-    axis.title = element_text(size = 28),
-    legend.title = element_text(size = 28),
-    legend.text = element_text(size = 24),
+    axis.text = element_text(size = 20),
+    axis.title = element_text(size = 22),
+    legend.title = element_text(size = 22),
+    legend.text = element_text(size = 18),
     axis.ticks = element_blank(),
     panel.grid = element_blank(),
     panel.border = element_rect(fill = NA, colour = "black"),
@@ -136,7 +184,7 @@ Norway_map <- ggplot() +
 
 Zoomed_in_map <- ggplot(dat, aes(x = Longitude, y = Latitude, fill = Precipitation, shape = Temperature)) +
   geom_map(aes(x = long, y = lat, map_id = region), data = norwaymapHires, map = norwaymapHires, color = NA, fill = "grey70", inherit.aes = FALSE) +
-  geom_point(size = 13) +
+  geom_point(size = 7) +
   coord_map(xlim = xlim, ylim = ylim) +
   guides(shape = guide_legend(override.aes = list(fill = "grey70")),
          fill = guide_legend(override.aes = list(shape = 21))) +
@@ -145,6 +193,16 @@ Zoomed_in_map <- ggplot(dat, aes(x = Longitude, y = Latitude, fill = Precipitati
   maptheme()
 
 ## Code for saving the figure
+
+library(patchwork)
+
+plot <- Zoomed_in_map +
+  inset_element(climate, left = 0.46, bottom = 0.55, right = 0.93, top = 1, align_to = "plot") +
+  inset_element(Norway_map, left = 0.7, bottom = 0.07, right = 0.95, top = 0.39, align_to = "plot") +
+  plot_layout(guides = 'collect', widths = 1, heights = 1) 
+
+#ggsave(plot = plot, "SeedClim_climate_grid.pdf", width = 34, height = 22, units = "cm")
+
 
   # png("SeedClim_climate_grid.png", width = 1285, height = 861)
   # grid.newpage()
@@ -221,15 +279,6 @@ fviz_eig(pca_trait, addlabels = TRUE) #Visualize eigenvalues/scree plot
 #              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
 #              repel = TRUE     # Avoid text overlapping
 # )
-
-### Test environmental data from ordination ###
-
-envfit_data <- env %>% 
-  mutate(year = Year) %>% 
-  select(Site, year, Temp_yearly_spring, Precip_yearly) %>% 
-  bind_rows(Ord_boot_traits, by = c("Site" = "Site", "year" = "year"))
-
-envfit(pca_trait, envfit_data)
 
 #### Ordination with traits ####
 
@@ -346,7 +395,7 @@ c <- ggarrange(Ord_plot_traits, Ord_plot_time, Ord_plot_precip, Ord_plot_temp,
 
 time_mixed <- model_output_time_mixed %>% 
   filter(moments == "mean") %>% 
-  select(Trait_trans, moments, term, effect, std.error, p.value) %>% 
+  dplyr::select(Trait_trans, moments, term, effect, std.error, p.value) %>% 
   mutate(moments = "time")
   #filter(Trait_trans %in% c("SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))
 
@@ -373,7 +422,7 @@ model_output_space_mixed %>%
   #geom_point(aes(size = if_else(p.value <0.05, 0.3, NA_real_)), position = position_dodge(width=0.6), show.legend = FALSE) +
   #geom_bar_pattern(aes(pattern = 'stripe'), stat = "identity", position = "dodge") +
   geom_errorbar(aes(ymin = effect-std.error, ymax = effect+std.error), position = position_dodge(width=0.7), width = 0.3) +
-  facet_grid(~term) +
+  facet_grid(~term, scales = "free") +
   scale_fill_manual(values = c("#2E75B6", "#bb3b0e", "#9A86A9")) +
   # scale_fill_gradient(low = "#213964", ##2E75B6
   #                     high = "#BAD8F7",
@@ -387,7 +436,7 @@ model_output_space_mixed %>%
   theme(axis.title.y=element_blank()) +
   guides(color = FALSE, alpha = FALSE, fill = FALSE)
 
-ggsave(filename = "trends_over_time.pdf",  width = 34, height = 23, units = "cm")
+ggsave(filename = "trends_over_time_free_scales.pdf",  width = 34, height = 23, units = "cm")
 
 model_output_space_mixed %>% 
   ungroup() %>% 
@@ -423,15 +472,17 @@ model_output_space_mixed %>%
 ## Community model output figure ##
 
 time_com_mixed <- model_output_com_time_mixed %>% 
-  select(community_properties, term, estimate, std.error, p.value) %>% 
+  dplyr::select(community_properties, term, estimate, std.error, p.value) %>% 
   mutate(moments = "time")
 
 model_output_com_space_mixed %>% 
   mutate(moments = "space") %>% 
   bind_rows(time_com_mixed) %>%
-  mutate(term = as.factor(recode(term, "Precip_yearly" = "Precipitation", "Temp_yearly_spring" = "SpringTemp", "Temp_yearly_spring:Precip_yearly" = "SpringTemp:Precipitation"))) %>% 
+  mutate(term = as.factor(recode(term, "Precip_yearly" = "Precipitation", "Temp_yearly_spring" = "SummerTemp", "Temp_yearly_spring:Precip_yearly" = "SummerTemp:Precipitation"))) %>% 
+  mutate(community_properties = as.factor(recode(community_properties, "species_richness" = "Species richness", "vegetation_height" = "Vegetation height", "total_vascular" = "Total vascular plant cover", "total_bryophytes" = "Bryophyte cover", "other_cover" = "Other plants cover", "moss_height" = "Bryophyte depth", "graminoid_cover" = "Graminoid cover", "forb_cover" = "Forb cover"))) %>% 
+  mutate(community_properties, factor(community_properties, levels = c("Other plants cover", "Bryophyte cover", "Graminoid cover", "Forb cover", "Total vascular plant cover", "Bryophyte depth", "Vegetation height","Species richness"))) %>% 
   mutate(moments = factor(moments, levels = c("time", "space"))) %>% 
-  ggplot(aes(x = community_properties, y = estimate, fill = term, color = moments)) +
+  ggplot(aes(x = rev(community_properties), y = estimate, fill = term, color = moments)) +
   geom_bar(aes(alpha = rev(p.value)), stat = "identity", position = position_dodge(width=0.7), width = 0.7) +
   #geom_point(aes(size = if_else(p.value <0.05, 0.3, NA_real_)), position = position_dodge(width=0.6), show.legend = FALSE) +
   #geom_bar_pattern(aes(pattern = 'stripe'), stat = "identity", position = "dodge") +
