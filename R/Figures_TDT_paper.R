@@ -103,16 +103,16 @@ climate <- env %>%
   mutate(Temp_level = factor(Temp_level, levels = c("Alpine 2009-19", "Boreal 2009-19", "Sub-alpine 2009-19"))) %>%
 ggplot(aes(x = Precip_decade, y = Temp_decade,
            color = Precip_level, fill = Precip_level, shape = Temp_level)) +
-  geom_point(aes(x = Precip_century, y = Temp_century, shape = Temp_old, size = 6)) +
-  geom_segment(aes(x = Precip_decade, y = Temp_decade, yend = Temp_century, xend = Precip_century)) +
-  geom_pointrange(aes(ymin = Temp_decade-Temp_se, ymax = Temp_decade+Temp_se)) +
-  geom_errorbarh(aes(xmin = Precip_decade-Precip_se, xmax = Precip_decade+Precip_se)) +
+  geom_point(aes(x = Precip_century, y = Temp_century, shape = Temp_old, size = 10)) +
+  geom_segment(aes(x = Precip_decade, y = Temp_decade, yend = Temp_century, xend = Precip_century, size = 1)) +
+  geom_pointrange(aes(ymin = Temp_decade-Temp_se, ymax = Temp_decade+Temp_se, size = 1)) +
+  geom_errorbarh(aes(xmin = Precip_decade-Precip_se, xmax = Precip_decade+Precip_se, size = 1)) +
   labs(x = "Annual precipitation in m", y = "Summer temperature in °C") +
   scale_color_manual(name = "Precipitation", values = c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")) +
   scale_fill_manual(name = "Precipitation", values = c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")) +
   scale_shape_manual(name = "Temperature", values = c(2, 24, 6, 25, 1, 21)) + 
   guides(fill = "none", size = "none", shape = "none", color = "none") +
-  theme_bw(base_size = 15)
+  theme_bw(base_size = 18)
 
 
 #ggsave("SeedClim_climate_over_time.jpg", width = 22 , height = 14, units = "cm")
@@ -657,3 +657,29 @@ C_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "C_pe
 figure <- ggarrange(SLA_mean_plot, SLA_skew_plot, CN_ratio_mean_plot, CN_ratio_skew_plot, LA_mean_plot, LA_skew_plot, C_mean_plot, C_skew_plot, nrow = 4, ncol = 2, labels = c("a)", "b)", "c)", "d)", "e)", "f)", "g)", "h)"), common.legend = TRUE, legend = "bottom")
 
 ggsave(plot = figure, filename = "mean_skewness_figure.png",  width = 20, height = 29, units = "cm")
+
+
+N_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "N_percent", "mean", N_mean_pred) +
+  labs(y = "Nitrogen %", x = "") 
+N_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "N_percent", "skewness", N_skew_pred) + geom_hline(yintercept = 0, color = "black", linetype = 2) +
+  labs(y = "", x = "") 
+
+Height_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean", Height_mean_pred) +
+  labs(y = "Plant height", x = "") 
+Height_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "skewness", Height_skew_pred) + geom_hline(yintercept = 0, color = "black", linetype = 2) +
+  labs(y = "", x = "") 
+
+Mass_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "Dry_Mass_g_log", "mean", Mass_mean_pred) +
+  labs(y = "Dry mass", x = "") 
+Mass_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "Dry_Mass_g_log", "skewness", Mass_skew_pred) + geom_hline(yintercept = 0, color = "black", linetype = 2) +
+  labs(y = "", x = "") 
+
+LDMC_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", LDMC_mean_pred) +
+  labs(y = "LDMC", x = "") 
+LDMC_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "LDMC", "skewness", LDMC_skew_pred) + geom_hline(yintercept = 0, color = "black", linetype = 2) +
+  labs(y = "", x = "") 
+
+Lth_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "Leaf_Thickness_Ave_mm", "mean", Lth_mean_pred) +
+  labs(y = "Leaf thickness", x = "") 
+Lth_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "Leaf_Thickness_Ave_mm", "skewness", Lth_skew_pred) + geom_hline(yintercept = 0, color = "black", linetype = 2) +
+  labs(y = "", x = "") 
