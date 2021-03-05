@@ -645,19 +645,16 @@ CN_ratio_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed
   labs(y = "", x = "") 
 
 LA_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "Leaf_Area_cm2_log", "mean", LA_mean_pred) +
-  labs(y = "Leaf area (cm2 log)", x = "") 
+  labs(y = "Leaf area (cm2 log)", x = "", title = "Mean") +
+  theme(plot.title = element_text(hjust = 0.5))
 LA_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "Leaf_Area_cm2_log", "skewness", LA_skew_pred)+ geom_hline(yintercept = 0, color = "black", linetype = 2) +
-  labs(y = "", x = "") 
+  labs(y = "", x = "", title = "Skewness") +
+  theme(plot.title = element_text(hjust = 0.5))
 
 C_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "C_percent", "mean", C_mean_pred) +
   labs(y = "Carbon %", x = "") 
 C_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "C_percent", "skewness", C_skew_pred) + geom_hline(yintercept = 0, color = "black", linetype = 2) +
   labs(y = "", x = "") 
-
-figure <- ggarrange(SLA_mean_plot, SLA_skew_plot, CN_ratio_mean_plot, CN_ratio_skew_plot, LA_mean_plot, LA_skew_plot, C_mean_plot, C_skew_plot, nrow = 4, ncol = 2, labels = c("a)", "b)", "c)", "d)", "e)", "f)", "g)", "h)"), common.legend = TRUE, legend = "bottom")
-
-ggsave(plot = figure, filename = "mean_skewness_figure.png",  width = 20, height = 29, units = "cm")
-
 
 N_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "N_percent", "mean", N_mean_pred) +
   labs(y = "Nitrogen %", x = "") 
@@ -683,3 +680,8 @@ Lth_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "Le
   labs(y = "Leaf thickness", x = "") 
 Lth_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "Leaf_Thickness_Ave_mm", "skewness", Lth_skew_pred) + geom_hline(yintercept = 0, color = "black", linetype = 2) +
   labs(y = "", x = "") 
+
+
+figure <- ggarrange(SLA_mean_plot, SLA_skew_plot, LA_mean_plot, LA_skew_plot, N_mean_plot, N_skew_plot, Height_mean_plot, Height_skew_plot, CN_ratio_mean_plot, CN_ratio_skew_plot, Mass_mean_plot, Mass_skew_plot, LDMC_mean_plot, LDMC_skew_plot, C_mean_plot, C_skew_plot, Lth_mean_plot, Lth_skew_plot, nrow = 5, ncol = 4, common.legend = TRUE, legend = "bottom")
+
+ggsave(plot = figure, filename = "mean_skewness_figure.pdf",  width = 25, height = 29, units = "cm")
