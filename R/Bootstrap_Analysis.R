@@ -585,6 +585,40 @@ C_skew_pred <- models_trait_predictions(C_skew_sum)
 C_skew_pred_heatmap <- models_trait_predictions_for_heatmap(C_skew_sum, "Carbon %", "skewness")
 
 
+N_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "N_percent", "mean")
+N_mean_pred <- models_trait_predictions(N_mean_sum)
+N_mean_pred_heatmap <- models_trait_predictions_for_heatmap(N_mean_sum, "Nitrogen %", "mean")
+N_skew_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "N_percent", "skewness")
+N_skew_pred <- models_trait_predictions(N_skew_sum)
+N_skew_pred_heatmap <- models_trait_predictions_for_heatmap(N_skew_sum, "Nitrogen %", "skewness")
+
+Height_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean")
+Height_mean_pred <- models_trait_predictions(Height_mean_sum)
+Height_mean_pred_heatmap <- models_trait_predictions_for_heatmap(Height_mean_sum, "Plang height", "mean")
+Height_skew_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "skewness")
+Height_skew_pred <- models_trait_predictions(Height_skew_sum)
+Height_skew_pred_heatmap <- models_trait_predictions_for_heatmap(Height_skew_sum, "Plang height", "skewness")
+
+Mass_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Dry_Mass_g_log", "mean")
+Mass_mean_pred <- models_trait_predictions(Mass_mean_sum)
+Mass_mean_pred_heatmap <- models_trait_predictions_for_heatmap(LA_mean_sum, "Dry mass", "mean")
+Mass_skew_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Dry_Mass_g_log", "skewness")
+Mass_skew_pred <- models_trait_predictions(Mass_skew_sum)
+Mass_skew_pred_heatmap <- models_trait_predictions_for_heatmap(LA_skew_sum, "Dry mass", "skewness")
+
+LDMC_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "LDMC", "mean")
+LDMC_mean_pred <- models_trait_predictions(LDMC_mean_sum)
+LDMC_mean_pred_heatmap <- models_trait_predictions_for_heatmap(LDMC_mean_sum, "LDMC", "mean")
+LDMC_skew_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "LDMC", "skewness")
+LDMC_skew_pred <- models_trait_predictions(LDMC_skew_sum)
+LDMC_skew_pred_heatmap <- models_trait_predictions_for_heatmap(LDMC_skew_sum, "LDMC", "skewness")
+
+Lth_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Leaf_Thickness_Ave_mm", "mean")
+Lth_mean_pred <- models_trait_predictions(Lth_mean_sum)
+Lth_mean_pred_heatmap <- models_trait_predictions_for_heatmap(Lth_mean_sum, "Leaf thickness", "mean")
+Lth_skew_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Leaf_Thickness_Ave_mm", "skewness")
+Lth_skew_pred <- models_trait_predictions(Lth_skew_sum)
+Lth_skew_pred_heatmap <- models_trait_predictions_for_heatmap(Lth_skew_sum, "Leaf thickness", "skewness")
 
 #### Correlation #### Needs to be updated
 
