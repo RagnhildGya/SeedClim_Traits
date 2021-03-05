@@ -307,7 +307,8 @@ mem_results_time_mixed <- memodel_data_fullcommunity %>%
 
 tidy_time_model_predicted_mixed <- mem_results_time_mixed %>%
   mutate(model_output = purrr::map(model, tidy)) %>%
-  mutate(predicted = purrr::map(model, predict_with_random))
+  mutate(predicted = purrr::map(model, predict_with_random)) %>% 
+  mutate(R_squared = purrr::map(model, rsquared))
 
  mem_results_time_mixed_nottrans <- memodel_data_fullcommunity_nottransformed %>%
    filter(moments %in% c("mean", "skewness")) %>% 
