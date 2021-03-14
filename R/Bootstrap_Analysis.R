@@ -166,6 +166,8 @@ moments_clim_long_fullcommunity <- Imputed_traits_fullcommunity %>%
 #### Mixed effect model testing ####
 
 ### Making dataset for models ###
+ 
+# With intrspecific variability
 memodel_data_fullcommunity <- moments_clim_long_fullcommunity %>% 
   ungroup() %>%
   select(Trait_trans, moments, siteID, turfID, Temp_yearly_prev, Temp_yearly_spring, Precip_yearly, value, year, n) %>% 
@@ -174,6 +176,21 @@ memodel_data_fullcommunity <- moments_clim_long_fullcommunity %>%
   nest()
 
 memodel_data_fullcommunity_nottransformed <- moments_clim_long_fullcommunity %>% 
+  ungroup() %>%
+  select(Trait_trans, moments, siteID, turfID, Temp_yearly_prev, Temp_yearly_spring, Precip_yearly, value, year, n) %>% 
+  group_by(Trait_trans, moments, n) %>% 
+  nest()
+
+
+# Without intraspecific variability
+memodel_data_fullcommunity <- moments_clim_long_without_intra %>% 
+  ungroup() %>%
+  select(Trait_trans, moments, siteID, turfID, Temp_yearly_prev, Temp_yearly_spring, Precip_yearly, value, year, n) %>% 
+  mutate(value = scale(value)) %>% 
+  group_by(Trait_trans, moments, n) %>% 
+  nest()
+
+memodel_data_fullcommunity_nottransformed <- moments_clim_long_without_intra %>% 
   ungroup() %>%
   select(Trait_trans, moments, siteID, turfID, Temp_yearly_prev, Temp_yearly_spring, Precip_yearly, value, year, n) %>% 
   group_by(Trait_trans, moments, n) %>% 
@@ -217,11 +234,11 @@ com_data_nottrans <- community_for_analysis %>%
 
 
 model_time<-function(df) {
-  lmer(value ~ Temp_yearly_spring * Precip_yearly + (1 | siteID), data = df)
+  lmer(value ~ scale(Temp_yearly_spring) * scale(Precip_yearly) + (1 | siteID), data = df)
 }
 
 model_space<-function(df) {
-  lmer(value ~  Temp_yearly_spring * Precip_yearly + (1 | year), data = df)
+  lmer(value ~  scale(Temp_yearly_spring) * scale(Precip_yearly) + (1 | year), data = df)
 }
 
 # model_space_linear<-function(df) {
