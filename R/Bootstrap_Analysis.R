@@ -101,14 +101,14 @@ sum_moments_fullcommunity <- trait_summarise_boot_moments(Imputed_traits_fullcom
    com_dat <- com_dat %>% 
      filter(siteID %in% c("Hogsete", "Ulvehaugen", "Vikesland", "Dumedalen", "Rambera", "Arhelleren"))
   
-      SeedClim_traits <- trait_summarise_boot_moments(trait_np_bootstrap(trait_impute(comm = com_dat,
+      SeedClim_traits <- trait_np_bootstrap(trait_impute(comm = com_dat,
                                   traits = trait_dat, 
                                   scale_hierarchy = "turfID",
                                   taxon_col = c("Full_name", "Genus", "Family"),
                                   trait_col = "Trait_trans",
                                   value_col = "Value",
                                   other_col = "year",
-                                  abundance_col = "cover"))) 
+                                  abundance_col = "cover")) 
  
    return(SeedClim_traits)
  }
@@ -121,21 +121,24 @@ sum_moments_fullcommunity <- trait_summarise_boot_moments(Imputed_traits_fullcom
    com_dat <- com_dat %>% 
      filter(siteID %in% c("Skjelingahaugen", "Veskre", "Ovstedalen", "Alrust", "Fauske", "Lavisdalen"))
    
-   SeedClim_traits <- trait_summarise_boot_moments(trait_np_bootstrap(trait_impute(comm = com_dat,
+   SeedClim_traits <- trait_np_bootstrap(trait_impute(comm = com_dat,
                                                                                    traits = trait_dat, 
                                                                                    scale_hierarchy = "turfID",
                                                                                    taxon_col = c("Full_name", "Genus", "Family"),
                                                                                    trait_col = "Trait_trans",
                                                                                    value_col = "Value",
                                                                                    other_col = "year",
-                                                                                   abundance_col = "cover"))) 
+                                                                                   abundance_col = "cover")) 
    
    return(SeedClim_traits)
  }
  
- sum_moments_without_intraA <- Trait_impute_without_intraA(com_dat = community_for_boostrapping, trait_dat = traitdata_2)
- sum_moments_without_intraB <- Trait_impute_without_intraB(com_dat = community_for_boostrapping, trait_dat = traitdata_2)
+ Imputed_traits_without_intraA <- Trait_impute_without_intraA(com_dat = community_for_boostrapping, trait_dat = traitdata_2)
+ Imputed_traits_without_intraB <- Trait_impute_without_intraB(com_dat = community_for_boostrapping, trait_dat = traitdata_2)
+ Imputed_traits_without_intra = bind_rows(Imputed_traits_without_intraA, Imputed_traits_without_intraB)
  
+ sum_moments_without_intraA <- trait_summarise_boot_moments(Imputed_traits_without_intraA)
+ sum_moments_without_intraB <- trait_summarise_boot_moments(Imputed_traits_without_intraB)
  sum_moment_without_intra = bind_rows(sum_moments_without_intraA, sum_moments_without_intraB)
 
 #### Adding climate info & pivoting longer ####
@@ -156,9 +159,8 @@ moments_clim_long_fullcommunity <- Imputed_traits_fullcommunity %>%
   mutate(year = as.factor(year))
 
 
- moments_clim_long_without_intra <- sum_moment_without_intra %>% 
-   pivot_longer(c("mean", "var", "skew", "kurt"), names_to = "moments", values_to = "value") %>% 
-   select(-ci_low_mean, -ci_high_mean, -ci_low_var, -ci_high_var, -ci_low_skew, -ci_high_skew, -ci_low_kurt, -ci_high_kurt) %>% 
+ moments_clim_long_without_intra <- Imputed_traits_without_intra %>% 
+   pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
    left_join(turf_site_dict, by = c("turfID" = "turfID")) %>% 
    left_join(env, by = c("siteID" = "siteID", "year" = "Year"))
 
@@ -339,11 +341,11 @@ tidy_time_model_predicted_mixed <- mem_results_time_mixed %>%
    mutate(R_squared = purrr::map(model, rsquared))
 
  ## Time mixed model without intraspecific ##
- mem_results_space_wi <- memodel_data_without_intra%>%
+ mem_results_time_wi <- memodel_data_without_intra%>%
    filter(moments %in% c("mean", "skewness")) %>% 
-   mutate(model = purrr::map(data, model_space))
+   mutate(model = purrr::map(data, model_time))
  
- tidy_space_model_predicted_mixed_wi <- mem_results_space_wi %>%
+ tidy_time_model_predicted_mixed_wi <- mem_results_time_wi %>%
    mutate(model_output = purrr::map(model, tidy)) %>%
    mutate(R_squared = purrr::map(model, rsquared))
  
@@ -461,7 +463,7 @@ model_output_mixed <-function(dat) {
     #filter(Trait_trans %in% c("CN_ratio_log", "SLA_cm2_g_log") & moments %in% c("mean", "variance")) %>% 
     #filter(!Trait_trans == "CN_ratio_log" | moments == "variance") %>% 
     unnest(c(model_output, R_squared)) %>% 
-    filter(term %in% c("Precip_yearly", "Temp_yearly_spring", "Temp_yearly_spring:Precip_yearly")) %>% 
+    filter(term %in% c("scale(Precip_yearly)", "scale(Temp_yearly_spring)", "scale(Temp_yearly_spring):scale(Precip_yearly)")) %>% 
     select(Trait_trans, moments, term, n, estimate, std.error, statistic, df, p.value, Marginal, Conditional) %>% 
     ungroup() %>% 
     group_by(Trait_trans, moments, term) %>% 
@@ -485,7 +487,7 @@ model_output_com_mixed <-function(dat) {
   model_output <- dat %>% 
     select(community_properties, model_output, R_squared) %>% 
     unnest(c(model_output, R_squared)) %>% 
-    filter(term %in% c("Precip_yearly", "Temp_yearly_spring", "Temp_yearly_spring:Precip_yearly")) %>% 
+    filter(term %in% c("scale(Precip_yearly)", "scale(Temp_yearly_spring)", "scale(Temp_yearly_spring):scale(Precip_yearly)")) %>% 
     select(community_properties, term, estimate, std.error, statistic, df, p.value, Marginal, Conditional) %>% 
     ungroup() 
     # group_by(community_properties, term) %>% 
@@ -512,7 +514,7 @@ model_output_linear <-function(dat) {
     #filter(Trait_trans %in% c("CN_ratio_log", "SLA_cm2_g_log") & moments %in% c("mean", "variance")) %>% 
     #filter(!Trait_trans == "CN_ratio_log" | moments == "variance") %>% 
     unnest(c(model_output, R_squared)) %>% 
-    filter(term %in% c("Precip_yearly", "Temp_yearly_spring", "Temp_yearly_spring:Precip_yearly")) %>% 
+    filter(term %in% c("scale(Precip_yearly)", "scale(Temp_yearly_spring)", "scale(Temp_yearly_spring):scale(Precip_yearly)")) %>% 
     select(Trait_trans, moments, term, n, estimate, std.error, statistic, p.value, R.squared) %>% 
     ungroup() %>% 
     group_by(Trait_trans, moments, term) %>% 
@@ -534,6 +536,8 @@ model_output_time_mixed <- model_output_mixed(tidy_time_model_predicted_mixed)%>
   mutate_if(is.numeric, round, digits = 3)
 model_output_time_mixed_nottrans <- model_output_mixed(tidy_time_model_predicted_mixed_nottrans) %>% 
   mutate_if(is.numeric, round, digits = 3)
+model_output_time_mixed_wi <- model_output_mixed(tidy_time_model_predicted_mixed_wi)%>% 
+  mutate_if(is.numeric, round, digits = 3)
 #model_output_time_linear <- model_output_linear(tidy_time_model_predicted_linear)
 model_output_com_time_mixed <- model_output_com_mixed(tidy_com_time_model_predicted_mixed) %>% 
   mutate_if(is.numeric, round, digits = 3)
@@ -543,6 +547,8 @@ model_output_com_time_mixed_nottrans <- model_output_com_mixed(tidy_com_time_mod
 model_output_space_mixed <- model_output_mixed(tidy_space_model_predicted_mixed) %>% 
   mutate_if(is.numeric, round, digits = 3)
 model_output_space_mixed_nottrans <- model_output_mixed(tidy_space_model_predicted_mixed_nottrans) %>% 
+  mutate_if(is.numeric, round, digits = 3)
+model_output_space_mixed_wi <- model_output_mixed(tidy_space_model_predicted_mixed_wi) %>% 
   mutate_if(is.numeric, round, digits = 3)
 #model_output_space_mixed_notax <- model_output_mixed(tidy_space_model_predicted_mixed_notax)
 #model_output_space_linear <- model_output_linear(tidy_space_model_predicted_linear)
@@ -588,82 +594,64 @@ models_trait_predictions <-function(model) {
 }
 
 
-models_trait_predictions_for_heatmap <-function(model, trait, moment) {
-  
-  newdata <- expand.grid(Precip_yearly=c(0.6, 1.5, 2.3, 3.5), Temp_yearly_spring=c(5.5, 7.5, 10.5), year = c(2009, 2011, 2012, 2013, 2015, 2016, 2017, 2019))
-  
-  newdata$predicted <- predict(object = model, newdata = newdata, re.form = NA, allow.new.levels=TRUE)
-  
-  newdata <- newdata %>% 
-  mutate(moment = moment,
-         trait = trait)
-  
-  return(newdata)
-}
+# models_trait_predictions_for_heatmap <-function(model, trait, moment) {
+#   
+#   newdata <- expand.grid(Precip_yearly=c(0.6, 1.5, 2.3, 3.5), Temp_yearly_spring=c(5.5, 7.5, 10.5), year = c(2009, 2011, 2012, 2013, 2015, 2016, 2017, 2019))
+#   
+#   newdata$predicted <- predict(object = model, newdata = newdata, re.form = NA, allow.new.levels=TRUE)
+#   
+#   newdata <- newdata %>% 
+#   mutate(moment = moment,
+#          trait = trait)
+#   
+#   return(newdata)
+# }
 
 SLA_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean")
 SLA_mean_pred <- models_trait_predictions(SLA_mean_sum)
-SLA_mean_pred_heatmap <- models_trait_predictions_for_heatmap(SLA_mean_sum, "SLA", "mean")
 SLA_skew_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "skewness")
 SLA_skew_pred <- models_trait_predictions(SLA_skew_sum)
-SLA_skew_pred_heatmap <- models_trait_predictions_for_heatmap(SLA_skew_sum, "SLA", "skewness")
 
 CN_ratio_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "CN_ratio_log", "mean")
 CN_ratio_mean_pred <- models_trait_predictions(CN_ratio_mean_sum)
-CN_ratio_mean_pred_heatmap <- models_trait_predictions_for_heatmap(CN_ratio_mean_sum, "CN ratio", "mean")
 CN_ratio_skew_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "CN_ratio_log", "skewness")
 CN_ratio_skew_pred <- models_trait_predictions(CN_ratio_skew_sum)
-CN_ratio_skew_pred_heatmap <- models_trait_predictions_for_heatmap(CN_ratio_skew_sum, "CN ratio", "skewness")
 
 LA_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Leaf_Area_cm2_log", "mean")
 LA_mean_pred <- models_trait_predictions(LA_mean_sum)
-LA_mean_pred_heatmap <- models_trait_predictions_for_heatmap(LA_mean_sum, "Leaf area", "mean")
 LA_skew_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Leaf_Area_cm2_log", "skewness")
 LA_skew_pred <- models_trait_predictions(LA_skew_sum)
-LA_skew_pred_heatmap <- models_trait_predictions_for_heatmap(LA_skew_sum, "Leaf area", "skewness")
+
 
 C_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "C_percent", "mean")
 C_mean_pred <- models_trait_predictions(C_mean_sum)
-C_mean_pred_heatmap <- models_trait_predictions_for_heatmap(C_mean_sum, "Carbon %", "mean")
 C_skew_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "C_percent", "skewness")
 C_skew_pred <- models_trait_predictions(C_skew_sum)
-C_skew_pred_heatmap <- models_trait_predictions_for_heatmap(C_skew_sum, "Carbon %", "skewness")
-
 
 N_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "N_percent", "mean")
 N_mean_pred <- models_trait_predictions(N_mean_sum)
-N_mean_pred_heatmap <- models_trait_predictions_for_heatmap(N_mean_sum, "Nitrogen %", "mean")
 N_skew_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "N_percent", "skewness")
 N_skew_pred <- models_trait_predictions(N_skew_sum)
-N_skew_pred_heatmap <- models_trait_predictions_for_heatmap(N_skew_sum, "Nitrogen %", "skewness")
 
 Height_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean")
 Height_mean_pred <- models_trait_predictions(Height_mean_sum)
-Height_mean_pred_heatmap <- models_trait_predictions_for_heatmap(Height_mean_sum, "Plang height", "mean")
 Height_skew_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "skewness")
 Height_skew_pred <- models_trait_predictions(Height_skew_sum)
-Height_skew_pred_heatmap <- models_trait_predictions_for_heatmap(Height_skew_sum, "Plang height", "skewness")
 
 Mass_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Dry_Mass_g_log", "mean")
 Mass_mean_pred <- models_trait_predictions(Mass_mean_sum)
-Mass_mean_pred_heatmap <- models_trait_predictions_for_heatmap(LA_mean_sum, "Dry mass", "mean")
 Mass_skew_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Dry_Mass_g_log", "skewness")
 Mass_skew_pred <- models_trait_predictions(Mass_skew_sum)
-Mass_skew_pred_heatmap <- models_trait_predictions_for_heatmap(LA_skew_sum, "Dry mass", "skewness")
 
 LDMC_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "LDMC", "mean")
 LDMC_mean_pred <- models_trait_predictions(LDMC_mean_sum)
-LDMC_mean_pred_heatmap <- models_trait_predictions_for_heatmap(LDMC_mean_sum, "LDMC", "mean")
 LDMC_skew_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "LDMC", "skewness")
 LDMC_skew_pred <- models_trait_predictions(LDMC_skew_sum)
-LDMC_skew_pred_heatmap <- models_trait_predictions_for_heatmap(LDMC_skew_sum, "LDMC", "skewness")
 
 Lth_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Leaf_Thickness_Ave_mm", "mean")
 Lth_mean_pred <- models_trait_predictions(Lth_mean_sum)
-Lth_mean_pred_heatmap <- models_trait_predictions_for_heatmap(Lth_mean_sum, "Leaf thickness", "mean")
 Lth_skew_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Leaf_Thickness_Ave_mm", "skewness")
 Lth_skew_pred <- models_trait_predictions(Lth_skew_sum)
-Lth_skew_pred_heatmap <- models_trait_predictions_for_heatmap(Lth_skew_sum, "Leaf thickness", "skewness")
 
 #### Correlation #### Needs to be updated
 
