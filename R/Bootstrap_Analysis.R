@@ -43,6 +43,10 @@ community_for_analysis <- community %>%
   filter(!year == "2010") %>% 
   select(siteID, blockID, turfID, year, species, Full_name, Genus, Family, Order, cover, total_vascular, total_bryophytes,vegetation_height, moss_height, functionalGroup)
 
+turf_site_dict <- community %>% 
+  select(siteID, turfID) %>% 
+  distinct()
+
 rm(community)
 ## Trait data ##
 
@@ -89,26 +93,50 @@ sum_moments_fullcommunity <- trait_summarise_boot_moments(Imputed_traits_fullcom
 #traitstrap:::autoplot.imputed_trait(Imputed_traits_without_intra) 
 
 
- # Trait_impute_without_intra <- function(com_dat, trait_dat){
- #   
- #   trait_dat <- trait_dat %>% 
- #     select(-siteID, -blockID, turfID)
- #   
- #   SeedClim_traits <- trait_np_bootstrap(trait_impute(comm = com_dat,
- #                                   traits = trait_dat, 
- #                                   scale_hierarchy = c("siteID","blockID", "turfID"),
- #                                   taxon_col = c("Full_name", "Genus", "Family"),
- #                                   trait_col = "Trait_trans",
- #                                   value_col = "Value",
- #                                   other_col = "year",
- #                                   abundance_col = "cover",
- #                                   global = TRUE)) 
- #   
- #   return(SeedClim_traits)
- # }
- # 
- # Imputed_traits_without_intra <- Trait_impute_without_intra(com_dat = community_for_boostrapping, trait_dat = traitdata_2)
-
+ Trait_impute_without_intraA <- function(com_dat, trait_dat){
+   
+   trait_dat <- trait_dat %>% 
+     mutate(turfID = "")
+   
+   com_dat <- com_dat %>% 
+     filter(siteID %in% c("Hogsete", "Ulvehaugen", "Vikesland", "Dumedalen", "Rambera", "Arhelleren"))
+  
+      SeedClim_traits <- trait_summarise_boot_moments(trait_np_bootstrap(trait_impute(comm = com_dat,
+                                  traits = trait_dat, 
+                                  scale_hierarchy = "turfID",
+                                  taxon_col = c("Full_name", "Genus", "Family"),
+                                  trait_col = "Trait_trans",
+                                  value_col = "Value",
+                                  other_col = "year",
+                                  abundance_col = "cover"))) 
+ 
+   return(SeedClim_traits)
+ }
+ 
+ Trait_impute_without_intraB <- function(com_dat, trait_dat){
+   
+   trait_dat <- trait_dat %>% 
+     mutate(turfID = "")
+   
+   com_dat <- com_dat %>% 
+     filter(siteID %in% c("Skjelingahaugen", "Veskre", "Ovstedalen", "Alrust", "Fauske", "Lavisdalen"))
+   
+   SeedClim_traits <- trait_summarise_boot_moments(trait_np_bootstrap(trait_impute(comm = com_dat,
+                                                                                   traits = trait_dat, 
+                                                                                   scale_hierarchy = "turfID",
+                                                                                   taxon_col = c("Full_name", "Genus", "Family"),
+                                                                                   trait_col = "Trait_trans",
+                                                                                   value_col = "Value",
+                                                                                   other_col = "year",
+                                                                                   abundance_col = "cover"))) 
+   
+   return(SeedClim_traits)
+ }
+ 
+ sum_moments_without_intraA <- Trait_impute_without_intraA(com_dat = community_for_boostrapping, trait_dat = traitdata_2)
+ sum_moments_without_intraB <- Trait_impute_without_intraB(com_dat = community_for_boostrapping, trait_dat = traitdata_2)
+ 
+ sum_moment_without_intra = bind_rows(sum_moments_without_intraA, sum_moments_without_intraB)
 
 #### Adding climate info & pivoting longer ####
 
@@ -116,36 +144,23 @@ sum_moments_climate_fullcommunity = bind_rows(
   sum_moments_fullcommunity %>% 
      left_join(env, by = c("siteID" = "siteID", "year" = "Year")))
 
-# sum_moments_climate_fullcommunity_notax = bind_rows(
-#   sum_moments_fullcommunity_notax %>% 
-#     left_join(env, by = c("siteID" = "siteID", "year" = "Year")))
+ sum_moments_climate_without_intra = bind_rows(
+   sum_moment_without_intra %>% 
+     left_join(turf_site_dict, by = c("turfID" = "turfID")) %>% 
+     left_join(env, by = c("siteID" = "siteID", "year" = "Year")))
 
-# sum_moments_climate_without_intra = bind_rows(
-#   sum_moments_without_intra %>% 
-#     left_join(env, by = c("siteID" = "siteID", "year" = "Year")))
-
-
-
+ 
 moments_clim_long_fullcommunity <- Imputed_traits_fullcommunity %>% 
   pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
   left_join(env, by = c("siteID" = "siteID", "year" = "Year")) %>% 
   mutate(year = as.factor(year))
 
-# moments_clim_long_fullcommunity_notax <- Imputed_traits_fullcommunity_notax %>% 
-#   pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
-#   left_join(env, by = c("siteID" = "siteID", "year" = "Year")) %>% 
-#   mutate(year = as.factor(year))
 
-
-# moments_clim_long_without_intra <- Moments_without_intra %>% 
-#   pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
-#   left_join(env, by = c("siteID" = "siteID", "year" = "Year")) %>% 
-#   mutate(year = as.factor(year))
-
-
-#### Making data set with with summary information about moments in the data set ####
-
-
+ moments_clim_long_without_intra <- sum_moment_without_intra %>% 
+   pivot_longer(c("mean", "var", "skew", "kurt"), names_to = "moments", values_to = "value") %>% 
+   select(-ci_low_mean, -ci_high_mean, -ci_low_var, -ci_high_var, -ci_low_skew, -ci_high_skew, -ci_low_kurt, -ci_high_kurt) %>% 
+   left_join(turf_site_dict, by = c("turfID" = "turfID")) %>% 
+   left_join(env, by = c("siteID" = "siteID", "year" = "Year"))
 
 
 #### Mixed effect model testing ####
@@ -164,11 +179,6 @@ memodel_data_fullcommunity_nottransformed <- moments_clim_long_fullcommunity %>%
   group_by(Trait_trans, moments, n) %>% 
   nest()
 
-# memodel_data_fullcommunity_notax <- moments_clim_long_fullcommunity_notax %>% 
-#   ungroup() %>%
-#   select(Trait_trans, moments, siteID, turfID, Temp_yearly_prev, Temp_yearly_spring, Precip_yearly, value, year, n) %>% 
-#   group_by(Trait_trans, moments, n) %>% 
-#   nest()
 
 com_data <- community_for_analysis %>%
   group_by(turfID, year) %>% 
