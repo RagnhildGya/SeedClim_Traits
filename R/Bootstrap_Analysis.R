@@ -264,7 +264,7 @@ predict_with_random<-function(model) {
 # 2) Tidying the model, giving the model output in a nice format. Making predicted values for each of the trait:moment combination along the climatic gradients. Calculating pseudo R squared values based on the method in paper Nakagawa et al 2017.
 # 3) Making a dataset with only the predicted values. Unnesting the list of the predicted values.
 
-## Space mixed ##
+## Space mixed with intraspecific ##
 mem_results_space <- memodel_data_fullcommunity %>%
   filter(moments %in% c("mean", "skewness")) %>% 
   mutate(model = purrr::map(data, model_space))
@@ -280,15 +280,23 @@ tidy_space_model_predicted_mixed <- mem_results_space %>%
  tidy_space_model_predicted_mixed_nottrans <- mem_results_space_nottrans %>%
    mutate(model_output = purrr::map(model, tidy)) %>%
    mutate(R_squared = purrr::map(model, rsquared))
-
-## Space mixed ##
-# mem_results_space_notax <- memodel_data_fullcommunity_notax %>%
-#   filter(moments %in% c("mean", "skewness")) %>% 
-#   mutate(model = purrr::map(data, model_space))
-# 
-# tidy_space_model_predicted_mixed_notax <- mem_results_space_notax %>%
-#   mutate(model_output = purrr::map(model, tidy)) %>%
-#   mutate(R_squared = purrr::map(model, rsquared))
+ 
+## Space mixed without intraspecific ##
+ mem_results_space_wi <- memodel_data_without_intra%>%
+   filter(moments %in% c("mean", "skewness")) %>% 
+   mutate(model = purrr::map(data, model_space))
+ 
+ tidy_space_model_predicted_mixed_wi <- mem_results_space_wi %>%
+   mutate(model_output = purrr::map(model, tidy)) %>%
+   mutate(R_squared = purrr::map(model, rsquared))
+ 
+ mem_results_space_nottrans_wi <- memodel_data_without_intra_nottransformed %>%
+   filter(moments %in% c("mean", "skewness")) %>% 
+   mutate(model = purrr::map(data, model_space))
+ 
+ tidy_space_model_predicted_mixed_nottrans_wi <- mem_results_space_nottrans_wi %>%
+   mutate(model_output = purrr::map(model, tidy)) %>%
+   mutate(R_squared = purrr::map(model, rsquared))
 
 ## Space community mixed ##
 mem_results_com_space <- com_data %>%
