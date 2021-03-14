@@ -400,22 +400,9 @@ time_mixed <- model_output_time_mixed %>%
   #filter(Trait_trans %in% c("SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))
 
 
-time_mixed_wi <- model_output_time_mixed_wi %>% 
+space_mixed_wi <- model_output_space_mixed_wi %>% 
   filter(moments == "mean") %>% 
   dplyr::select(Trait_trans, moments, term, effect, std.error, p.value) %>% 
-  mutate(moments = "Without ITV")
-
-
-time_mixed_R <- model_output_time_mixed %>% 
-  filter(moments == "mean") %>% 
-  dplyr::select(Trait_trans, moments, term, R2_marginal, R2_conditional, p.value) %>% 
-  mutate(moments = "time")
-#filter(Trait_trans %in% c("SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))
-
-
-time_mixed_wi_R <- model_output_time_mixed_wi %>% 
-  filter(moments == "mean") %>% 
-  dplyr::select(Trait_trans, moments, term, R2_marginal, R2_conditional, p.value) %>% 
   mutate(moments = "Without ITV")
 
 # time_linear <- model_output_time_linear %>% 
@@ -429,13 +416,13 @@ time_mixed_wi_R <- model_output_time_mixed_wi %>%
 model_output_space_mixed %>% 
   ungroup() %>% 
   bind_rows(time_mixed) %>%
-  bind_rows(time_mixed_wi) %>% 
-  #bind_rows(without_intra) %>% 
+  bind_rows(space_mixed_wi) %>% 
+  filter(!Trait_trans == "Wet_Mass_g_log") %>% 
   mutate(Trait_moment = paste0(moments, "_", Trait_trans)) %>% 
   filter(moments %in% c("mean", "time", "Without ITV")) %>% 
   mutate(moments = factor(moments, levels = c("time", "Without ITV", "mean"))) %>% 
   mutate(term = as.factor(recode(term, "scale(Precip_yearly)" = "Precipitation", "scale(Temp_yearly_spring)" = "SummerTemp", "scale(Temp_yearly_spring):scale(Precip_yearly)" = "SummerTemp:Precipitation"))) %>% 
-  mutate(Trait_trans = factor(Trait_trans, levels = c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent", "SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))) %>%
+  mutate(Trait_trans = factor(Trait_trans, levels = c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "C_percent", "SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))) %>%
   ggplot(aes(x = fct_rev(Trait_trans), y = effect, fill = term, color = moments)) +
   geom_bar(aes(alpha = rev(p.value)), stat = "identity", position = position_dodge(width=0.7), width = 0.7) +
   #geom_point(aes(size = if_else(p.value <0.05, 0.3, NA_real_)), position = position_dodge(width=0.6), show.legend = FALSE) +
@@ -447,7 +434,7 @@ model_output_space_mixed %>%
   #                     high = "#BAD8F7",
   #                     guide = "colourbar") +
   scale_color_manual(values = c("black", "black", "black")) +
-  scale_alpha_continuous(range = c(0.1, 3)) +
+  scale_alpha_continuous(range = c(0.9, 0.1)) +
   geom_hline(yintercept =  0) +
   theme_bw(base_size = 18) +
   coord_flip() +
@@ -456,36 +443,6 @@ model_output_space_mixed %>%
   guides(color = FALSE, alpha = FALSE, fill = FALSE)
 
 ggsave(filename = "trends_over_time_free_scales_WI.pdf",  width = 34, height = 23, units = "cm")
-
-model_output_space_mixed %>% 
-  ungroup() %>% 
-  bind_rows(time_mixed_R) %>%
-  bind_rows(time_mixed_wi_R) %>% 
-  #bind_rows(without_intra) %>% 
-  mutate(Trait_moment = paste0(moments, "_", Trait_trans)) %>% 
-  filter(moments %in% c("mean", "time", "Without ITV")) %>% 
-  mutate(moments = factor(moments, levels = c("time", "Without ITV", "mean"))) %>% 
-  mutate(term = as.factor(recode(term, "scale(Precip_yearly)" = "Precipitation", "scale(Temp_yearly_spring)" = "SummerTemp", "scale(Temp_yearly_spring):scale(Precip_yearly)" = "SummerTemp:Precipitation"))) %>% 
-  mutate(Trait_trans = factor(Trait_trans, levels = c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent", "SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))) %>%
-  ggplot(aes(x = fct_rev(Trait_trans), y = R2_conditional, fill = term, color = moments)) +
-  geom_bar(aes(alpha = rev(p.value)), stat = "identity", position = position_dodge(width=0.7), width = 0.7) +
-  #geom_point(aes(size = if_else(p.value <0.05, 0.3, NA_real_)), position = position_dodge(width=0.6), show.legend = FALSE) +
-  #geom_bar_pattern(aes(pattern = 'stripe'), stat = "identity", position = "dodge") +
-  #geom_errorbar(aes(ymin = effect-std.error, ymax = effect+std.error), position = position_dodge(width=0.7), width = 0.3) +
-  facet_grid(~term) +
-  scale_fill_manual(values = c("#2E75B6", "#bb3b0e", "#9A86A9")) +
-  # scale_fill_gradient(low = "#213964", ##2E75B6
-  #                     high = "#BAD8F7",
-  #                     guide = "colourbar") +
-  scale_color_manual(values = c("black", "black", "black")) +
-  scale_alpha_continuous(range = c(0.1, 3)) +
-  geom_hline(yintercept =  0) +
-  theme_bw(base_size = 18) +
-  coord_flip() +
-  #guides(fill = "none", color = "none", size = "none") +
-  theme(axis.title.y=element_blank()) +
-  guides(color = FALSE, alpha = FALSE, fill = FALSE)
-
 
 model_output_space_mixed %>% 
   ungroup() %>% 
@@ -687,13 +644,13 @@ SLA_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "SL
   geom_hline(yintercept = 0, color = "black", linetype = 2) +
   labs(y = "", x = "", title = "Skewness") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  ylim(-4, 4)
+  ylim(-2, 4)
 
 CN_ratio_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "CN_ratio_log", "mean", CN_ratio_mean_pred) +
   labs(y = "C/N ratio (log))", x = "") 
 CN_ratio_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "CN_ratio_log", "skewness", CN_ratio_skew_pred) + geom_hline(yintercept = 0, color = "black", linetype = 2) +
   labs(y = "", x = "") +
-  ylim(-4, 4)
+  ylim(-2, 4)
 
 LA_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "Leaf_Area_cm2_log", "mean", LA_mean_pred) +
   labs(y = "Leaf area (cm2 log)", x = "", title = "Mean") +
@@ -701,43 +658,43 @@ LA_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "Lea
 LA_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "Leaf_Area_cm2_log", "skewness", LA_skew_pred)+ geom_hline(yintercept = 0, color = "black", linetype = 2) +
   labs(y = "", x = "", title = "Skewness") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  ylim(-4, 4)
+  ylim(-2, 4)
 
 C_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "C_percent", "mean", C_mean_pred) +
   labs(y = "Carbon %", x = "") 
 C_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "C_percent", "skewness", C_skew_pred) + geom_hline(yintercept = 0, color = "black", linetype = 2) +
   labs(y = "", x = "") +
-  ylim(-4, 4)
+  ylim(-2, 4)
 
 N_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "N_percent", "mean", N_mean_pred) +
   labs(y = "Nitrogen %", x = "") 
 N_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "N_percent", "skewness", N_skew_pred) + geom_hline(yintercept = 0, color = "black", linetype = 2) +
   labs(y = "", x = "") +
-  ylim(-4, 4)
+  ylim(-2, 4)
 
 Height_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean", Height_mean_pred) +
   labs(y = "Plant height", x = "") 
 Height_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "skewness", Height_skew_pred) + geom_hline(yintercept = 0, color = "black", linetype = 2) +
   labs(y = "", x = "") +
-  ylim(-4, 4)
+  ylim(-2, 4)
 
 Mass_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "Dry_Mass_g_log", "mean", Mass_mean_pred) +
   labs(y = "Dry mass", x = "") 
 Mass_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "Dry_Mass_g_log", "skewness", Mass_skew_pred) + geom_hline(yintercept = 0, color = "black", linetype = 2) +
   labs(y = "", x = "") +
-  ylim(-4, 4)
+  ylim(-2, 4)
 
 LDMC_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", LDMC_mean_pred) +
   labs(y = "LDMC", x = "") 
 LDMC_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "LDMC", "skewness", LDMC_skew_pred) + geom_hline(yintercept = 0, color = "black", linetype = 2) +
   labs(y = "", x = "") +
-  ylim(-4, 4)
+  ylim(-2, 4)
 
 Lth_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "Leaf_Thickness_Ave_mm", "mean", Lth_mean_pred) +
   labs(y = "Leaf thickness", x = "") 
 Lth_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "Leaf_Thickness_Ave_mm", "skewness", Lth_skew_pred) + geom_hline(yintercept = 0, color = "black", linetype = 2) +
   labs(y = "", x = "") +
-  ylim(-4, 4)
+  ylim(-2, 4)
 
 
 figure <- ggarrange(SLA_mean_plot, SLA_skew_plot, LA_mean_plot, LA_skew_plot, N_mean_plot, N_skew_plot, Height_mean_plot, Height_skew_plot, CN_ratio_mean_plot, CN_ratio_skew_plot, Mass_mean_plot, Mass_skew_plot, LDMC_mean_plot, LDMC_skew_plot, C_mean_plot, C_skew_plot, Lth_mean_plot, Lth_skew_plot, nrow = 5, ncol = 4, common.legend = TRUE, legend = "bottom")
