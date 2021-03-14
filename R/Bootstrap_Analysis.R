@@ -183,14 +183,14 @@ memodel_data_fullcommunity_nottransformed <- moments_clim_long_fullcommunity %>%
 
 
 # Without intraspecific variability
-memodel_data_fullcommunity <- moments_clim_long_without_intra %>% 
+memodel_data_without_intra <- moments_clim_long_without_intra %>% 
   ungroup() %>%
   select(Trait_trans, moments, siteID, turfID, Temp_yearly_prev, Temp_yearly_spring, Precip_yearly, value, year, n) %>% 
   mutate(value = scale(value)) %>% 
   group_by(Trait_trans, moments, n) %>% 
   nest()
 
-memodel_data_fullcommunity_nottransformed <- moments_clim_long_without_intra %>% 
+memodel_data_without_intra_nottransformed <- moments_clim_long_without_intra %>% 
   ungroup() %>%
   select(Trait_trans, moments, siteID, turfID, Temp_yearly_prev, Temp_yearly_spring, Precip_yearly, value, year, n) %>% 
   group_by(Trait_trans, moments, n) %>% 
