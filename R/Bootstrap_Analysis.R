@@ -290,13 +290,13 @@ tidy_space_model_predicted_mixed <- mem_results_space %>%
    mutate(model_output = purrr::map(model, tidy)) %>%
    mutate(R_squared = purrr::map(model, rsquared))
  
- mem_results_space_nottrans_wi <- memodel_data_without_intra_nottransformed %>%
-   filter(moments %in% c("mean", "skewness")) %>% 
-   mutate(model = purrr::map(data, model_space))
- 
- tidy_space_model_predicted_mixed_nottrans_wi <- mem_results_space_nottrans_wi %>%
-   mutate(model_output = purrr::map(model, tidy)) %>%
-   mutate(R_squared = purrr::map(model, rsquared))
+ # mem_results_space_nottrans_wi <- memodel_data_without_intra_nottransformed %>%
+ #   filter(moments %in% c("mean", "skewness")) %>% 
+ #   mutate(model = purrr::map(data, model_space))
+ # 
+ # tidy_space_model_predicted_mixed_nottrans_wi <- mem_results_space_nottrans_wi %>%
+ #   mutate(model_output = purrr::map(model, tidy)) %>%
+ #   mutate(R_squared = purrr::map(model, rsquared))
 
 ## Space community mixed ##
 mem_results_com_space <- com_data %>%
@@ -313,29 +313,13 @@ tidy_com_space_model_predicted_mixed_nottrans <- mem_results_com_space_nottrans 
   mutate(model_output = purrr::map(model, tidy)) %>%
   mutate(R_squared = purrr::map(model, rsquared))
 
-
-## Time community mixed model ##
-mem_results_com_time_mixed <- com_data %>%
-  mutate(model = purrr::map(data, model_time))
-
-tidy_com_time_model_predicted_mixed <- mem_results_com_time_mixed %>%
-  mutate(model_output = purrr::map(model, tidy)) %>%
-  mutate(R_squared = purrr::map(model, rsquared)) 
-
-mem_results_com_time_mixed_nottrans <- com_data_nottrans %>%
-  mutate(model = purrr::map(data, model_time))
-
-tidy_com_time_model_predicted_mixed_nottrans <- mem_results_com_time_mixed_nottrans %>%
-  mutate(model_output = purrr::map(model, tidy)) %>%
-  mutate(R_squared = purrr::map(model, rsquared))
-
 # predicted_values_space_mixed <- tidy_space_model_predicted %>%
 #   ungroup() %>%
 #   select(Trait_trans, moments, data, predicted) %>%
 #   unnest(c(data, predicted)) %>%
 #   rename(modeled = predicted, measured = value)
 
-## Time - Full community mixed ##
+## Time mixed with intraspecific ##
 mem_results_time_mixed <- memodel_data_fullcommunity %>%
   filter(moments %in% c("mean", "skewness")) %>% 
   mutate(model = purrr::map(data, model_time))
@@ -354,6 +338,31 @@ tidy_time_model_predicted_mixed <- mem_results_time_mixed %>%
    mutate(predicted = purrr::map(model, predict_with_random)) %>% 
    mutate(R_squared = purrr::map(model, rsquared))
 
+ ## Time mixed model without intraspecific ##
+ mem_results_space_wi <- memodel_data_without_intra%>%
+   filter(moments %in% c("mean", "skewness")) %>% 
+   mutate(model = purrr::map(data, model_space))
+ 
+ tidy_space_model_predicted_mixed_wi <- mem_results_space_wi %>%
+   mutate(model_output = purrr::map(model, tidy)) %>%
+   mutate(R_squared = purrr::map(model, rsquared))
+ 
+
+## Time community mixed model ##
+ mem_results_com_time_mixed <- com_data %>%
+   mutate(model = purrr::map(data, model_time))
+ 
+ tidy_com_time_model_predicted_mixed <- mem_results_com_time_mixed %>%
+   mutate(model_output = purrr::map(model, tidy)) %>%
+   mutate(R_squared = purrr::map(model, rsquared)) 
+ 
+ mem_results_com_time_mixed_nottrans <- com_data_nottrans %>%
+   mutate(model = purrr::map(data, model_time))
+ 
+ tidy_com_time_model_predicted_mixed_nottrans <- mem_results_com_time_mixed_nottrans %>%
+   mutate(model_output = purrr::map(model, tidy)) %>%
+   mutate(R_squared = purrr::map(model, rsquared)) 
+ 
 # mem_results_time_mixed_notax <- memodel_data_fullcommunity_notax %>%
 #   filter(moments %in% c("mean", "skewness")) %>% 
 #   mutate(model = purrr::map(data, model_time))
