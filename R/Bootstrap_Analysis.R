@@ -284,21 +284,21 @@ tidy_space_model_predicted_mixed <- mem_results_space %>%
    mutate(R_squared = purrr::map(model, rsquared))
  
 ## Space mixed without intraspecific ##
- mem_results_space_wi <- memodel_data_without_intra%>%
+mem_results_space_wi <- memodel_data_without_intra%>%
    filter(moments %in% c("mean", "skewness")) %>% 
    mutate(model = purrr::map(data, model_space))
  
- tidy_space_model_predicted_mixed_wi <- mem_results_space_wi %>%
+tidy_space_model_predicted_mixed_wi <- mem_results_space_wi %>%
    mutate(model_output = purrr::map(model, tidy)) %>%
    mutate(R_squared = purrr::map(model, rsquared))
  
- # mem_results_space_nottrans_wi <- memodel_data_without_intra_nottransformed %>%
- #   filter(moments %in% c("mean", "skewness")) %>% 
- #   mutate(model = purrr::map(data, model_space))
- # 
- # tidy_space_model_predicted_mixed_nottrans_wi <- mem_results_space_nottrans_wi %>%
- #   mutate(model_output = purrr::map(model, tidy)) %>%
- #   mutate(R_squared = purrr::map(model, rsquared))
+mem_results_space_nottrans_wi <- memodel_data_without_intra_nottransformed %>%
+    filter(moments %in% c("mean", "skewness")) %>% 
+    mutate(model = purrr::map(data, model_space))
+  
+tidy_space_model_predicted_mixed_nottrans_wi <- mem_results_space_nottrans_wi %>%
+    mutate(model_output = purrr::map(model, tidy)) %>%
+    mutate(R_squared = purrr::map(model, rsquared))
 
 ## Space community mixed ##
 mem_results_com_space <- com_data %>%
@@ -550,6 +550,8 @@ model_output_space_mixed_nottrans <- model_output_mixed(tidy_space_model_predict
   mutate_if(is.numeric, round, digits = 3)
 model_output_space_mixed_wi <- model_output_mixed(tidy_space_model_predicted_mixed_wi) %>% 
   mutate_if(is.numeric, round, digits = 3)
+model_output_space_mixed_nottrans_wi <- model_output_mixed(tidy_space_model_predicted_mixed_nottrans_wi) %>% 
+  mutate_if(is.numeric, round, digits = 3)
 #model_output_space_mixed_notax <- model_output_mixed(tidy_space_model_predicted_mixed_notax)
 #model_output_space_linear <- model_output_linear(tidy_space_model_predicted_linear)
 model_output_com_space_mixed <- model_output_com_mixed(tidy_com_space_model_predicted_mixed)%>% 
@@ -560,6 +562,8 @@ model_output_com_space_mixed_nottrans <- model_output_com_mixed(tidy_com_space_m
 
 write.table(model_output_time_mixed_nottrans, row.names = TRUE, col.names = TRUE, file = "model_output_time.csv")
 write.table(model_output_space_mixed_nottrans, row.names = TRUE, col.names = TRUE, file = "model_output_space.csv")
+write.table(model_output_space_mixed_nottrans_wi, row.names = TRUE, col.names = TRUE, file = "model_output_space_withoutITV.csv")
+
 write.table(model_output_com_time_mixed_nottrans, row.names = TRUE, col.names = TRUE, file = "model_output_com_time.csv")
 write.table(model_output_com_space_mixed_nottrans, row.names = TRUE, col.names = TRUE, file = "model_output_com_space.csv")
 
