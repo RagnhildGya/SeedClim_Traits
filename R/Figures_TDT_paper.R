@@ -442,38 +442,7 @@ model_output_space_mixed %>%
   theme(axis.title.y=element_blank()) +
   guides(color = FALSE, alpha = FALSE, fill = FALSE)
 
-ggsave(filename = "trends_over_time_free_scales_WI.pdf",  width = 34, height = 23, units = "cm")
-
-model_output_space_mixed %>% 
-  ungroup() %>% 
-  #filter(Trait_trans %in% c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent")) %>% 
-  bind_rows(time_mixed) %>%
-  #bind_rows(without_intra) %>% 
-  mutate(Trait_moment = paste0(moments, "_", Trait_trans)) %>% 
-  filter(moments %in% c("mean", "time")) %>% 
-  mutate(moments = factor(moments, levels = c("time", "mean"))) %>% 
-  mutate(term = as.factor(recode(term, "scale(Precip_yearly)" = "Precipitation", "Temp_yearly_spring" = "SummerTemp", "Temp_yearly_spring:scale(Precip_yearly)" = "SummerTemp:Precipitation"))) %>% 
-  mutate(Trait_trans = factor(Trait_trans, levels = c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent", "SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))) %>%
-  ggplot(aes(x = fct_rev(Trait_trans), y = effect, fill = term, color = moments)) +
-  geom_bar(aes(alpha = rev(p.value)), stat = "identity", position = position_dodge(width=0.7), width = 0.7) +
-  #geom_point(aes(size = if_else(p.value <0.05, 0.3, NA_real_)), position = position_dodge(width=0.6), show.legend = FALSE) +
-  #geom_bar_pattern(aes(pattern = 'stripe'), stat = "identity", position = "dodge") +
-  geom_errorbar(aes(ymin = effect-std.error, ymax = effect+std.error), position = position_dodge(width=0.7), width = 0.3) +
-  facet_grid(~term, scales = "free") +
-  scale_fill_manual(values = c("#2E75B6", "#bb3b0e", "#9A86A9")) +
-  # scale_fill_gradient(low = "#213964", ##2E75B6
-  #                     high = "#BAD8F7",
-  #                     guide = "colourbar") +
-  scale_color_manual(values = c("black", "black")) +
-  scale_alpha_continuous(range = c(0.1, 3)) +
-  geom_hline(yintercept =  0) +
-  theme_bw(base_size = 18) +
-  coord_flip() +
-  #guides(fill = "none", color = "none", size = "none") +
-  theme(axis.title.y=element_blank()) +
-  guides(color = FALSE, alpha = FALSE, fill = FALSE)
-
-#ggsave(filename = "trends_over_time_free_scales.pdf",  width = 27, height = 23, units = "cm")
+#ggsave(filename = "trends_over_time_free_scales_WI.pdf",  width = 34, height = 23, units = "cm")
 
 ## Community model output figure ##
 
@@ -484,11 +453,11 @@ time_com_mixed <- model_output_com_time_mixed %>%
 model_output_com_space_mixed %>% 
   mutate(moments = "space") %>% 
   bind_rows(time_com_mixed) %>%
-  mutate(term = as.factor(recode(term, "Precip_yearly" = "Precipitation", "Temp_yearly_spring" = "SummerTemp", "Temp_yearly_spring:Precip_yearly" = "SummerTemp:Precipitation"))) %>% 
+  mutate(term = as.factor(recode(term, "scale(Precip_yearly)" = "Precipitation", "scale(Temp_yearly_spring)" = "SummerTemp", "scale(Temp_yearly_spring):scale(Precip_yearly)" = "SummerTemp:Precipitation"))) %>% 
   mutate(community_properties = as.factor(recode(community_properties, "species_richness" = "Species richness", "vegetation_height" = "Vegetation height", "total_vascular" = "Total vascular plant cover", "total_bryophytes" = "Bryophyte cover", "other_cover" = "Other plants cover", "moss_height" = "Bryophyte depth", "graminoid_cover" = "Graminoid cover", "forb_cover" = "Forb cover"))) %>% 
-  mutate(community_properties, factor(community_properties, levels = c("Other plants cover", "Bryophyte cover", "Graminoid cover", "Forb cover", "Total vascular plant cover", "Bryophyte depth", "Vegetation height","Species richness"))) %>% 
+  mutate(community_properties = factor(community_properties, levels = c("Other plants cover", "Bryophyte cover", "Graminoid cover", "Forb cover", "Total vascular plant cover", "Bryophyte depth", "Vegetation height","Species richness"))) %>% 
   mutate(moments = factor(moments, levels = c("time", "space"))) %>% 
-  ggplot(aes(x = rev(community_properties), y = estimate, fill = term, color = moments)) +
+  ggplot(aes(x = community_properties, y = estimate, fill = term, color = moments)) +
   geom_bar(aes(alpha = rev(p.value)), stat = "identity", position = position_dodge(width=0.7), width = 0.7) +
   #geom_point(aes(size = if_else(p.value <0.05, 0.3, NA_real_)), position = position_dodge(width=0.6), show.legend = FALSE) +
   #geom_bar_pattern(aes(pattern = 'stripe'), stat = "identity", position = "dodge") +
@@ -499,7 +468,7 @@ model_output_com_space_mixed %>%
   #                     high = "#BAD8F7",
   #                     guide = "colourbar") +
   scale_color_manual(values = c("black", "black")) +
-  scale_alpha_continuous(range = c(0.005, 1.5)) +
+  scale_alpha_continuous(range = c(0.2,  1.5)) +
   geom_hline(yintercept =  0) +
   theme_bw(base_size = 18) +
   coord_flip() +
@@ -507,7 +476,7 @@ model_output_com_space_mixed %>%
   theme(axis.title.y=element_blank()) +
   guides(color = FALSE, alpha = FALSE, fill = FALSE)
 
-#ggsave(filename = "community_timeandspace.png",  width = 27, height = 17, units = "cm")
+ggsave(filename = "community_timeandspace.pdf",  width = 27, height = 17, units = "cm")
 
 ## Mean linear model ##
 
@@ -539,83 +508,6 @@ model_output_com_space_mixed %>%
 #   #guides(fill = "none", color = "none", size = "none") +
 #   theme(axis.title.y=element_blank()) +
 #   guides(fill = FALSE)
-
-### Mean compared to skewness figures ###
-
-# heatmap_data <- SLA_mean_pred_heatmap %>% 
-#   bind_rows(SLA_skew_pred_heatmap) %>% 
-#   bind_rows(CN_ratio_mean_pred_heatmap) %>% 
-#   bind_rows(CN_ratio_skew_pred_heatmap) %>% 
-#   bind_rows(LA_mean_pred_heatmap) %>% 
-#   bind_rows(LA_skew_pred_heatmap) %>% 
-#   bind_rows(C_mean_pred_heatmap) %>% 
-#   bind_rows(C_skew_pred_heatmap)
-# 
-# limits <- range(heatmap_data$predicted)
-# 
-# heatmap_data %>% 
-#   group_by(trait, moment, Precip_yearly, Temp_yearly_spring) %>% 
-#   mutate(predicted = mean(predicted)) %>% 
-#   select(-year) %>% 
-#   unique() %>% 
-#   ggplot(aes(as.factor(Precip_yearly), as.factor(Temp_yearly_spring), fill = predicted)) +
-#   geom_tile() +
-#   scale_fill_gradient(low = "#DFD3EA", high = "#9B87AA") +
-#   facet_grid(trait ~ moment, scales = "free")
-# 
-# heatplot <-function(dat) {
-#   
-#   plot <- dat %>%
-#     group_by(Precip_yearly, Temp_yearly_spring) %>% 
-#     mutate(predicted = mean(predicted)) %>% 
-#     select(-year) %>% 
-#     unique() %>% 
-#     ggplot(aes(as.factor(Precip_yearly), as.factor(Temp_yearly_spring), fill = predicted)) +
-#     geom_tile() +
-#     scale_fill_gradient(low = "#DFD3EA", high = "#9B87AA") +
-#     xlab(label = "") +
-#     ylab(label = "") +
-#     theme_minimal()
-#   
-#   return(plot)
-# }
-
-# scale_fill_gradient2(name= "logit(cover %)",low = "purple", mid = "white", high = "forest green", 
-#                      midpoint = mean(bryocov$estimate))+
-#   
-# 
-# heatplot_skewness <-function(dat) {
-#   
-#   plot <- dat %>%
-#     group_by(Precip_yearly, Temp_yearly_spring) %>% 
-#     mutate(predicted = mean(predicted)) %>% 
-#     select(-year) %>% 
-#     unique() %>% 
-#     ggplot(aes(as.factor(Precip_yearly), as.factor(Temp_yearly_spring), fill = predicted)) +
-#     geom_tile() +
-#     scale_fill_gradient2(low ="#8C8C8C", mid = "#FFFFFF", high = "#9B87AA", midpoint = 0) +
-#     xlab(label = "") +
-#     ylab(label = "") +
-#     theme_minimal()
-#   
-#   return(plot)
-# }
-# 
-# SLA_mean_heatplot <- heatplot(SLA_mean_pred_heatmap)
-# SLA_skew_heatplot <- heatplot_skewness(SLA_skew_pred_heatmap)
-# 
-# CN_mean_heatplot <- heatplot(CN_ratio_mean_pred_heatmap)
-# CN_skew_heatplot <- heatplot_skewness(CN_ratio_skew_pred_heatmap)
-# 
-# LA_mean_heatplot <- heatplot(LA_mean_pred_heatmap)
-# LA_skew_heatplot <- heatplot_skewness(LA_skew_pred_heatmap)
-# 
-# C_mean_heatplot <- heatplot(C_mean_pred_heatmap)
-# C_skew_heatplot <- heatplot_skewness(C_skew_pred_heatmap)
-# 
-# heatplot <- ggarrange(SLA_mean_heatplot, SLA_skew_heatplot, CN_mean_heatplot, CN_skew_heatplot, LA_mean_heatplot, LA_skew_heatplot, C_mean_heatplot, C_skew_heatplot, nrow = 4, ncol = 2, labels = c("a)", "b)", "c)", "d)", "e)", "f)", "g)", "h)"), legend = "bottom")
-# 
-# ggsave(plot = heatplot, filename = "mean_skewness_heatplot.png",  width = 20, height = 29, units = "cm")
 
 #### Making plots for predicted values and observed values
 
