@@ -66,6 +66,11 @@ env <- env %>%
          Precip_deviation_decade = Precip_deviation_decade/1000,
          Precip_century = Precip_century/1000)
 
+## Climate data - making model for mean change in temp and precip ##
+
+env_trend <- env %>% 
+  
+
 
 #### Trait impute ####
 
