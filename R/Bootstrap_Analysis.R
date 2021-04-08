@@ -68,8 +68,25 @@ env <- env %>%
 
 ## Climate data - making model for mean change in temp and precip ##
 
-env_trend <- env %>% 
+temp_model <- lmer(Temp_yearly_spring ~ Year + (1 | Site), data = env)
+precip_model <- lmer(Precip_yearly ~ Year + (1 | Site), data = env)
+
+# summary(temp_model)
+# rsquared(temp_model)
+# summary(precip_model)
+# rsquared(precip_model)
+
+env_predictions <-function(model_temp, model_precip) {
   
+  newdata <- expand.grid(Year=c(2009, 2011, 2012, 2013, 2015, 2016, 2017, 2019), Site = c("Alr", "Arh", "Fau", "Gud", "Hog", "Lav", "Ovs", "Ram", "Skj", "Ulv", "Ves", "Vik"))
+  
+  newdata$temp <- predict(object = model_temp, newdata = newdata, re.form = NULL, allow.new.levels=TRUE)
+  newdata$precip <- predict(object = model_precip, newdata = newdata, re.form = NULL, allow.new.levels=TRUE)
+  
+  return(newdata)
+}
+
+env_pred <- env_predictions(temp_model, precip_model)
 
 
 #### Trait impute ####
@@ -150,24 +167,28 @@ sum_moments_fullcommunity <- trait_summarise_boot_moments(Imputed_traits_fullcom
 
 sum_moments_climate_fullcommunity = bind_rows(
   sum_moments_fullcommunity %>% 
-     left_join(env, by = c("siteID" = "siteID", "year" = "Year")))
+     left_join(env, by = c("siteID" = "siteID", "year" = "Year")) %>% 
+    left_join(env_pred, by = c("siteID" = "Site", "year" = "Year")))
 
  sum_moments_climate_without_intra = bind_rows(
    sum_moment_without_intra %>% 
      left_join(turf_site_dict, by = c("turfID" = "turfID")) %>% 
-     left_join(env, by = c("siteID" = "siteID", "year" = "Year")))
+     left_join(env, by = c("siteID" = "siteID", "year" = "Year")) %>% 
+     left_join(env_pred, by = c("siteID" = "Site", "year" = "Year")))
 
  
 moments_clim_long_fullcommunity <- Imputed_traits_fullcommunity %>% 
   pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
   left_join(env, by = c("siteID" = "siteID", "year" = "Year")) %>% 
+  left_join(env_pred, by = c("siteID" = "Site", "year" = "Year")) %>% 
   mutate(year = as.factor(year))
 
 
  moments_clim_long_without_intra <- Imputed_traits_without_intra %>% 
    pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
    left_join(turf_site_dict, by = c("turfID" = "turfID")) %>% 
-   left_join(env, by = c("siteID" = "siteID", "year" = "Year"))
+   left_join(env, by = c("siteID" = "siteID", "year" = "Year")) %>% 
+   left_join(env_pred, by = c("siteID" = "Site", "year" = "Year"))
 
 
 #### Mixed effect model testing ####
@@ -177,14 +198,14 @@ moments_clim_long_fullcommunity <- Imputed_traits_fullcommunity %>%
 # With intrspecific variability
 memodel_data_fullcommunity <- moments_clim_long_fullcommunity %>% 
   ungroup() %>%
-  select(Trait_trans, moments, siteID, turfID, Temp_yearly_prev, Temp_yearly_spring, Precip_yearly, value, year, n) %>% 
+  select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, temp, precip, value, year, n) %>% 
   mutate(value = scale(value)) %>% 
   group_by(Trait_trans, moments, n) %>% 
   nest()
 
 memodel_data_fullcommunity_nottransformed <- moments_clim_long_fullcommunity %>% 
   ungroup() %>%
-  select(Trait_trans, moments, siteID, turfID, Temp_yearly_prev, Temp_yearly_spring, Precip_yearly, value, year, n) %>% 
+  select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, temp, precip, value, year, n) %>% 
   group_by(Trait_trans, moments, n) %>% 
   nest()
 
@@ -192,14 +213,14 @@ memodel_data_fullcommunity_nottransformed <- moments_clim_long_fullcommunity %>%
 # Without intraspecific variability
 memodel_data_without_intra <- moments_clim_long_without_intra %>% 
   ungroup() %>%
-  select(Trait_trans, moments, siteID, turfID, Temp_yearly_prev, Temp_yearly_spring, Precip_yearly, value, year, n) %>% 
+  select(Trait_trans, moments, siteID, turfID,Temp_yearly_spring, Precip_yearly, temp, precip, value, year, n) %>% 
   mutate(value = scale(value)) %>% 
   group_by(Trait_trans, moments, n) %>% 
   nest()
 
 memodel_data_without_intra_nottransformed <- moments_clim_long_without_intra %>% 
   ungroup() %>%
-  select(Trait_trans, moments, siteID, turfID, Temp_yearly_prev, Temp_yearly_spring, Precip_yearly, value, year, n) %>% 
+  select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, temp, precip, value, year, n) %>% 
   group_by(Trait_trans, moments, n) %>% 
   nest()
 
@@ -214,8 +235,9 @@ com_data <- community_for_analysis %>%
          forb_cover = sum(forb, na.rm = TRUE),
          other_cover = sum(woody, pteridophyte, `NA`, na.rm = TRUE)) %>% 
   left_join(env, by = c("siteID" = "siteID", "year" = "Year")) %>% 
+  left_join(env_pred, by = c("siteID" = "Site", "year" = "Year")) %>% 
   pivot_longer(cols = c("species_richness", "graminoid_cover", "forb_cover", "other_cover", "total_vascular", "total_bryophytes", "vegetation_height", "moss_height"), names_to = "community_properties", values_to = "value") %>% 
-  select(siteID, turfID, Temp_yearly_spring, Precip_yearly, year, value, community_properties) %>% 
+  select(siteID, turfID, Temp_yearly_spring, Precip_yearly, temp, precip, year, value, community_properties) %>% 
   group_by(community_properties) %>% 
   unique() %>% 
   mutate(value = scale(value)) %>% 
@@ -231,8 +253,9 @@ com_data_nottrans <- community_for_analysis %>%
          forb_cover = sum(forb, na.rm = TRUE),
          other_cover = sum(woody, pteridophyte, `NA`, na.rm = TRUE)) %>% 
   left_join(env, by = c("siteID" = "siteID", "year" = "Year")) %>% 
+  left_join(env_pred, by = c("siteID" = "Site", "year" = "Year")) %>% 
   pivot_longer(cols = c("species_richness", "graminoid_cover", "forb_cover", "other_cover", "total_vascular", "total_bryophytes", "vegetation_height", "moss_height"), names_to = "community_properties", values_to = "value") %>% 
-  select(siteID, turfID, Temp_yearly_spring, Precip_yearly, year, value, community_properties) %>% 
+  select(siteID, turfID, Temp_yearly_spring, Precip_yearly, temp, precip, year, value, community_properties) %>% 
   group_by(community_properties) %>% 
   unique() %>% 
   nest()
@@ -242,6 +265,10 @@ com_data_nottrans <- community_for_analysis %>%
 
 model_time<-function(df) {
   lmer(value ~ scale(Temp_yearly_spring) * scale(Precip_yearly) + (1 | siteID), data = df)
+}
+
+model_time_predicted <- function(df) {
+  lmer(value ~scale(temp) * scale(precip) + 1(siteID), data = df)
 }
 
 model_space<-function(df) {
@@ -327,10 +354,12 @@ tidy_com_space_model_predicted_mixed_nottrans <- mem_results_com_space_nottrans 
 #   rename(modeled = predicted, measured = value)
 
 ## Time mixed with intraspecific ##
+# Model
 mem_results_time_mixed <- memodel_data_fullcommunity %>%
   filter(moments %in% c("mean", "skewness")) %>% 
   mutate(model = purrr::map(data, model_time))
 
+#Tidying model output, getting predictions and R2
 tidy_time_model_predicted_mixed <- mem_results_time_mixed %>%
   mutate(model_output = purrr::map(model, tidy)) %>%
   mutate(predicted = purrr::map(model, predict_with_random)) %>% 
