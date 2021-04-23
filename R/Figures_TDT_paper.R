@@ -518,12 +518,16 @@ plot_predictions <-function(dat, trait, moment, newdata) {
            moments == moment,
            n == 75) %>% 
     unnest(data) %>% 
+    mutate(year_coloring = ifelse(year == "2009", "first",
+                                    ifelse(year == "2019", "last",
+                                           "between"))) %>% 
     ungroup()
   
   plot <- ggplot(dat2, aes(x = Temp_yearly_spring, y = value)) +
-    geom_point(color = "grey") +
+    geom_point(aes(fill = year_coloring)) +
     geom_line(aes(x = Temp_yearly_spring, y = predicted, color = factor(Precip_yearly)), data=newdata, size = 1, inherit.aes = FALSE, show.legend = TRUE) +
     scale_color_manual(values = Precip_palette) +
+    scale_fill_manual(values = c("#BAD8F7", "#89B7E1","#2E75B6")) +
     theme_minimal(base_size = 15) 
 
   return(plot)
