@@ -236,8 +236,8 @@ com_data <- community_for_analysis %>%
          other_cover = sum(woody, pteridophyte, `NA`, na.rm = TRUE)) %>% 
   left_join(env, by = c("siteID" = "siteID", "year" = "Year")) %>% 
   left_join(env_pred, by = c("siteID" = "Site", "year" = "Year")) %>% 
-  pivot_longer(cols = c("species_richness", "graminoid_cover", "forb_cover", "other_cover", "total_vascular", "total_bryophytes", "vegetation_height", "moss_height"), names_to = "community_properties", values_to = "value") %>% 
-  select(siteID, turfID, Temp_yearly_spring, Precip_yearly, temp, precip, year, value, community_properties) %>% 
+  pivot_longer(cols = c("species_richness", "graminoid_cover", "forb_cover", "other_cover", "total_vascular", "vegetation_height"), names_to = "community_properties", values_to = "value") %>% 
+  select(siteID, turfID, Temp_yearly_spring, Precip_yearly, temp_modeled, precip_modeled, year, value, community_properties) %>% 
   group_by(community_properties) %>% 
   unique() %>% 
   mutate(value = scale(value)) %>% 
@@ -254,8 +254,8 @@ com_data_nottrans <- community_for_analysis %>%
          other_cover = sum(woody, pteridophyte, `NA`, na.rm = TRUE)) %>% 
   left_join(env, by = c("siteID" = "siteID", "year" = "Year")) %>% 
   left_join(env_pred, by = c("siteID" = "Site", "year" = "Year")) %>% 
-  pivot_longer(cols = c("species_richness", "graminoid_cover", "forb_cover", "other_cover", "total_vascular", "total_bryophytes", "vegetation_height", "moss_height"), names_to = "community_properties", values_to = "value") %>% 
-  select(siteID, turfID, Temp_yearly_spring, Precip_yearly, temp, precip, year, value, community_properties) %>% 
+  pivot_longer(cols = c("species_richness", "graminoid_cover", "forb_cover", "other_cover", "total_vascular", "vegetation_height"), names_to = "community_properties", values_to = "value") %>% 
+  select(siteID, turfID, Temp_yearly_spring, Precip_yearly, temp_modeled, precip_modeled, year, value, community_properties) %>% 
   group_by(community_properties) %>% 
   unique() %>% 
   nest()
@@ -263,21 +263,26 @@ com_data_nottrans <- community_for_analysis %>%
 ### Funcitons for different models and model predictions later ###
 
 
-model_time<-function(df) {
+model_time <- function(df) {
   lmer(value ~ scale(Temp_yearly_spring) * scale(Precip_yearly) + (1 | siteID), data = df)
 }
 
 model_time_predicted <- function(df) {
-  lmer(value ~scale(temp) * scale(precip) + 1(siteID), data = df)
+  lmer(value ~scale(temp_modeled) * scale(precip_modeled) + 1(siteID), data = df)
 }
 
-model_space<-function(df) {
+model_space <- function(df) {
   lmer(value ~  scale(Temp_yearly_spring) * scale(Precip_yearly) + (1 | year), data = df)
 }
 
 # model_space_linear<-function(df) {
 #   lm(value ~  Temp_yearly_spring * scale(Precip_yearly) +  year, data = df)
 # }
+
+# model_time_predicted <- function(df) {
+#   lm(value ~scale(temp_modeled) * scale(precip_modeled) + siteID, data = df)
+# }
+
 # 
 # model_time_linear<-function(df) {
 #   lm(value ~ Temp_yearly_spring * scale(Precip_yearly) +  siteID, data = df)
