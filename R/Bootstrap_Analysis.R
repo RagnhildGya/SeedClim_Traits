@@ -78,7 +78,7 @@ precip_model <- lmer(Precip_yearly ~ Year + (1 | Site), data = env)
 
 env_predictions <-function(model_temp, model_precip) {
   
-  newdata <- expand.grid(Year=c(2009, 2011, 2012, 2013, 2015, 2016, 2017, 2019), Site = c("Alr", "Arh", "Fau", "Gud", "Hog", "Lav", "Ovs", "Ram", "Skj", "Ulv", "Ves", "Vik"))
+  newdata <- expand.grid(Year=c(2009, 2011, 2012, 2013, 2015, 2016, 2017, 2019), Site = c("Alrust", "Arhelleren", "Fauske", "Gudmedalen", "Hogsete", "Lavisdalen", "Ovstedalen", "Rambera", "Skjellingahaugen", "Ulvehaugen", "Veskre", "Vikesland"))
   
   newdata$temp_modeled <- predict(object = model_temp, newdata = newdata, re.form = NULL, allow.new.levels=TRUE)
   newdata$precip_modeled <- predict(object = model_precip, newdata = newdata, re.form = NULL, allow.new.levels=TRUE)
@@ -86,7 +86,8 @@ env_predictions <-function(model_temp, model_precip) {
   return(newdata)
 }
 
-env_pred <- env_predictions(temp_model, precip_model)
+env_pred <- env_predictions(temp_model, precip_model) %>% 
+  mutate(Site = as.character(Site))
 
 
 #### Trait impute ####
@@ -271,7 +272,7 @@ model_time <- function(df) {
 ## 2. model testing if traits shift directionally by using the modeled climate data for directional shift in temp and precip in the ten years.
 
 model_time_predicted <- function(df) {
-  lmer(value ~scale(temp_modeled) * scale(precip_modeled) + 1(siteID), data = df)
+  lmer(value ~scale(temp_modeled) * scale(precip_modeled) + (1 | siteID), data = df)
 }
 
 ## 3. and 4. model testing if traits shift along the spatial gradient. One will be using the bootstrapped traits with intraspecific variability, and one without the intraspecific variability
@@ -312,18 +313,18 @@ predict_with_random<-function(model) {
 # 2) Tidying the model, giving the model output in a nice format. Calculating pseudo R squared values based on the method in paper Nakagawa et al 2017.
 
 
-## Model 1: Trait and community shifts with time/climate flucuations ##
+## Model 1: Trait shifts with time/climate fluctuations ##
 # Step 1) Model
 mem_results_time_mixed <- memodel_data_fullcommunity %>%
   filter(moments %in% c("mean", "skewness")) %>% 
   mutate(model = purrr::map(data, model_time))
 
-#Tidying model output, getting predictions and R2
+#Step 2) Tidying model output, getting predictions and R2
 tidy_time_model_predicted_mixed <- mem_results_time_mixed %>%
   mutate(model_output = purrr::map(model, tidy)) %>%
   mutate(R_squared = purrr::map(model, rsquared))
 
-## Model 1 without transforming the data: Trait and community shifts with time/climate flucuations
+## Model 1 without transforming the data: Trait shifts with time/climate fluctuations
 # mem_results_time_mixed_nottrans <- memodel_data_fullcommunity_nottransformed %>%
 #   filter(moments %in% c("mean", "skewness")) %>% 
 #   mutate(model = purrr::map(data, model_time))
@@ -333,71 +334,94 @@ tidy_time_model_predicted_mixed <- mem_results_time_mixed %>%
 #   mutate(R_squared = purrr::map(model, rsquared))
 
 
-## Time community mixed model ##
+## Model 1: Community shifts with time/climate fluctuations ##
+# Step 1) Model
 mem_results_com_time_mixed <- com_data %>%
   mutate(model = purrr::map(data, model_time))
 
+#Step 2) Tidying model output, getting predictions and R2
 tidy_com_time_model_predicted_mixed <- mem_results_com_time_mixed %>%
   mutate(model_output = purrr::map(model, tidy)) %>%
   mutate(R_squared = purrr::map(model, rsquared)) 
 
-mem_results_com_time_mixed_nottrans <- com_data_nottrans %>%
-  mutate(model = purrr::map(data, model_time))
+## Model 1 without transforming the data: Community shifts with time/climate flucuations
+# mem_results_com_time_mixed_nottrans <- com_data_nottrans %>%
+#   mutate(model = purrr::map(data, model_time))
+# 
+# tidy_com_time_model_predicted_mixed_nottrans <- mem_results_com_time_mixed_nottrans %>%
+#   mutate(model_output = purrr::map(model, tidy)) %>%
+#   mutate(R_squared = purrr::map(model, rsquared)) 
 
-tidy_com_time_model_predicted_mixed_nottrans <- mem_results_com_time_mixed_nottrans %>%
+
+## Model 2: Trait shifts with time, directional shifts ##
+# Step 1) Model
+mem_results_time_directional_mixed <- memodel_data_fullcommunity %>%
+  filter(moments %in% c("mean", "skewness")) %>% 
+  mutate(model = purrr::map(data, model_time_predicted))
+
+#Step 2) Tidying model output, getting predictions and R2
+tidy_time_directional_model_predicted_mixed <- mem_results_time_directional_mixed %>%
   mutate(model_output = purrr::map(model, tidy)) %>%
-  mutate(R_squared = purrr::map(model, rsquared)) 
+  mutate(R_squared = purrr::map(model, rsquared))
 
 
 
-## Space mixed effect model with intraspecific ##
+## Model 3: Trait shifts in space, with intraspecific variability ##
+# Step 1) Model
 mem_results_space <- memodel_data_fullcommunity %>%
   filter(moments %in% c("mean", "skewness")) %>% 
   mutate(model = purrr::map(data, model_space))
 
+#Step 2) Tidying model output, getting predictions and R2
 tidy_space_model_predicted_mixed <- mem_results_space %>%
   mutate(model_output = purrr::map(model, tidy)) %>%
   mutate(R_squared = purrr::map(model, rsquared))
 
- mem_results_space_nottrans <- memodel_data_fullcommunity_nottransformed %>%
-   filter(moments %in% c("mean", "skewness")) %>% 
-   mutate(model = purrr::map(data, model_space))
+ # mem_results_space_nottrans <- memodel_data_fullcommunity_nottransformed %>%
+ #   filter(moments %in% c("mean", "skewness")) %>% 
+ #   mutate(model = purrr::map(data, model_space))
+ # 
+ # tidy_space_model_predicted_mixed_nottrans <- mem_results_space_nottrans %>%
+ #   mutate(model_output = purrr::map(model, tidy)) %>%
+ #   mutate(R_squared = purrr::map(model, rsquared))
  
- tidy_space_model_predicted_mixed_nottrans <- mem_results_space_nottrans %>%
-   mutate(model_output = purrr::map(model, tidy)) %>%
-   mutate(R_squared = purrr::map(model, rsquared))
- 
-## Space mixed without intraspecific ##
+
+## Model 4: Trait shifts in space, without intraspecific variability ##
+# Step 1) Model
 mem_results_space_wi <- memodel_data_without_intra%>%
    filter(moments %in% c("mean", "skewness")) %>% 
    mutate(model = purrr::map(data, model_space))
  
+#Step 2) Tidying model output, getting predictions and R2
 tidy_space_model_predicted_mixed_wi <- mem_results_space_wi %>%
    mutate(model_output = purrr::map(model, tidy)) %>%
    mutate(R_squared = purrr::map(model, rsquared))
  
-mem_results_space_nottrans_wi <- memodel_data_without_intra_nottransformed %>%
-    filter(moments %in% c("mean", "skewness")) %>% 
-    mutate(model = purrr::map(data, model_space))
-  
-tidy_space_model_predicted_mixed_nottrans_wi <- mem_results_space_nottrans_wi %>%
-    mutate(model_output = purrr::map(model, tidy)) %>%
-    mutate(R_squared = purrr::map(model, rsquared))
+# mem_results_space_nottrans_wi <- memodel_data_without_intra_nottransformed %>%
+#     filter(moments %in% c("mean", "skewness")) %>% 
+#     mutate(model = purrr::map(data, model_space))
+#   
+# tidy_space_model_predicted_mixed_nottrans_wi <- mem_results_space_nottrans_wi %>%
+#     mutate(model_output = purrr::map(model, tidy)) %>%
+#     mutate(R_squared = purrr::map(model, rsquared))
 
-## Space community mixed ##
+
+## Model space community: Community shifts in space ##
+# Step 1) Model
 mem_results_com_space <- com_data %>%
   mutate(model = purrr::map(data, model_space))
 
+#Step 2) Tidying model output, getting predictions and R2
 tidy_com_space_model_predicted_mixed <- mem_results_com_space %>%
   mutate(model_output = purrr::map(model, tidy)) %>%
   mutate(R_squared = purrr::map(model, rsquared))
 
-mem_results_com_space_nottrans <- com_data_nottrans %>%
-  mutate(model = purrr::map(data, model_space))
-
-tidy_com_space_model_predicted_mixed_nottrans <- mem_results_com_space_nottrans %>%
-  mutate(model_output = purrr::map(model, tidy)) %>%
-  mutate(R_squared = purrr::map(model, rsquared))
+# mem_results_com_space_nottrans <- com_data_nottrans %>%
+#   mutate(model = purrr::map(data, model_space))
+# 
+# tidy_com_space_model_predicted_mixed_nottrans <- mem_results_com_space_nottrans %>%
+#   mutate(model_output = purrr::map(model, tidy)) %>%
+#   mutate(R_squared = purrr::map(model, rsquared))
 
 # predicted_values_space_mixed <- tidy_space_model_predicted %>%
 #   ungroup() %>%
