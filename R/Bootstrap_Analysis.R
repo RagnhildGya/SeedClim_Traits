@@ -548,6 +548,32 @@ model_output_mixed <-function(dat) {
   return(model_output)
 }
 
+model_output_mixed_modeled_climate <-function(dat) {
+  
+  model_output <- dat %>% 
+    select(Trait_trans, moments, n, model_output, R_squared) %>% 
+    #filter(Trait_trans %in% c("CN_ratio_log", "SLA_cm2_g_log") & moments %in% c("mean", "variance")) %>% 
+    #filter(!Trait_trans == "CN_ratio_log" | moments == "variance") %>% 
+    unnest(c(model_output, R_squared)) %>% 
+    filter(term %in% c("scale(precip_modeled)", "scale(temp_modeled)", "scale(temp_modeled):scale(precip_modeled)")) %>% 
+    select(Trait_trans, moments, term, n, estimate, std.error, statistic, df, p.value, Marginal, Conditional) %>% 
+    ungroup() %>% 
+    group_by(Trait_trans, moments, term) %>% 
+    summarize(effect = mean(estimate),
+              R2_marginal = mean(Marginal),
+              R2_conditional = mean(Conditional),
+              CIlow.fit = effect - sd(estimate),
+              CIhigh.fit = effect + sd(estimate),
+              std.error = mean(std.error),
+              staticstic = mean(statistic),
+              df = mean(df),
+              p.value = mean(p.value)) %>% 
+    mutate(Trend = case_when(CIlow.fit < 0 & CIhigh.fit < 0 ~ "Negative",
+                             CIlow.fit > 0 & CIhigh.fit > 0 ~ "Positive",
+                             CIlow.fit < 0 & CIhigh.fit > 0 ~ "No"))
+  return(model_output)
+}
+
 model_output_com_mixed <-function(dat) {
   
   model_output <- dat %>% 
@@ -600,30 +626,30 @@ model_output_linear <-function(dat) {
 
 model_output_time_mixed <- model_output_mixed(tidy_time_model_predicted_mixed)%>% 
   mutate_if(is.numeric, round, digits = 3)
-model_output_time_mixed_nottrans <- model_output_mixed(tidy_time_model_predicted_mixed_nottrans) %>% 
-  mutate_if(is.numeric, round, digits = 3)
+#model_output_time_mixed_nottrans <- model_output_mixed(tidy_time_model_predicted_mixed_nottrans) %>% 
+#  mutate_if(is.numeric, round, digits = 3)
 model_output_time_mixed_wi <- model_output_mixed(tidy_time_model_predicted_mixed_wi)%>% 
   mutate_if(is.numeric, round, digits = 3)
 #model_output_time_linear <- model_output_linear(tidy_time_model_predicted_linear)
 model_output_com_time_mixed <- model_output_com_mixed(tidy_com_time_model_predicted_mixed) %>% 
   mutate_if(is.numeric, round, digits = 3)
-model_output_com_time_mixed_nottrans <- model_output_com_mixed(tidy_com_time_model_predicted_mixed_nottrans) %>% 
-  mutate_if(is.numeric, round, digits = 3)
+# model_output_com_time_mixed_nottrans <- model_output_com_mixed(tidy_com_time_model_predicted_mixed_nottrans) %>% 
+#   mutate_if(is.numeric, round, digits = 3)
 
 model_output_space_mixed <- model_output_mixed(tidy_space_model_predicted_mixed) %>% 
   mutate_if(is.numeric, round, digits = 3)
-model_output_space_mixed_nottrans <- model_output_mixed(tidy_space_model_predicted_mixed_nottrans) %>% 
-  mutate_if(is.numeric, round, digits = 3)
+# model_output_space_mixed_nottrans <- model_output_mixed(tidy_space_model_predicted_mixed_nottrans) %>% 
+#   mutate_if(is.numeric, round, digits = 3)
 model_output_space_mixed_wi <- model_output_mixed(tidy_space_model_predicted_mixed_wi) %>% 
   mutate_if(is.numeric, round, digits = 3)
-model_output_space_mixed_nottrans_wi <- model_output_mixed(tidy_space_model_predicted_mixed_nottrans_wi) %>% 
-  mutate_if(is.numeric, round, digits = 3)
+# model_output_space_mixed_nottrans_wi <- model_output_mixed(tidy_space_model_predicted_mixed_nottrans_wi) %>% 
+#   mutate_if(is.numeric, round, digits = 3)
 #model_output_space_mixed_notax <- model_output_mixed(tidy_space_model_predicted_mixed_notax)
 #model_output_space_linear <- model_output_linear(tidy_space_model_predicted_linear)
 model_output_com_space_mixed <- model_output_com_mixed(tidy_com_space_model_predicted_mixed)%>% 
   mutate_if(is.numeric, round, digits = 3)
-model_output_com_space_mixed_nottrans <- model_output_com_mixed(tidy_com_space_model_predicted_mixed_nottrans) %>% 
-  mutate_if(is.numeric, round, digits = 3)
+# model_output_com_space_mixed_nottrans <- model_output_com_mixed(tidy_com_space_model_predicted_mixed_nottrans) %>% 
+#   mutate_if(is.numeric, round, digits = 3)
 
 
 write.table(model_output_time_mixed_nottrans, row.names = TRUE, col.names = TRUE, file = "model_output_time.csv")
