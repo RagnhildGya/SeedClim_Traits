@@ -526,8 +526,6 @@ model_output_mixed <-function(dat) {
   
   model_output <- dat %>% 
     select(Trait_trans, moments, n, model_output, R_squared) %>% 
-    #filter(Trait_trans %in% c("CN_ratio_log", "SLA_cm2_g_log") & moments %in% c("mean", "variance")) %>% 
-    #filter(!Trait_trans == "CN_ratio_log" | moments == "variance") %>% 
     unnest(c(model_output, R_squared)) %>% 
     filter(term %in% c("scale(Precip_yearly)", "scale(Temp_yearly_spring)", "scale(Temp_yearly_spring):scale(Precip_yearly)")) %>% 
     select(Trait_trans, moments, term, n, estimate, std.error, statistic, df, p.value, Marginal, Conditional) %>% 
@@ -541,21 +539,17 @@ model_output_mixed <-function(dat) {
               std.error = mean(std.error),
               staticstic = mean(statistic),
               df = mean(df),
-              p.value = mean(p.value)) %>% 
-    mutate(Trend = case_when(CIlow.fit < 0 & CIhigh.fit < 0 ~ "Negative",
-                                   CIlow.fit > 0 & CIhigh.fit > 0 ~ "Positive",
-                                   CIlow.fit < 0 & CIhigh.fit > 0 ~ "No"))
+              p.value = mean(p.value))
+  
   return(model_output)
 }
 
-model_output_mixed_modeled_climate <-function(dat) {
+model_output_mixed_predicted_climate <-function(dat) {
   
   model_output <- dat %>% 
     select(Trait_trans, moments, n, model_output, R_squared) %>% 
-    #filter(Trait_trans %in% c("CN_ratio_log", "SLA_cm2_g_log") & moments %in% c("mean", "variance")) %>% 
-    #filter(!Trait_trans == "CN_ratio_log" | moments == "variance") %>% 
     unnest(c(model_output, R_squared)) %>% 
-    filter(term %in% c("scale(precip_modeled)", "scale(temp_modeled)", "scale(temp_modeled):scale(precip_modeled)")) %>% 
+    filter(term %in% c( "scale(temp_modeled)", "scale(temp_modeled):scale(precip_modeled)")) %>% 
     select(Trait_trans, moments, term, n, estimate, std.error, statistic, df, p.value, Marginal, Conditional) %>% 
     ungroup() %>% 
     group_by(Trait_trans, moments, term) %>% 
@@ -567,10 +561,8 @@ model_output_mixed_modeled_climate <-function(dat) {
               std.error = mean(std.error),
               staticstic = mean(statistic),
               df = mean(df),
-              p.value = mean(p.value)) %>% 
-    mutate(Trend = case_when(CIlow.fit < 0 & CIhigh.fit < 0 ~ "Negative",
-                             CIlow.fit > 0 & CIhigh.fit > 0 ~ "Positive",
-                             CIlow.fit < 0 & CIhigh.fit > 0 ~ "No"))
+              p.value = mean(p.value))
+  
   return(model_output)
 }
 
@@ -582,19 +574,7 @@ model_output_com_mixed <-function(dat) {
     filter(term %in% c("scale(Precip_yearly)", "scale(Temp_yearly_spring)", "scale(Temp_yearly_spring):scale(Precip_yearly)")) %>% 
     select(community_properties, term, estimate, std.error, statistic, df, p.value, Marginal, Conditional) %>% 
     ungroup() 
-    # group_by(community_properties, term) %>% 
-    # summarize(effect = mean(estimate),
-    #           R2_marginal = mean(Marginal),
-    #           R2_conditional = mean(Conditional),
-    #           CIlow.fit = effect - sd(estimate),
-    #           CIhigh.fit = effect + sd(estimate),
-    #           std.error = mean(std.error),
-    #           staticstic = mean(statistic),
-    #           df = mean(df),
-    #           p.value = mean(p.value)) %>% 
-    # mutate(Trend = case_when(CIlow.fit < 0 & CIhigh.fit < 0 ~ "Negative",
-    #                          CIlow.fit > 0 & CIhigh.fit > 0 ~ "Positive",
-    #                          CIlow.fit < 0 & CIhigh.fit > 0 ~ "No"))
+  
   return(model_output)
 }
 
@@ -612,19 +592,16 @@ model_output_linear <-function(dat) {
     group_by(Trait_trans, moments, term) %>% 
     summarize(effect = mean(estimate),
               R2 = mean(R.squared),
-              #CIlow.fit = effect - sd(estimate),
-              #CIhigh.fit = effect + sd(estimate),
               std.error = mean(std.error),
               staticstic = mean(statistic),
               p.value = mean(p.value))
-    # mutate(Trend = case_when(CIlow.fit < 0 & CIhigh.fit < 0 ~ "Negative",
-    #                          CIlow.fit > 0 & CIhigh.fit > 0 ~ "Positive",
-    #                          CIlow.fit < 0 & CIhigh.fit > 0 ~ "No"))
   return(model_output)
 }
 
 
 model_output_time_mixed <- model_output_mixed(tidy_time_model_predicted_mixed)%>% 
+  mutate_if(is.numeric, round, digits = 3)
+model_output_time_directional_mixed <- model_output_mixed_predicted_climate(tidy_time_directional_model_predicted_mixed)%>% 
   mutate_if(is.numeric, round, digits = 3)
 #model_output_time_mixed_nottrans <- model_output_mixed(tidy_time_model_predicted_mixed_nottrans) %>% 
 #  mutate_if(is.numeric, round, digits = 3)
