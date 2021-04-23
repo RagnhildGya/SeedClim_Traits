@@ -306,11 +306,49 @@ predict_with_random<-function(model) {
 }
 
 
-#### Running models (time consuming), 3 steps ####
+#### Running models (time consuming), 2 steps ####
 
-# 1) Testing with mixed effect model
-# 2) Tidying the model, giving the model output in a nice format. Making predicted values for each of the trait:moment combination along the climatic gradients. Calculating pseudo R squared values based on the method in paper Nakagawa et al 2017.
-# 3) Making a dataset with only the predicted values. Unnesting the list of the predicted values.
+# 1) Running the mixed effects model
+# 2) Tidying the model, giving the model output in a nice format. Calculating pseudo R squared values based on the method in paper Nakagawa et al 2017.
+
+
+## Model 1: Trait and community shifts with time/climate flucuations ##
+# Step 1) Model
+mem_results_time_mixed <- memodel_data_fullcommunity %>%
+  filter(moments %in% c("mean", "skewness")) %>% 
+  mutate(model = purrr::map(data, model_time))
+
+#Tidying model output, getting predictions and R2
+tidy_time_model_predicted_mixed <- mem_results_time_mixed %>%
+  mutate(model_output = purrr::map(model, tidy)) %>%
+  mutate(R_squared = purrr::map(model, rsquared))
+
+## Model 1 without transforming the data: Trait and community shifts with time/climate flucuations
+# mem_results_time_mixed_nottrans <- memodel_data_fullcommunity_nottransformed %>%
+#   filter(moments %in% c("mean", "skewness")) %>% 
+#   mutate(model = purrr::map(data, model_time))
+# 
+# tidy_time_model_predicted_mixed_nottrans <- mem_results_time_mixed_nottrans %>%
+#   mutate(model_output = purrr::map(model, tidy)) %>%
+#   mutate(R_squared = purrr::map(model, rsquared))
+
+
+## Time community mixed model ##
+mem_results_com_time_mixed <- com_data %>%
+  mutate(model = purrr::map(data, model_time))
+
+tidy_com_time_model_predicted_mixed <- mem_results_com_time_mixed %>%
+  mutate(model_output = purrr::map(model, tidy)) %>%
+  mutate(R_squared = purrr::map(model, rsquared)) 
+
+mem_results_com_time_mixed_nottrans <- com_data_nottrans %>%
+  mutate(model = purrr::map(data, model_time))
+
+tidy_com_time_model_predicted_mixed_nottrans <- mem_results_com_time_mixed_nottrans %>%
+  mutate(model_output = purrr::map(model, tidy)) %>%
+  mutate(R_squared = purrr::map(model, rsquared)) 
+
+
 
 ## Space mixed effect model with intraspecific ##
 mem_results_space <- memodel_data_fullcommunity %>%
@@ -367,51 +405,7 @@ tidy_com_space_model_predicted_mixed_nottrans <- mem_results_com_space_nottrans 
 #   unnest(c(data, predicted)) %>%
 #   rename(modeled = predicted, measured = value)
 
-## Time mixed with intraspecific ##
-# Model
-mem_results_time_mixed <- memodel_data_fullcommunity %>%
-  filter(moments %in% c("mean", "skewness")) %>% 
-  mutate(model = purrr::map(data, model_time))
 
-#Tidying model output, getting predictions and R2
-tidy_time_model_predicted_mixed <- mem_results_time_mixed %>%
-  mutate(model_output = purrr::map(model, tidy)) %>%
-  mutate(predicted = purrr::map(model, predict_with_random)) %>% 
-  mutate(R_squared = purrr::map(model, rsquared))
-
- mem_results_time_mixed_nottrans <- memodel_data_fullcommunity_nottransformed %>%
-   filter(moments %in% c("mean", "skewness")) %>% 
-   mutate(model = purrr::map(data, model_time))
- 
- tidy_time_model_predicted_mixed_nottrans <- mem_results_time_mixed_nottrans %>%
-   mutate(model_output = purrr::map(model, tidy)) %>%
-   mutate(predicted = purrr::map(model, predict_with_random)) %>% 
-   mutate(R_squared = purrr::map(model, rsquared))
-
- ## Time mixed model without intraspecific ##
- mem_results_time_wi <- memodel_data_without_intra%>%
-   filter(moments %in% c("mean", "skewness")) %>% 
-   mutate(model = purrr::map(data, model_time))
- 
- tidy_time_model_predicted_mixed_wi <- mem_results_time_wi %>%
-   mutate(model_output = purrr::map(model, tidy)) %>%
-   mutate(R_squared = purrr::map(model, rsquared))
- 
-
-## Time community mixed model ##
- mem_results_com_time_mixed <- com_data %>%
-   mutate(model = purrr::map(data, model_time))
- 
- tidy_com_time_model_predicted_mixed <- mem_results_com_time_mixed %>%
-   mutate(model_output = purrr::map(model, tidy)) %>%
-   mutate(R_squared = purrr::map(model, rsquared)) 
- 
- mem_results_com_time_mixed_nottrans <- com_data_nottrans %>%
-   mutate(model = purrr::map(data, model_time))
- 
- tidy_com_time_model_predicted_mixed_nottrans <- mem_results_com_time_mixed_nottrans %>%
-   mutate(model_output = purrr::map(model, tidy)) %>%
-   mutate(R_squared = purrr::map(model, rsquared)) 
  
 # mem_results_time_mixed_notax <- memodel_data_fullcommunity_notax %>%
 #   filter(moments %in% c("mean", "skewness")) %>% 
