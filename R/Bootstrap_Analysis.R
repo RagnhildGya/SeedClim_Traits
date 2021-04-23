@@ -262,18 +262,25 @@ com_data_nottrans <- community_for_analysis %>%
 
 ### Funcitons for different models and model predictions later ###
 
+## 1. model testing if traits shift with climate fluctioations (warm years vs. cold years)
 
 model_time <- function(df) {
   lmer(value ~ scale(Temp_yearly_spring) * scale(Precip_yearly) + (1 | siteID), data = df)
 }
 
+## 2. model testing if traits shift directionally by using the modeled climate data for directional shift in temp and precip in the ten years.
+
 model_time_predicted <- function(df) {
   lmer(value ~scale(temp_modeled) * scale(precip_modeled) + 1(siteID), data = df)
 }
 
+## 3. and 4. model testing if traits shift along the spatial gradient. One will be using the bootstrapped traits with intraspecific variability, and one without the intraspecific variability
+
 model_space <- function(df) {
   lmer(value ~  scale(Temp_yearly_spring) * scale(Precip_yearly) + (1 | year), data = df)
 }
+
+## Models 1-4. but with linear models. Results goes in the appendix of the paper.
 
 # model_space_linear<-function(df) {
 #   lm(value ~  Temp_yearly_spring * scale(Precip_yearly) +  year, data = df)
@@ -288,6 +295,8 @@ model_space <- function(df) {
 #   lm(value ~ Temp_yearly_spring * scale(Precip_yearly) +  siteID, data = df)
 # }
 
+
+## Function for predictions from the above models
 predict_without_random<-function(model) {
   predict(object = model, re.form=NA)
 }
@@ -303,7 +312,7 @@ predict_with_random<-function(model) {
 # 2) Tidying the model, giving the model output in a nice format. Making predicted values for each of the trait:moment combination along the climatic gradients. Calculating pseudo R squared values based on the method in paper Nakagawa et al 2017.
 # 3) Making a dataset with only the predicted values. Unnesting the list of the predicted values.
 
-## Space mixed with intraspecific ##
+## Space mixed effect model with intraspecific ##
 mem_results_space <- memodel_data_fullcommunity %>%
   filter(moments %in% c("mean", "skewness")) %>% 
   mutate(model = purrr::map(data, model_space))
