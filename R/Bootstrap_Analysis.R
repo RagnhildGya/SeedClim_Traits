@@ -80,8 +80,8 @@ env_predictions <-function(model_temp, model_precip) {
   
   newdata <- expand.grid(Year=c(2009, 2011, 2012, 2013, 2015, 2016, 2017, 2019), Site = c("Alr", "Arh", "Fau", "Gud", "Hog", "Lav", "Ovs", "Ram", "Skj", "Ulv", "Ves", "Vik"))
   
-  newdata$temp <- predict(object = model_temp, newdata = newdata, re.form = NULL, allow.new.levels=TRUE)
-  newdata$precip <- predict(object = model_precip, newdata = newdata, re.form = NULL, allow.new.levels=TRUE)
+  newdata$temp_modeled <- predict(object = model_temp, newdata = newdata, re.form = NULL, allow.new.levels=TRUE)
+  newdata$precip_modeled <- predict(object = model_precip, newdata = newdata, re.form = NULL, allow.new.levels=TRUE)
   
   return(newdata)
 }
@@ -198,14 +198,14 @@ moments_clim_long_fullcommunity <- Imputed_traits_fullcommunity %>%
 # With intrspecific variability
 memodel_data_fullcommunity <- moments_clim_long_fullcommunity %>% 
   ungroup() %>%
-  select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, temp, precip, value, year, n) %>% 
+  select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, temp_modeled, precip_modeled, value, year, n) %>% 
   mutate(value = scale(value)) %>% 
   group_by(Trait_trans, moments, n) %>% 
   nest()
 
 memodel_data_fullcommunity_nottransformed <- moments_clim_long_fullcommunity %>% 
   ungroup() %>%
-  select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, temp, precip, value, year, n) %>% 
+  select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, temp_modeled, precip_modeled, value, year, n) %>% 
   group_by(Trait_trans, moments, n) %>% 
   nest()
 
@@ -213,14 +213,14 @@ memodel_data_fullcommunity_nottransformed <- moments_clim_long_fullcommunity %>%
 # Without intraspecific variability
 memodel_data_without_intra <- moments_clim_long_without_intra %>% 
   ungroup() %>%
-  select(Trait_trans, moments, siteID, turfID,Temp_yearly_spring, Precip_yearly, temp, precip, value, year, n) %>% 
+  select(Trait_trans, moments, siteID, turfID,Temp_yearly_spring, Precip_yearly, temp_modeled, precip_modeled, value, year, n) %>% 
   mutate(value = scale(value)) %>% 
   group_by(Trait_trans, moments, n) %>% 
   nest()
 
 memodel_data_without_intra_nottransformed <- moments_clim_long_without_intra %>% 
   ungroup() %>%
-  select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, temp, precip, value, year, n) %>% 
+  select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, temp_modeled, precip_modeled, value, year, n) %>% 
   group_by(Trait_trans, moments, n) %>% 
   nest()
 
