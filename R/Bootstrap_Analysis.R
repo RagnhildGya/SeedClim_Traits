@@ -263,7 +263,7 @@ com_data_nottrans <- community_for_analysis %>%
 
 ### Funcitons for different models and model predictions later ###
 
-## 1. model testing if traits shift with climate fluctioations (warm years vs. cold years)
+## 1. model testing if traits shift with climate fluctuations (warm years vs. cold years)
 
 model_time <- function(df) {
   lmer(value ~ scale(Temp_yearly_spring) * scale(Precip_yearly) + (1 | siteID), data = df)
