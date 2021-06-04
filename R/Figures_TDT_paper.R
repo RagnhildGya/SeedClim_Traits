@@ -12,6 +12,7 @@ library(maps)
 library(mapdata)
 library(grid)
 library(ggvegan)
+library(ggnewscale)
 
 ## Color palettes ##
 Temp_palette <- c("#d8c593", "#dd7631", "#bb3b0e")
@@ -524,14 +525,16 @@ plot_predictions <-function(dat, trait, moment, newdata) {
     ungroup()
   
   plot <- ggplot(dat2, aes(x = Temp_yearly_spring, y = value)) +
-    geom_point(aes(fill = year_coloring)) +
-    geom_line(aes(x = Temp_yearly_spring, y = predicted, color = factor(Precip_yearly)), data=newdata, size = 1, inherit.aes = FALSE, show.legend = TRUE) +
+    geom_point(aes(color = year_coloring)) +
+    scale_color_manual(values = c("grey", "#2E75B6","black")) +
+    new_scale_color()+
+    geom_line(aes(x = Temp_yearly_spring, y = predicted, color = factor(Precip_yearly)), data=newdata, size = 1, show.legend = TRUE) +
     scale_color_manual(values = Precip_palette) +
-    scale_fill_manual(values = c("#BAD8F7", "#89B7E1","#2E75B6")) +
     theme_minimal(base_size = 15) 
 
   return(plot)
 }
+
 
 SLA_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", SLA_mean_pred) +
   labs(y = "SLA (cm2/g log)", x = "", title = "Mean") +
