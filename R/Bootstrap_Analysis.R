@@ -68,8 +68,8 @@ env <- env %>%
 
 ## Climate data - making model for mean change in temp and precip ##
 
-temp_model <- lmer(Temp_yearly_spring ~ Year + (1 | Site), data = env)
-precip_model <- lmer(Precip_yearly ~ Year + (1 | Site), data = env)
+temp_model <- lm(Temp_yearly_spring ~ Year + Site, data = env)
+precip_model <- lm(Precip_yearly ~ Year + Site, data = env)
 
 # summary(temp_model)
 # rsquared(temp_model)
@@ -78,7 +78,7 @@ precip_model <- lmer(Precip_yearly ~ Year + (1 | Site), data = env)
 
 env_predictions <-function(model_temp, model_precip) {
   
-  newdata <- expand.grid(Year=c(2009, 2011, 2012, 2013, 2015, 2016, 2017, 2019), Site = c("Alrust", "Arhelleren", "Fauske", "Gudmedalen", "Hogsete", "Lavisdalen", "Ovstedalen", "Rambera", "Skjellingahaugen", "Ulvehaugen", "Veskre", "Vikesland"))
+  newdata <- expand.grid(Year=c(2009, 2011, 2012, 2013, 2015, 2016, 2017, 2019), Site = c("Alr", "Arh", "Fau", "Gud", "Hog", "Lav", "Ovs", "Ram", "Skj", "Ulv", "Ves", "Vik"))
   
   newdata$temp_modeled <- predict(object = model_temp, newdata = newdata, re.form = NULL, allow.new.levels=TRUE)
   newdata$precip_modeled <- predict(object = model_precip, newdata = newdata, re.form = NULL, allow.new.levels=TRUE)
@@ -89,6 +89,9 @@ env_predictions <-function(model_temp, model_precip) {
 env_pred <- env_predictions(temp_model, precip_model) %>% 
   mutate(Site = as.character(Site))
 
+
+env <- env %>% 
+  left_join(env_pred, by = c("Site" = "Site", "Year" = "Year"))
 
 #### Trait impute ####
 
@@ -168,28 +171,24 @@ sum_moments_fullcommunity <- trait_summarise_boot_moments(Imputed_traits_fullcom
 
 sum_moments_climate_fullcommunity = bind_rows(
   sum_moments_fullcommunity %>% 
-     left_join(env, by = c("siteID" = "siteID", "year" = "Year")) %>% 
-    left_join(env_pred, by = c("siteID" = "Site", "year" = "Year")))
+     left_join(env, by = c("siteID" = "siteID", "year" = "Year")))
 
  sum_moments_climate_without_intra = bind_rows(
    sum_moment_without_intra %>% 
      left_join(turf_site_dict, by = c("turfID" = "turfID")) %>% 
-     left_join(env, by = c("siteID" = "siteID", "year" = "Year")) %>% 
-     left_join(env_pred, by = c("siteID" = "Site", "year" = "Year")))
+     left_join(env, by = c("siteID" = "siteID", "year" = "Year")))
 
  
 moments_clim_long_fullcommunity <- Imputed_traits_fullcommunity %>% 
   pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
   left_join(env, by = c("siteID" = "siteID", "year" = "Year")) %>% 
-  left_join(env_pred, by = c("siteID" = "Site", "year" = "Year")) %>% 
   mutate(year = as.factor(year))
 
 
  moments_clim_long_without_intra <- Imputed_traits_without_intra %>% 
    pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
    left_join(turf_site_dict, by = c("turfID" = "turfID")) %>% 
-   left_join(env, by = c("siteID" = "siteID", "year" = "Year")) %>% 
-   left_join(env_pred, by = c("siteID" = "Site", "year" = "Year"))
+   left_join(env, by = c("siteID" = "siteID", "year" = "Year"))
 
 
 #### Mixed effect model testing ####
@@ -236,7 +235,6 @@ com_data <- community_for_analysis %>%
          forb_cover = sum(forb, na.rm = TRUE),
          other_cover = sum(woody, pteridophyte, `NA`, na.rm = TRUE)) %>% 
   left_join(env, by = c("siteID" = "siteID", "year" = "Year")) %>% 
-  left_join(env_pred, by = c("siteID" = "Site", "year" = "Year")) %>% 
   pivot_longer(cols = c("species_richness", "graminoid_cover", "forb_cover", "other_cover", "total_vascular", "vegetation_height"), names_to = "community_properties", values_to = "value") %>% 
   select(siteID, turfID, Temp_yearly_spring, Precip_yearly, temp_modeled, precip_modeled, year, value, community_properties) %>% 
   group_by(community_properties) %>% 
@@ -254,7 +252,6 @@ com_data_nottrans <- community_for_analysis %>%
          forb_cover = sum(forb, na.rm = TRUE),
          other_cover = sum(woody, pteridophyte, `NA`, na.rm = TRUE)) %>% 
   left_join(env, by = c("siteID" = "siteID", "year" = "Year")) %>% 
-  left_join(env_pred, by = c("siteID" = "Site", "year" = "Year")) %>% 
   pivot_longer(cols = c("species_richness", "graminoid_cover", "forb_cover", "other_cover", "total_vascular", "vegetation_height"), names_to = "community_properties", values_to = "value") %>% 
   select(siteID, turfID, Temp_yearly_spring, Precip_yearly, temp_modeled, precip_modeled, year, value, community_properties) %>% 
   group_by(community_properties) %>% 
@@ -667,6 +664,35 @@ models_trait_predictions <-function(model) {
 }
 
 
+### Makgin function for simpler models on single traits with the modeled climate change in the ten year period ###
+
+model_trait_summary_directional_climate <-function(dat, trait, moment) {
+  
+  
+  # Filter data for model
+  dat2 <- dat %>%
+    filter(Trait_trans == trait,
+           moments == moment,
+           n == 75) %>% 
+    unnest(data) %>% 
+    ungroup() 
+  
+  # Run model
+  model <- lmer(value ~ temp_modeled + temp_modeled*precip_modeled + (1 | year), data = dat2)
+  
+  return(model)
+}
+
+models_trait_predictions_directional_climate <-function(model) {
+  
+  newdata <- expand.grid(precip_modeled=c(0.6, 1.5, 2.3, 3.5), temp_modeled=seq(5,12.5, length=500), year = c(2009, 2011, 2012, 2013, 2015, 2016, 2017, 2019))
+  
+  newdata$predicted <- predict(object = model, newdata = newdata, re.form = NA, allow.new.levels=TRUE)
+  
+  return(newdata)
+}
+
+
 # models_trait_predictions_for_heatmap <-function(model, trait, moment) {
 #   
 #   newdata <- expand.grid(Precip_yearly=c(0.6, 1.5, 2.3, 3.5), Temp_yearly_spring=c(5.5, 7.5, 10.5), year = c(2009, 2011, 2012, 2013, 2015, 2016, 2017, 2019))
@@ -725,6 +751,16 @@ Lth_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "
 Lth_mean_pred <- models_trait_predictions(Lth_mean_sum)
 Lth_skew_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Leaf_Thickness_Ave_mm", "skewness")
 Lth_skew_pred <- models_trait_predictions(Lth_skew_sum)
+
+
+### Making predictions for modeling using the modeled climate change ##
+SLA_mean_direction_climate_sum <- model_trait_summary_directional_climate(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean")
+SLA_mean_directional_climate_pred <- models_trait_predictions_directional_climate(SLA_mean_direction_climate_sum)
+
+Height_mean_direction_climate_sum <- model_trait_summary_directional_climate(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean")
+Height_mean_direction_climate_pred <- models_trait_predictions_directional_climate(Height_mean_direction_climate_sum)
+
+
 
 #### Correlation #### Needs to be updated
 
