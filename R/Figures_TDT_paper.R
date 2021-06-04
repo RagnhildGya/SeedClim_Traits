@@ -599,3 +599,62 @@ Lth_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "Le
 figure <- ggarrange(SLA_mean_plot, SLA_skew_plot, LA_mean_plot, LA_skew_plot, N_mean_plot, N_skew_plot, Height_mean_plot, Height_skew_plot, CN_ratio_mean_plot, CN_ratio_skew_plot, Mass_mean_plot, Mass_skew_plot, LDMC_mean_plot, LDMC_skew_plot, C_mean_plot, C_skew_plot, Lth_mean_plot, Lth_skew_plot, nrow = 5, ncol = 4, common.legend = TRUE, legend = "bottom")
 
 ggsave(plot = figure, filename = "mean_skewness_figure_centered.pdf",  width = 25, height = 29, units = "cm")
+
+### Time with linear change in climate ##
+
+plot_predictions_modeled_climate <-function(dat, trait, moment, newdata) {
+  
+  dat2 <- dat %>%
+    filter(Trait_trans == trait,
+           moments == moment,
+           n == 75) %>% 
+    unnest(data) %>% 
+    ungroup()
+  
+  plot <- ggplot(dat2, aes(x = temp_modeled, y = value)) +
+    geom_point() +
+    geom_line(aes(x = temp_modeled, y = predicted, color = factor(precip_modeled)), data=newdata, size = 1, show.legend = TRUE) +
+    scale_color_manual(values = Precip_palette) +
+    theme_minimal(base_size = 15)
+  
+  return(plot)
+}
+
+SLA_mean_plot_directional_climate <- plot_predictions_modeled_climate(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", SLA_mean_directional_climate_pred) +
+  labs(y = "SLA (cm2/g log)", x = "", title = "Mean") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+plot_predictions_modeled_climate(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean", Height_mean_direction_climate_pred) +
+  labs(y = "Plant height (mm log)", x = "", title = "Mean") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+
+### Plotting by year ####
+
+plot_predictions_year <-function(dat, trait, moment) {
+  
+  dat2 <- dat %>%
+    filter(Trait_trans == trait,
+           moments == moment,
+           n == 75) %>% 
+    unnest(data) %>% 
+    ungroup()
+  
+  plot <- ggplot(dat2, aes(x = year, y = value)) +
+    geom_point() +
+    #geom_line(aes(x = temp_modeled, y = predicted, color = factor(precip_modeled)), data=newdata, size = 1, show.legend = TRUE) +
+    #scale_color_manual(values = Precip_palette) +
+    theme_minimal(base_size = 15)
+  
+  return(plot)
+}
+
+
+plot_predictions_year(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean") +
+  labs(y = "SLA (cm2/g log)", x = "", title = "Mean") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+plot_predictions_year(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean") +
+  labs(y = "Plant height (mm log)", x = "", title = "Mean") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
