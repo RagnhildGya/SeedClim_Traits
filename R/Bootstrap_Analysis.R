@@ -181,8 +181,7 @@ sum_moments_climate_fullcommunity = bind_rows(
  
 moments_clim_long_fullcommunity <- Imputed_traits_fullcommunity %>% 
   pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
-  left_join(env, by = c("siteID" = "siteID", "year" = "Year")) %>% 
-  mutate(year = as.factor(year))
+  left_join(env, by = c("siteID" = "siteID", "year" = "Year"))
 
 
  moments_clim_long_without_intra <- Imputed_traits_without_intra %>% 
@@ -195,7 +194,7 @@ moments_clim_long_fullcommunity <- Imputed_traits_fullcommunity %>%
 
 ### Making dataset for models ###
  
-# With intrspecific variability
+# With intraspecific variability
 memodel_data_fullcommunity <- moments_clim_long_fullcommunity %>% 
   ungroup() %>%
   select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, temp_modeled, precip_modeled, value, year, n) %>% 
@@ -266,6 +265,12 @@ model_time <- function(df) {
   lmer(value ~ scale(Temp_yearly_spring) * scale(Precip_yearly) + (1 | siteID), data = df)
 }
 
+## 2. model testing if traits shifts in time using year as the fixed effect
+
+model_time_year <- function(df) {
+  lmer(value ~ year + (1 | siteID), data = df)
+}
+
 ## 2. model testing if traits shift directionally by using the modeled climate data for directional shift in temp and precip in the ten years.
 
 model_time_predicted <- function(df) {
@@ -318,6 +323,17 @@ mem_results_time_mixed <- memodel_data_fullcommunity %>%
 
 #Step 2) Tidying model output, getting predictions and R2
 tidy_time_model_predicted_mixed <- mem_results_time_mixed %>%
+  mutate(model_output = purrr::map(model, tidy)) %>%
+  mutate(R_squared = purrr::map(model, rsquared))
+
+## Model 2: Trait shifts with time - year ##
+# Step 1) Model
+mem_results_year_mixed <- memodel_data_fullcommunity %>%
+  filter(moments %in% c("mean", "skewness")) %>% 
+  mutate(model = purrr::map(data, model_time_year))
+
+#Step 2) Tidying model output, getting predictions and R2
+tidy_year_model_predicted_mixed <- mem_results_year_mixed %>%
   mutate(model_output = purrr::map(model, tidy)) %>%
   mutate(R_squared = purrr::map(model, rsquared))
 
@@ -541,6 +557,28 @@ model_output_mixed <-function(dat) {
   return(model_output)
 }
 
+model_output_mixed_year <-function(dat) {
+  
+  model_output <- dat %>% 
+    select(Trait_trans, moments, n, model_output, R_squared) %>% 
+    unnest(c(model_output, R_squared)) %>% 
+    filter(term %in% c( "year")) %>% 
+    select(Trait_trans, moments, term, n, estimate, std.error, statistic, df, p.value, Marginal, Conditional) %>% 
+    ungroup() %>% 
+    group_by(Trait_trans, moments, term) %>% 
+    summarize(effect = mean(estimate),
+              R2_marginal = mean(Marginal),
+              R2_conditional = mean(Conditional),
+              CIlow.fit = effect - sd(estimate),
+              CIhigh.fit = effect + sd(estimate),
+              std.error = mean(std.error),
+              staticstic = mean(statistic),
+              df = mean(df),
+              p.value = mean(p.value))
+  
+  return(model_output)
+}
+
 model_output_mixed_predicted_climate <-function(dat) {
   
   model_output <- dat %>% 
@@ -596,8 +634,12 @@ model_output_linear <-function(dat) {
 }
 
 
-model_output_time_mixed <- model_output_mixed(tidy_time_model_predicted_mixed)%>% 
+model_output_time_mixed <- model_output_mixed(tidy_time_model_predicted_mixed) %>% 
   mutate_if(is.numeric, round, digits = 3)
+
+model_output_time_year_mixed <- model_output_mixed_year(tidy_year_model_predicted_mixed) %>% 
+  mutate_if(is.numeric, round, digits = 6)
+
 model_output_time_directional_mixed <- model_output_mixed_predicted_climate(tidy_time_directional_model_predicted_mixed)%>% 
   mutate_if(is.numeric, round, digits = 3)
 #model_output_time_mixed_nottrans <- model_output_mixed(tidy_time_model_predicted_mixed_nottrans) %>% 
