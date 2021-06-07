@@ -529,6 +529,9 @@ plot_predictions <-function(dat, trait, moment, newdata) {
     ungroup()
   
   dat3 <- dat2 %>% 
+    group_by(Trait_trans, moments, siteID, turfID, Temp_yearly_spring) %>% 
+    pivot_wider(names_from = year, values_from = value, values_fn = length) %>% 
+  select("2009", "2019")
     mutate(x_2009 = ifelse(year == "2009", Temp_yearly_spring,
                            NA),
            x_2019 = ifelse(year == "2019", Temp_yearly_spring,
@@ -537,7 +540,8 @@ plot_predictions <-function(dat, trait, moment, newdata) {
                            NA),
            y_2019 = ifelse(year == "2019", value,
                            NA)) %>%
-    select(x_2009, x_2019, y_2009, y_2019)
+    select(x_2009, x_2019, y_2009, y_2019) %>% 
+    
   
   plot <- ggplot(dat2, aes(x = Temp_yearly_spring, y = value)) +
     geom_point(aes(color = year_coloring)) +
