@@ -511,6 +511,10 @@ ggsave(filename = "community_timeandspace.pdf",  width = 27, height = 17, units 
 #   guides(fill = FALSE)
 
 #### Making plots for predicted values and observed values
+dat <- memodel_data_fullcommunity_nottransformed
+trait <- "SLA_cm2_g_log"
+moment <- "mean"
+newdata <- SLA_mean_pred
 
 plot_predictions <-function(dat, trait, moment, newdata) {
   
@@ -524,9 +528,21 @@ plot_predictions <-function(dat, trait, moment, newdata) {
                                            "between"))) %>% 
     ungroup()
   
+  dat3 <- dat2 %>% 
+    mutate(x_2009 = ifelse(year == "2009", Temp_yearly_spring,
+                           NA),
+           x_2019 = ifelse(year == "2019", Temp_yearly_spring,
+                           NA),
+           y_2009 = ifelse(year == "2009", value,
+                           NA),
+           y_2019 = ifelse(year == "2019", value,
+                           NA)) %>%
+    select(x_2009, x_2019, y_2009, y_2019)
+  
   plot <- ggplot(dat2, aes(x = Temp_yearly_spring, y = value)) +
     geom_point(aes(color = year_coloring)) +
     scale_color_manual(values = c("grey", "#2E75B6","black")) +
+    geom_segment(aes(x = x_2009, xend = x_2019, y = y_2009, yend = y_2019), na.rm = TRUE, data = dat3) +
     new_scale_color()+
     geom_line(aes(x = Temp_yearly_spring, y = predicted, color = factor(Precip_yearly)), data=newdata, size = 1, show.legend = TRUE) +
     scale_color_manual(values = Precip_palette) +
