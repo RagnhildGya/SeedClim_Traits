@@ -477,7 +477,7 @@ model_output_com_space_mixed %>%
   theme(axis.title.y=element_blank()) +
   guides(color = FALSE, alpha = FALSE, fill = FALSE)
 
-ggsave(filename = "community_timeandspace.pdf",  width = 27, height = 17, units = "cm")
+#ggsave(filename = "community_timeandspace.pdf",  width = 27, height = 17, units = "cm")
 
 ## Mean linear model ##
 
@@ -651,7 +651,7 @@ plot_predictions_modeled_climate(memodel_data_fullcommunity_nottransformed, "Pla
 
 ### Plotting by year ####
 
-plot_predictions_year <-function(dat, trait, moment) {
+plot_predictions_year <-function(dat, trait, moment, newdata) {
   
   dat2 <- dat %>%
     filter(Trait_trans == trait,
@@ -662,7 +662,7 @@ plot_predictions_year <-function(dat, trait, moment) {
   
   plot <- ggplot(dat2, aes(x = year, y = value)) +
     geom_point() +
-    #geom_line(aes(x = temp_modeled, y = predicted, color = factor(precip_modeled)), data=newdata, size = 1, show.legend = TRUE) +
+    geom_line(aes(x = year, y = predicted, color = factor(siteID)), data=newdata, size = 1, show.legend = TRUE) +
     #scale_color_manual(values = Precip_palette) +
     theme_minimal(base_size = 15)
   
@@ -670,11 +670,11 @@ plot_predictions_year <-function(dat, trait, moment) {
 }
 
 
-plot_predictions_year(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean") +
+plot_predictions_year(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", SLA_mean_temporal_pred) +
   labs(y = "SLA (cm2/g log)", x = "", title = "Mean") +
   theme(plot.title = element_text(hjust = 0.5))
 
-plot_predictions_year(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean") +
+plot_predictions_year(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean", Height_mean_temporal_pred) +
   labs(y = "Plant height (mm log)", x = "", title = "Mean") +
   theme(plot.title = element_text(hjust = 0.5)) 
 
