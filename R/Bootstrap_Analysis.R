@@ -347,13 +347,23 @@ tidy_year_model_predicted_mixed <- mem_results_year_mixed %>%
 #   mutate(R_squared = purrr::map(model, rsquared))
 
 
-## Model 1: Community shifts with time/climate fluctuations ##
+## Model 1: Community shifts with time/climate fluctuations -Community ##
 # Step 1) Model
 mem_results_com_time_mixed <- com_data %>%
   mutate(model = purrr::map(data, model_time))
 
 #Step 2) Tidying model output, getting predictions and R2
 tidy_com_time_model_predicted_mixed <- mem_results_com_time_mixed %>%
+  mutate(model_output = purrr::map(model, tidy)) %>%
+  mutate(R_squared = purrr::map(model, rsquared)) 
+
+## Model 2: Trait shifts with time - year - Community ##
+# Step 1) Model
+mem_results_com_time_year_mixed <- com_data %>%
+  mutate(model = purrr::map(data, model_time_year))
+
+#Step 2) Tidying model output, getting predictions and R2
+tidy_com_time_year_model_predicted_mixed <- mem_results_com_time_year_mixed %>%
   mutate(model_output = purrr::map(model, tidy)) %>%
   mutate(R_squared = purrr::map(model, rsquared)) 
 
@@ -562,7 +572,7 @@ model_output_mixed_year <-function(dat) {
   model_output <- dat %>% 
     select(Trait_trans, moments, n, model_output, R_squared) %>% 
     unnest(c(model_output, R_squared)) %>% 
-    filter(term %in% c( "year")) %>% 
+    filter(term %in% c("(Intercept)", "year")) %>% 
     select(Trait_trans, moments, term, n, estimate, std.error, statistic, df, p.value, Marginal, Conditional) %>% 
     ungroup() %>% 
     group_by(Trait_trans, moments, term) %>% 
@@ -613,6 +623,19 @@ model_output_com_mixed <-function(dat) {
   return(model_output)
 }
 
+model_output_com_year_mixed <-function(dat) {
+  
+  model_output <- dat %>% 
+    select(community_properties, model_output, R_squared) %>% 
+    unnest(c(model_output, R_squared)) %>% 
+    filter(term %in% c("year")) %>% 
+    select(community_properties, term, estimate, std.error, statistic, df, p.value, Marginal, Conditional) %>% 
+    ungroup() 
+  
+  return(model_output)
+}
+
+
 
 model_output_linear <-function(dat) {
   
@@ -648,6 +671,8 @@ model_output_time_mixed_wi <- model_output_mixed(tidy_time_model_predicted_mixed
   mutate_if(is.numeric, round, digits = 3)
 #model_output_time_linear <- model_output_linear(tidy_time_model_predicted_linear)
 model_output_com_time_mixed <- model_output_com_mixed(tidy_com_time_model_predicted_mixed) %>% 
+  mutate_if(is.numeric, round, digits = 3)
+model_output_com_time_year_mixed <- model_output_com_year_mixed(tidy_com_time_year_model_predicted_mixed) %>% 
   mutate_if(is.numeric, round, digits = 3)
 # model_output_com_time_mixed_nottrans <- model_output_com_mixed(tidy_com_time_model_predicted_mixed_nottrans) %>% 
 #   mutate_if(is.numeric, round, digits = 3)
