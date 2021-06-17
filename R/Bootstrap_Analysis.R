@@ -635,7 +635,7 @@ model_output_linear <-function(dat) {
 
 
 model_output_time_mixed <- model_output_mixed(tidy_time_model_predicted_mixed) %>% 
-  mutate_if(is.numeric, round, digits = 3)
+  mutate_if(is.numeric, round, digits = 5)
 
 model_output_time_year_mixed <- model_output_mixed_year(tidy_year_model_predicted_mixed) %>% 
   mutate_if(is.numeric, round, digits = 6)
@@ -708,7 +708,7 @@ models_trait_predictions <-function(model) {
 
 ### Makgin function for simpler models on single traits with the modeled climate change in the ten year period ###
 
-model_trait_summary_directional_climate <-function(dat, trait, moment) {
+model_trait_summary_spatial_climate <-function(dat, trait, moment) {
   
   
   # Filter data for model
@@ -720,14 +720,31 @@ model_trait_summary_directional_climate <-function(dat, trait, moment) {
     ungroup() 
   
   # Run model
-  model <- lmer(value ~ temp_modeled + temp_modeled*precip_modeled + (1 | year), data = dat2)
+  model <- lmer(value ~ Temp_yearly_spring * Precip_yearly + (1 | siteID), data = dat2)
   
   return(model)
 }
 
-models_trait_predictions_directional_climate <-function(model) {
+model_trait_summary_temporal <-function(dat, trait, moment) {
   
-  newdata <- expand.grid(precip_modeled=c(0.6, 1.5, 2.3, 3.5), temp_modeled=seq(5,12.5, length=500), year = c(2009, 2011, 2012, 2013, 2015, 2016, 2017, 2019))
+  
+  # Filter data for model
+  dat2 <- dat %>%
+    filter(Trait_trans == trait,
+           moments == moment,
+           n == 75) %>% 
+    unnest(data) %>% 
+    ungroup() 
+  
+  # Run model
+  model <- lmer(value ~ year + (1 | siteID), data = dat2)
+  
+  return(model)
+}
+
+models_trait_predictions_siteID <-function(model) {
+  
+  newdata <- expand.grid( year = c(2009, 2011, 2012, 2013, 2015, 2016, 2017, 2019), siteID = c("Alrust", "Arhelleren", "Fauske", "Gudmedalen", "Hogsete", "Lavisdalen", "Ovstedalen", "Rambera", "Skjelingahaugen", "Ulvehaugen", "Veskre", "Vikesland"))
   
   newdata$predicted <- predict(object = model, newdata = newdata, re.form = NA, allow.new.levels=TRUE)
   
@@ -752,6 +769,18 @@ SLA_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "
 SLA_mean_pred <- models_trait_predictions(SLA_mean_sum)
 SLA_skew_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "skewness")
 SLA_skew_pred <- models_trait_predictions(SLA_skew_sum)
+
+SLA_mean_spatial_climate_sum <- model_trait_summary_spatial_climate(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean")
+SLA_mean_spatial_pred <- models_trait_predictions_siteID(SLA_mean_spatial_climate_sum)
+
+
+Height_mean_temporal_sum <- model_trait_summary_temporal(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean")
+Height_mean_temporal_pred <- models_trait_predictions_siteID(Height_mean_temporal_sum)
+
+Height_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean")
+Height_mean_pred <- models_trait_predictions(Height_mean_sum)
+
+
 
 CN_ratio_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "CN_ratio_log", "mean")
 CN_ratio_mean_pred <- models_trait_predictions(CN_ratio_mean_sum)
