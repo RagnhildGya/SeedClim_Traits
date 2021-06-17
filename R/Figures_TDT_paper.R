@@ -145,7 +145,7 @@ precipLab <- c("Driest", "Dry", "Wet", "Wettest")
 tempLab <- c("Alpine", "Sub-alpine", "Boreal")
 
 xlim <- range(dat$Longitude) + c(-1, 0.5)
-ylim <- range(dat$Latitude) + c(-0.5, 1)
+ylim <- range(dat$Latitude) + c(-0.3, 1.3)
 
 
 norwaymap <- map_data("world", "Norway")
@@ -198,8 +198,8 @@ Zoomed_in_map <- ggplot(dat, aes(x = Longitude, y = Latitude, fill = Precipitati
 library(patchwork)
 
 plot <- Zoomed_in_map +
-  inset_element(climate, left = 0.46, bottom = 0.55, right = 0.93, top = 1, align_to = "plot") +
-  inset_element(Norway_map, left = 0.7, bottom = 0.07, right = 0.95, top = 0.39, align_to = "plot") +
+  inset_element(climate, left = 0.2, bottom = 0.55, right = 0.65, top = 1, align_to = "plot") +
+  inset_element(Norway_map, left = 0.65, bottom = 0.5, right = 1, top = 1, align_to = "plot") +
   plot_layout(guides = 'collect', widths = 1, heights = 1) 
 
 #ggsave(plot = plot, "SeedClim_climate_grid.pdf", width = 34, height = 22, units = "cm")
@@ -678,3 +678,21 @@ plot_predictions_year(memodel_data_fullcommunity_nottransformed, "Plant_Height_m
   labs(y = "Plant height (mm log)", x = "", title = "Mean") +
   theme(plot.title = element_text(hjust = 0.5)) 
 
+
+### Make a heatplot of effect size and p-value for the model outputs ###
+model_output_everything <- model_output_time_year_mixed %>% 
+  select(Trait_trans, moments, term, effect, p.value) %>% 
+  mutate(model = "year") %>% 
+  bind_rows(model_output_time_mixed  %>% 
+              select(Trait_trans, moments, term, effect, p.value) %>% 
+              mutate(model = "temporal_fluctuations")) %>%  
+  bind_rows(model_output_space_mixed  %>% 
+              select(Trait_trans, moments, term, effect, p.value) %>% 
+              mutate(model = "space_for_time")) %>% 
+  mutate(unique_name = )
+  pivot_wider(names_from = , values_from =)
+
+library(ztable)
+
+z <- ztable(model_output_everything) 
+print(z,caption="Table 1. Basic Table")
