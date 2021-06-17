@@ -844,30 +844,29 @@ pca_trait_results <- get_pca_ind(pca_trait)
 
 #### Constrained ordination ####
 
-# RDA <- rda(Ord_boot_traits[, -(1:3)]~ Temp+Precip, scale = TRUE, data = Ord_boot_traits)
-# 
-# autoplot(RDA) +
-#   theme_bw()
-# 
-# autoplot(RDA, arrows = TRUE, data = PCA_boot_traits) +
-#   scale_x_continuous(expand = c(0.22, 0)) +
-#   geom_point(data = RDA, aes(RDA1, RDA2), size=2) +
-#   geom_abline(intercept = 0,slope = 0,linetype="dashed", size=0.8) +
-#   geom_vline(aes(xintercept=0), linetype="dashed", size=0.8) + labs(x = "Axis 1", y="Axis 2") + 
-#   theme_bw()
-# 
-# RDA_fort <- fortify(RDA)
-# 
-# ggplot(RDA_fort, aes(x = RDA1, y = RDA2)) +
-#   geom_point(show.legend = FALSE) +
-#   scale_size(range = 2) +
-#   coord_equal()
-# 
-# 
-# RDA_VPD
-# plot(RDA)
-# screeplot(RDA)
-# 
-# coef(RDA)
-# 
-# RsquareAdj(RDA)$adj.r.squared
+ RDA <- rda(Ord_boot_traits[, -(1:6)]~ year, scale = TRUE, data = Ord_boot_traits)
+ 
+ autoplot(RDA, arrows = TRUE) +
+   theme_bw()
+ 
+ autoplot(RDA, arrows = TRUE, data = Ord_boot_traits) +
+   scale_x_continuous(expand = c(0.22, 0)) +
+   geom_point(data = RDA, aes(PC1, PC2), size=2) +
+   geom_abline(intercept = 0,slope = 0,linetype="dashed", size=0.8) +
+   geom_vline(aes(xintercept=0), linetype="dashed", size=0.8) + labs(x = "Axis 1", y="Axis 2") + 
+   theme_bw()
+ 
+ RDA_fort <- fortify(RDA)
+ 
+ ggplot(RDA_fort, aes(x = PC1, y = PC2)) +
+   geom_point(show.legend = FALSE) +
+   scale_size(range = 2) +
+   coord_equal() 
+ 
+  
+ plot(RDA)
+ screeplot(RDA)
+ 
+ coef(RDA)
+ 
+ RsquareAdj(RDA)$adj.r.squared
