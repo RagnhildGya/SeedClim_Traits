@@ -761,7 +761,7 @@ model_trait_summary_temporal <-function(dat, trait, moment) {
     ungroup() 
   
   # Run model
-  model <- lmer(value ~ year + (1 | siteID), data = dat2)
+  model <- lm(value ~ year * siteID, data = dat2)
   
   return(model)
 }
@@ -899,29 +899,24 @@ pca_trait_results <- get_pca_ind(pca_trait)
 
 #### Constrained ordination ####
 
- RDA <- rda(Ord_boot_traits[, -(1:6)]~ year, scale = TRUE, data = Ord_boot_traits)
+RDA_space <- rda(Ord_boot_traits[, -(1:6)]~ Temp_level*Precip_level, scale = TRUE, data = Ord_boot_traits)
+RDA_without_interaction <- rda(Ord_boot_traits[, -(1:6)]~ Temp_level*Precip_level + year, scale = TRUE, data = Ord_boot_traits)
+RDA_space_and_time <- rda(Ord_boot_traits[, -(1:6)]~ Temp_level*Precip_level * year, scale = TRUE, data = Ord_boot_traits)
+
+anova(RDA_space, RDA_without_interaction)
+anova(RDA_space, RDA_space_and_time)
+anova(RDA_without_interaction, RDA_space_and_time)
  
  autoplot(RDA, arrows = TRUE) +
    theme_bw()
- 
- autoplot(RDA, arrows = TRUE, data = Ord_boot_traits) +
-   scale_x_continuous(expand = c(0.22, 0)) +
-   geom_point(data = RDA, aes(PC1, PC2), size=2) +
-   geom_abline(intercept = 0,slope = 0,linetype="dashed", size=0.8) +
-   geom_vline(aes(xintercept=0), linetype="dashed", size=0.8) + labs(x = "Axis 1", y="Axis 2") + 
-   theme_bw()
- 
+
  RDA_fort <- fortify(RDA)
  
- ggplot(RDA_fort, aes(x = PC1, y = PC2)) +
+ ggplot(RDA_fort, aes(x = RDA1, y = RDA2)) +
    geom_point(show.legend = FALSE) +
    scale_size(range = 2) +
    coord_equal() 
- 
-  
- plot(RDA)
- screeplot(RDA)
- 
- coef(RDA)
+
  
  RsquareAdj(RDA)$adj.r.squared
+ 
