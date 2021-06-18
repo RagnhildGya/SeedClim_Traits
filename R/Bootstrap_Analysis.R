@@ -848,13 +848,6 @@ Lth_skew_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "
 Lth_skew_pred <- models_trait_predictions(Lth_skew_sum)
 
 
-### Making predictions for modeling using the modeled climate change ##
-SLA_mean_direction_climate_sum <- model_trait_summary_directional_climate(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean")
-SLA_mean_directional_climate_pred <- models_trait_predictions_directional_climate(SLA_mean_direction_climate_sum)
-
-Height_mean_direction_climate_sum <- model_trait_summary_directional_climate(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean")
-Height_mean_direction_climate_pred <- models_trait_predictions_directional_climate(Height_mean_direction_climate_sum)
-
 ### Finding the start values for skewness in 2009 to see change in time ###
 
 moments_clim_long_fullcommunity %>% 
