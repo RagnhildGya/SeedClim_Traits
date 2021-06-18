@@ -208,7 +208,6 @@ memodel_data_fullcommunity_nottransformed <- moments_clim_long_fullcommunity %>%
   group_by(Trait_trans, moments, n) %>% 
   nest()
 
-
 # Without intraspecific variability
 memodel_data_without_intra <- moments_clim_long_without_intra %>% 
   ungroup() %>%
@@ -856,7 +855,16 @@ SLA_mean_directional_climate_pred <- models_trait_predictions_directional_climat
 Height_mean_direction_climate_sum <- model_trait_summary_directional_climate(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean")
 Height_mean_direction_climate_pred <- models_trait_predictions_directional_climate(Height_mean_direction_climate_sum)
 
+### Finding the start values for skewness in 2009 to see change in time ###
 
+moments_clim_long_fullcommunity %>% 
+  select(siteID, Trait_trans, year, moments, value) %>% 
+  filter(moments == "skewness",
+         year == "2009") %>% 
+  group_by(Trait_trans) %>% 
+  summarise(skewness = mean(value),
+            CIlow = skewness - sd(value),
+            CIhigh = skewness + sd(value))
 
 #### Correlation #### Needs to be updated
 
