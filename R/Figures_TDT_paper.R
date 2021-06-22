@@ -651,20 +651,24 @@ plot_predictions_modeled_climate(memodel_data_fullcommunity_nottransformed, "Pla
 
 ### Plotting by year ####
 
-plot_predictions_year <-function(dat, trait, moment, newdata) {
+plot_predictions_year <-function(dat, trait, moment) {
   
   dat2 <- dat %>%
     filter(Trait_trans == trait,
            moments == moment,
            n == 75) %>% 
     unnest(data) %>% 
-    ungroup()
+    ungroup() %>% 
+    left_join(env, by = c("siteID" = "siteID")) %>% 
+    select(year, value, siteID, Temp_level, Precip_level)
   
-  plot <- ggplot(dat2, aes(x = year, y = value)) +
+  plot <- ggplot(dat2, aes(x = year, y = value, color = Precip_level)) +
     geom_point() +
-    geom_line(aes(x = year, y = predicted, color = factor(siteID)), data=newdata, size = 1, show.legend = TRUE) +
-    #scale_color_manual(values = Precip_palette) +
-    theme_minimal(base_size = 15)
+    geom_smooth(method = "lm") +
+    #geom_line(aes(x = year, y = predicted, color = factor(siteID)), data=newdata, size = 1, show.legend = TRUE) +
+    scale_color_manual(values = Precip_palette) +
+    theme_minimal(base_size = 15) +
+    facet_grid(~Temp_level)
   
   return(plot)
 }
@@ -676,6 +680,31 @@ plot_predictions_year(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log"
 
 plot_predictions_year(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean", Height_mean_temporal_pred) +
   labs(y = "Plant height (mm log)", x = "", title = "Mean") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+plot_predictions_year(memodel_data_fullcommunity_nottransformed, "LDMC", "mean") +
+  labs(y = "LDMC", x = "", title = "Mean") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+plot_predictions_year(memodel_data_fullcommunity_nottransformed, "C_percent", "mean") +
+  labs(y = "C_percent", x = "", title = "Mean") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+
+plot_predictions_year(memodel_data_fullcommunity_nottransformed, "Dry_Mass_g_log", "skewness") +
+  labs(y = "Dry mass", x = "", title = "Skewness") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+plot_predictions_year(memodel_data_fullcommunity_nottransformed, "N_percent", "skewness") +
+  labs(y = "N_percent", x = "", title = "Skewness") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+plot_predictions_year(memodel_data_fullcommunity_nottransformed, "CN_ratio_log", "skewness") +
+  labs(y = "C/N ratio", x = "", title = "Skewness") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+plot_predictions_year(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "skewness") +
+  labs(y = "Plant height", x = "", title = "Skewness") +
   theme(plot.title = element_text(hjust = 0.5)) 
 
 
