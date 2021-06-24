@@ -748,3 +748,28 @@ Explained_variance_RDA %>%
   ylab("Variance explained")
 
 ggsave(filename = "Variance_explained.png",  width = 20, height = 14, units = "cm")
+
+## Mean & Skewness figures ##
+
+model_output_space_mixed %>% 
+  select(Trait_trans, term, moments, effect) %>% 
+  pivot_wider(names_from = moments, values_from = effect) %>% 
+  unique() %>% 
+  left_join(skewness_2009, by = "Trait_trans", suffix = c("_change", "2009")) %>% 
+  ggplot(aes(x = mean, y = skewness_change, color = Trait_trans)) +
+  geom_point() +
+  geom_hline(yintercept = 0) +
+  geom_vline(xintercept = 0) +
+  facet_grid(~term)
+
+model_output_time_year_mixed %>% 
+  select(Trait_trans, term, moments, effect) %>% 
+  filter(!term == "(Intercept)") %>% 
+  pivot_wider(names_from = moments, values_from = effect) %>% 
+  unique() %>% 
+  left_join(skewness_2009, by = "Trait_trans", suffix = c("_change", "2009")) %>% 
+  select(-CIlow, -CIhigh) %>% 
+  ggplot(aes(x = mean, y = skewness2009, color = Trait_trans)) +
+  geom_point() +
+  geom_hline(yintercept = 0) +
+  geom_vline(xintercept = 0) 
