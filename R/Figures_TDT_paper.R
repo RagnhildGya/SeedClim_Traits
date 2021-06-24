@@ -21,23 +21,23 @@ Precip_palette <- c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")
 ## Without intraspecific plot ##
 # This code is to test if the without intra bootstrapping worked
 
- plot1 <- sum_moments_climate_without_intra %>% 
-   filter(Trait_trans == "SLA_cm2_g_log") %>% 
- ggplot(aes(x = Precip_yearly, y = mean, color = Temp_level))+
-   geom_point() +
-   geom_smooth(method = "lm") +
-   ylim(c(4.75, 5.75)) +
-   ggtitle("Without intraspecific")
- 
- plot2 <- sum_moments_climate_fullcommunity %>% 
-   filter(Trait_trans == "SLA_cm2_g_log") %>% 
-   ggplot(aes(x = Precip_yearly, y = mean, color = Temp_level))+
-   geom_point() +
-   geom_smooth(method = "lm") +
-   ylim(c(4.75, 5.75)) +
-   ggtitle("With intraspecific")
- 
- ggarrange(plot1, plot2, ncol = 2)
+plot1 <- sum_moments_climate_without_intra %>% 
+  filter(Trait_trans == "SLA_cm2_g_log") %>% 
+  ggplot(aes(x = Precip_yearly, y = mean, color = Temp_level))+
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylim(c(4.75, 5.75)) +
+  ggtitle("Without intraspecific")
+
+plot2 <- sum_moments_climate_fullcommunity %>% 
+  filter(Trait_trans == "SLA_cm2_g_log") %>% 
+  ggplot(aes(x = Precip_yearly, y = mean, color = Temp_level))+
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylim(c(4.75, 5.75)) +
+  ggtitle("With intraspecific")
+
+ggarrange(plot1, plot2, ncol = 2)
 
 env_shift <- env %>% 
   group_by(Site) %>% 
@@ -56,8 +56,8 @@ env_shift <- env %>%
 
 env %>% 
   mutate(Temp_level = recode(Temp_level, "10.5" = "Boreal",
-                           "8.5" = "Sub-alpine",
-                           "6.5" = "Alpine")) %>% 
+                             "8.5" = "Sub-alpine",
+                             "6.5" = "Alpine")) %>% 
   ggplot(aes(x = Year, y = Temp_summer)) +
   geom_point() +
   geom_smooth(method = "lm") +
@@ -69,7 +69,7 @@ env %>%
   scale_x_continuous(breaks = c(2009, 2011, 2013, 2015, 2017, 2019))
 
 ggsave("Temperature_over_time.pdf", width = 20 , height = 11, units = "cm")
-  
+
 
 env %>% 
   mutate(Precip_level = recode(Precip_level, "600" = "Driest",
@@ -94,16 +94,16 @@ climate <- env %>%
                            "8.5" = "Sub-alpine 1960-90",
                            "6.5" = "Alpine 1960-90")) %>% 
   mutate(Temp_level = recode(Temp_level, "10.5" = "Boreal 2009-19",
-                           "8.5" = "Sub-alpine 2009-19",
-                           "6.5" = "Alpine 2009-19")) %>% 
+                             "8.5" = "Sub-alpine 2009-19",
+                             "6.5" = "Alpine 2009-19")) %>% 
   mutate(Precip_level = recode(Precip_level, "600" = "Driest",
-                             "1200" = "Dry",
-                             "2000" = "Wet",
-                             "2700" = "Wettest")) %>% 
+                               "1200" = "Dry",
+                               "2000" = "Wet",
+                               "2700" = "Wettest")) %>% 
   mutate(Temp_old = factor(Temp_old, levels = c("Alpine 1960-90", "Boreal 1960-90", "Sub-alpine 1960-90"))) %>%
   mutate(Temp_level = factor(Temp_level, levels = c("Alpine 2009-19", "Boreal 2009-19", "Sub-alpine 2009-19"))) %>%
-ggplot(aes(x = Precip_decade, y = Temp_decade,
-           color = Precip_level, fill = Precip_level, shape = Temp_level)) +
+  ggplot(aes(x = Precip_decade, y = Temp_decade,
+             color = Precip_level, fill = Precip_level, shape = Temp_level)) +
   geom_point(aes(x = Precip_century, y = Temp_century, shape = Temp_old, size = 10)) +
   geom_segment(aes(x = Precip_decade, y = Temp_decade, yend = Temp_century, xend = Precip_century, size = 1)) +
   geom_pointrange(aes(ymin = Temp_decade-Temp_se, ymax = Temp_decade+Temp_se, size = 1)) +
@@ -205,13 +205,13 @@ plot <- Zoomed_in_map +
 ggsave(plot = plot, "SeedClim_climate_grid.pdf", width = 34, height = 22, units = "cm")
 
 
-  # png("SeedClim_climate_grid.png", width = 1285, height = 861)
-  # grid.newpage()
-  # vp_zoomed_in_map <- viewport(width = 1, height = 1, x = 0.5, y = 0.5)  # the zoomed in map
-  # vp_norway_map <- viewport(width = 0.4, height = 0.4, x = 0.685, y = 0.8)  # the inset in upper left of scandinacia
-  # print(Zoomed_in_map, vp = vp_zoomed_in_map)
-  # print(Norway_map, vp = vp_norway_map)
-  # dev.off()
+# png("SeedClim_climate_grid.png", width = 1285, height = 861)
+# grid.newpage()
+# vp_zoomed_in_map <- viewport(width = 1, height = 1, x = 0.5, y = 0.5)  # the zoomed in map
+# vp_norway_map <- viewport(width = 0.4, height = 0.4, x = 0.685, y = 0.8)  # the inset in upper left of scandinacia
+# print(Zoomed_in_map, vp = vp_zoomed_in_map)
+# print(Norway_map, vp = vp_norway_map)
+# dev.off()
 
 ### Community weighted skewness over time in different temp levels ###
 
@@ -284,10 +284,10 @@ fviz_eig(pca_trait, addlabels = TRUE) #Visualize eigenvalues/scree plot
 #### Ordination with traits ####
 
 Ord_plot_traits <- fviz_pca_biplot(pca_trait, repel = TRUE,
-                col.var = "#2A2A2A", # Variables color
-                col.ind = "#AAB7B8",
-                label = "var",
-                labelsize = 5) +
+                                   col.var = "#2A2A2A", # Variables color
+                                   col.ind = "#AAB7B8",
+                                   label = "var",
+                                   labelsize = 5) +
   theme_minimal(base_size = 14) +
   guides(shape = FALSE) +
   #scale_color_manual(name = "Summer temperature", values = c("#8DD5E1", "#FCB971", "#B93B3B")) +
@@ -303,13 +303,13 @@ Ord_plot_traits <- fviz_pca_biplot(pca_trait, repel = TRUE,
 
 
 Ord_plot_temp <- fviz_pca_ind(pca_trait, repel = TRUE,
-                col.var = "#2A2A2A", # Variables color
-                label = "none",
-                labelsize = 5, 
-                habillage = Ord_boot_traits$Temp_level, 
-                addEllipses = TRUE,
-                ellipse.level = 0.95,
-                palette = c("#d8c593", "#dd7631", "#bb3b0e")) +
+                              col.var = "#2A2A2A", # Variables color
+                              label = "none",
+                              labelsize = 5, 
+                              habillage = Ord_boot_traits$Temp_level, 
+                              addEllipses = TRUE,
+                              ellipse.level = 0.95,
+                              palette = c("#d8c593", "#dd7631", "#bb3b0e")) +
   theme_minimal(base_size = 14) +
   #scale_color_manual(name = "Summer temperature", values = c("#8DD5E1", "#FCB971", "#B93B3B")) +
   theme(legend.text=element_text(size=14), legend.title = element_text(size = 14), plot.title = element_blank(), axis.title = element_blank()) +
@@ -323,32 +323,32 @@ Ord_plot_temp <- fviz_pca_ind(pca_trait, repel = TRUE,
 ### Ordination with precipitation ####
 
 Ord_plot_precip <- fviz_pca_ind(pca_trait, repel = TRUE,
-              col.var = "#2A2A2A", # Variables color
-              label = "none",
-              labelsize = 5, 
-              habillage = Ord_boot_traits$Precip_level, 
-              addEllipses = TRUE,
-              ellipse.level = 0.95,
-              palette = c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")) +
+                                col.var = "#2A2A2A", # Variables color
+                                label = "none",
+                                labelsize = 5, 
+                                habillage = Ord_boot_traits$Precip_level, 
+                                addEllipses = TRUE,
+                                ellipse.level = 0.95,
+                                palette = c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")) +
   theme_minimal(base_size = 15) +
-    #scale_color_manual(name = "Summer temperature", values = c("#8DD5E1", "#FCB971", "#B93B3B")) +
+  #scale_color_manual(name = "Summer temperature", values = c("#8DD5E1", "#FCB971", "#B93B3B")) +
   theme(legend.text=element_text(size=14), legend.title = element_text(size = 14), plot.title = element_blank(), axis.title = element_blank()) +
   labs(title = "", fill = "Yearly precipitation", color = "Yearly precipitation", shape = "Yearly precipitation") +
   coord_fixed() +
   theme(plot.title = element_text(hjust = 0.1))
 
 #ggsave("Ordination_Precip.svg", width = 18 , height = 11, units = "cm", dpi = 600)
-  
+
 ## Ordination over time ##
-  
-  
+
+
 pca_fort <- fortify(pca_trait, display = "Sites") %>% 
   bind_cols(Ord_boot_traits[1:6]) %>% 
   filter(year %in% c(2009, 2019)) 
-  
+
 
 Ord_plot_time <- pca_fort %>% 
-ggplot(aes(x = PC1, y = PC2, colour = Temp_level, group = turfID)) +
+  ggplot(aes(x = PC1, y = PC2, colour = Temp_level, group = turfID)) +
   geom_path() + #use geom_path not geom_line
   geom_point(aes(size = if_else(year == 2009, 1, NA_real_)), show.legend = FALSE) +
   #scale_color_viridis_d() +
@@ -398,7 +398,7 @@ time_mixed <- model_output_time_mixed %>%
   filter(moments == "mean") %>% 
   dplyr::select(Trait_trans, moments, term, effect, std.error, p.value) %>% 
   mutate(moments = "time")
-  #filter(Trait_trans %in% c("SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))
+#filter(Trait_trans %in% c("SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))
 
 
 space_mixed_wi <- model_output_space_mixed_wi %>% 
@@ -524,26 +524,26 @@ plot_predictions <-function(dat, trait, moment, newdata) {
            n == 75) %>% 
     unnest(data) %>% 
     mutate(year_coloring = ifelse(year == "2009", "first",
-                                    ifelse(year == "2019", "last",
-                                           "between"))) %>% 
+                                  ifelse(year == "2019", "last",
+                                         "between"))) %>% 
     ungroup()
   
   dat3 <- dat2 %>% 
     group_by(Trait_trans, moments, siteID, turfID, Temp_yearly_spring) %>% 
     pivot_wider(names_from = year, values_from = value, values_fn = length) %>% 
-  select("2009", "2019")
-    mutate(x_2009 = ifelse(year == "2009", Temp_yearly_spring,
-                           NA),
-           x_2019 = ifelse(year == "2019", Temp_yearly_spring,
-                           NA),
-           y_2009 = ifelse(year == "2009", value,
-                           NA),
-           y_2019 = ifelse(year == "2019", value,
-                           NA)) %>%
+    select("2009", "2019")
+  mutate(x_2009 = ifelse(year == "2009", Temp_yearly_spring,
+                         NA),
+         x_2019 = ifelse(year == "2019", Temp_yearly_spring,
+                         NA),
+         y_2009 = ifelse(year == "2009", value,
+                         NA),
+         y_2019 = ifelse(year == "2019", value,
+                         NA)) %>%
     select(x_2009, x_2019, y_2009, y_2019) %>% 
     
-  
-  plot <- ggplot(dat2, aes(x = Temp_yearly_spring, y = value)) +
+    
+    plot <- ggplot(dat2, aes(x = Temp_yearly_spring, y = value)) +
     geom_point(aes(color = year_coloring)) +
     scale_color_manual(values = c("grey", "#2E75B6","black")) +
     geom_segment(aes(x = x_2009, xend = x_2019, y = y_2009, yend = y_2019), na.rm = TRUE, data = dat3) +
@@ -551,7 +551,7 @@ plot_predictions <-function(dat, trait, moment, newdata) {
     geom_line(aes(x = Temp_yearly_spring, y = predicted, color = factor(Precip_yearly)), data=newdata, size = 1, show.legend = TRUE) +
     scale_color_manual(values = Precip_palette) +
     theme_minimal(base_size = 15) 
-
+  
   return(plot)
 }
 
@@ -719,9 +719,32 @@ model_output_everything <- model_output_time_year_mixed %>%
               select(Trait_trans, moments, term, effect, p.value) %>% 
               mutate(model = "space_for_time")) %>% 
   mutate(unique_name = )
-  pivot_wider(names_from = , values_from =)
+pivot_wider(names_from = , values_from =)
 
 library(ztable)
 
 z <- ztable(model_output_everything) 
 print(z,caption="Table 1. Basic Table")
+
+Explained_variance_RDA <- read.table(header = TRUE, stringsAsFactors = TRUE, text = 
+                                       "x model variance
+                               1 Temperature 0.2306
+                               1 Precipitation 0.1556
+                               1 Temp*Precip 0.1765
+                               1 Temp*Precip*Year 0.0169
+                               1 Unexplained 0.4195
+                               ")
+
+Explained_variance_RDA %>% 
+  mutate(model = factor(model, levels = c("Unexplained", "Temp*Precip*Year", "Temp*Precip",  "Temperature", "Precipitation"))) %>% 
+  ggplot(aes(x = x, fill = model, y = variance)) +
+  geom_bar(position = "stack", stat = "identity") +
+  scale_fill_manual(values = c("#CCCBCC", "#BAD8F7", "#89B7E1", "#2E75B6", "#213964")) +
+  theme_minimal(base_size = 18) +
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        legend.title = element_blank()) +
+  ylab("Variance explained")
+
+ggsave(filename = "Variance_explained.png",  width = 20, height = 14, units = "cm")
