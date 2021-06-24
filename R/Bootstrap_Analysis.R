@@ -849,7 +849,7 @@ Lth_skew_pred <- models_trait_predictions(Lth_skew_sum)
 
 ### Finding the start values for skewness in 2009 to see change in time ###
 
-moments_clim_long_fullcommunity %>% 
+skewness_2009 <- moments_clim_long_fullcommunity %>% 
   select(siteID, Trait_trans, year, moments, value) %>% 
   filter(moments == "skewness",
          year == "2009") %>% 
