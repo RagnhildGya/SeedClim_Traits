@@ -7,14 +7,14 @@ source("R/Cleaning.R")
 
 #### Libraries ####
 
- library(broom.mixed)
- library(lme4)
- library(lmerTest)
- library(purrr)
- library(piecewiseSEM)
- library(factoextra)
+library(broom.mixed)
+library(lme4)
+library(lmerTest)
+library(purrr)
+library(piecewiseSEM)
+library(factoextra)
 # library(GGally)
- library(ggcorrplot)
+library(ggcorrplot)
 # library(textshape)
 library(traitstrap)
 library(vegan)
@@ -95,20 +95,20 @@ env <- env %>%
 
 #### Trait impute ####
 
- Trait_impute_per_year <- function(com_dat, trait_dat){
-   
-   SeedClim_traits <- trait_np_bootstrap(trait_impute(comm = com_dat,
-                                   traits = trait_dat, 
-                                   scale_hierarchy = c("siteID", "blockID", "turfID"),
-                                   global = TRUE,
-                                   taxon_col = c("Full_name", "Genus", "Family"),
-                                   trait_col = "Trait_trans",
-                                   value_col = "Value",
-                                   other_col = "year",
-                                   abundance_col = "cover"))
-   
-   return(SeedClim_traits)
- }
+Trait_impute_per_year <- function(com_dat, trait_dat){
+  
+  SeedClim_traits <- trait_np_bootstrap(trait_impute(comm = com_dat,
+                                                     traits = trait_dat, 
+                                                     scale_hierarchy = c("siteID", "blockID", "turfID"),
+                                                     global = TRUE,
+                                                     taxon_col = c("Full_name", "Genus", "Family"),
+                                                     trait_col = "Trait_trans",
+                                                     value_col = "Value",
+                                                     other_col = "year",
+                                                     abundance_col = "cover"))
+  
+  return(SeedClim_traits)
+}
 
 
 Imputed_traits_fullcommunity <- Trait_impute_per_year(com_dat = community_for_boostrapping, trait_dat = traitdata_2)
@@ -119,81 +119,81 @@ sum_moments_fullcommunity <- trait_summarise_boot_moments(Imputed_traits_fullcom
 #traitstrap:::autoplot.imputed_trait(Imputed_traits_without_intra) 
 
 
- Trait_impute_without_intraA <- function(com_dat, trait_dat){
-   
-   trait_dat <- trait_dat %>% 
-     mutate(turfID = "")
-   
-   com_dat <- com_dat %>% 
-     filter(siteID %in% c("Hogsete", "Ulvehaugen", "Vikesland", "Dumedalen", "Rambera", "Arhelleren"))
+Trait_impute_without_intraA <- function(com_dat, trait_dat){
   
-      SeedClim_traits <- trait_np_bootstrap(trait_impute(comm = com_dat,
-                                  traits = trait_dat, 
-                                  scale_hierarchy = "turfID",
-                                  taxon_col = c("Full_name", "Genus", "Family"),
-                                  trait_col = "Trait_trans",
-                                  value_col = "Value",
-                                  other_col = "year",
-                                  abundance_col = "cover")) 
- 
-   return(SeedClim_traits)
- }
- 
- Trait_impute_without_intraB <- function(com_dat, trait_dat){
-   
-   trait_dat <- trait_dat %>% 
-     mutate(turfID = "")
-   
-   com_dat <- com_dat %>% 
-     filter(siteID %in% c("Skjelingahaugen", "Veskre", "Ovstedalen", "Alrust", "Fauske", "Lavisdalen"))
-   
-   SeedClim_traits <- trait_np_bootstrap(trait_impute(comm = com_dat,
-                                                                                   traits = trait_dat, 
-                                                                                   scale_hierarchy = "turfID",
-                                                                                   taxon_col = c("Full_name", "Genus", "Family"),
-                                                                                   trait_col = "Trait_trans",
-                                                                                   value_col = "Value",
-                                                                                   other_col = "year",
-                                                                                   abundance_col = "cover")) 
-   
-   return(SeedClim_traits)
- }
- 
- Imputed_traits_without_intraA <- Trait_impute_without_intraA(com_dat = community_for_boostrapping, trait_dat = traitdata_2)
- Imputed_traits_without_intraB <- Trait_impute_without_intraB(com_dat = community_for_boostrapping, trait_dat = traitdata_2)
- Imputed_traits_without_intra = bind_rows(Imputed_traits_without_intraA, Imputed_traits_without_intraB)
- 
- sum_moments_without_intraA <- trait_summarise_boot_moments(Imputed_traits_without_intraA)
- sum_moments_without_intraB <- trait_summarise_boot_moments(Imputed_traits_without_intraB)
- sum_moment_without_intra = bind_rows(sum_moments_without_intraA, sum_moments_without_intraB)
+  trait_dat <- trait_dat %>% 
+    mutate(turfID = "")
+  
+  com_dat <- com_dat %>% 
+    filter(siteID %in% c("Hogsete", "Ulvehaugen", "Vikesland", "Dumedalen", "Rambera", "Arhelleren"))
+  
+  SeedClim_traits <- trait_np_bootstrap(trait_impute(comm = com_dat,
+                                                     traits = trait_dat, 
+                                                     scale_hierarchy = "turfID",
+                                                     taxon_col = c("Full_name", "Genus", "Family"),
+                                                     trait_col = "Trait_trans",
+                                                     value_col = "Value",
+                                                     other_col = "year",
+                                                     abundance_col = "cover")) 
+  
+  return(SeedClim_traits)
+}
+
+Trait_impute_without_intraB <- function(com_dat, trait_dat){
+  
+  trait_dat <- trait_dat %>% 
+    mutate(turfID = "")
+  
+  com_dat <- com_dat %>% 
+    filter(siteID %in% c("Skjelingahaugen", "Veskre", "Ovstedalen", "Alrust", "Fauske", "Lavisdalen"))
+  
+  SeedClim_traits <- trait_np_bootstrap(trait_impute(comm = com_dat,
+                                                     traits = trait_dat, 
+                                                     scale_hierarchy = "turfID",
+                                                     taxon_col = c("Full_name", "Genus", "Family"),
+                                                     trait_col = "Trait_trans",
+                                                     value_col = "Value",
+                                                     other_col = "year",
+                                                     abundance_col = "cover")) 
+  
+  return(SeedClim_traits)
+}
+
+Imputed_traits_without_intraA <- Trait_impute_without_intraA(com_dat = community_for_boostrapping, trait_dat = traitdata_2)
+Imputed_traits_without_intraB <- Trait_impute_without_intraB(com_dat = community_for_boostrapping, trait_dat = traitdata_2)
+Imputed_traits_without_intra = bind_rows(Imputed_traits_without_intraA, Imputed_traits_without_intraB)
+
+sum_moments_without_intraA <- trait_summarise_boot_moments(Imputed_traits_without_intraA)
+sum_moments_without_intraB <- trait_summarise_boot_moments(Imputed_traits_without_intraB)
+sum_moment_without_intra = bind_rows(sum_moments_without_intraA, sum_moments_without_intraB)
 
 #### Adding climate info & pivoting longer ####
 
 sum_moments_climate_fullcommunity = bind_rows(
   sum_moments_fullcommunity %>% 
-     left_join(env, by = c("siteID" = "siteID", "year" = "Year")))
+    left_join(env, by = c("siteID" = "siteID", "year" = "Year")))
 
- sum_moments_climate_without_intra = bind_rows(
-   sum_moment_without_intra %>% 
-     left_join(turf_site_dict, by = c("turfID" = "turfID")) %>% 
-     left_join(env, by = c("siteID" = "siteID", "year" = "Year")))
+sum_moments_climate_without_intra = bind_rows(
+  sum_moment_without_intra %>% 
+    left_join(turf_site_dict, by = c("turfID" = "turfID")) %>% 
+    left_join(env, by = c("siteID" = "siteID", "year" = "Year")))
 
- 
+
 moments_clim_long_fullcommunity <- Imputed_traits_fullcommunity %>% 
   pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
   left_join(env, by = c("siteID" = "siteID", "year" = "Year"))
 
 
- moments_clim_long_without_intra <- Imputed_traits_without_intra %>% 
-   pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
-   left_join(turf_site_dict, by = c("turfID" = "turfID")) %>% 
-   left_join(env, by = c("siteID" = "siteID", "year" = "Year"))
+moments_clim_long_without_intra <- Imputed_traits_without_intra %>% 
+  pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
+  left_join(turf_site_dict, by = c("turfID" = "turfID")) %>% 
+  left_join(env, by = c("siteID" = "siteID", "year" = "Year"))
 
 
 #### Mixed effect model testing ####
 
 ### Making dataset for models ###
- 
+
 # With intraspecific variability
 memodel_data_fullcommunity <- moments_clim_long_fullcommunity %>% 
   ungroup() %>%
@@ -399,26 +399,26 @@ tidy_space_model_predicted_mixed <- mem_results_space %>%
   mutate(model_output = purrr::map(model, tidy)) %>%
   mutate(R_squared = purrr::map(model, rsquared))
 
- # mem_results_space_nottrans <- memodel_data_fullcommunity_nottransformed %>%
- #   filter(moments %in% c("mean", "skewness")) %>% 
- #   mutate(model = purrr::map(data, model_space))
- # 
- # tidy_space_model_predicted_mixed_nottrans <- mem_results_space_nottrans %>%
- #   mutate(model_output = purrr::map(model, tidy)) %>%
- #   mutate(R_squared = purrr::map(model, rsquared))
- 
+# mem_results_space_nottrans <- memodel_data_fullcommunity_nottransformed %>%
+#   filter(moments %in% c("mean", "skewness")) %>% 
+#   mutate(model = purrr::map(data, model_space))
+# 
+# tidy_space_model_predicted_mixed_nottrans <- mem_results_space_nottrans %>%
+#   mutate(model_output = purrr::map(model, tidy)) %>%
+#   mutate(R_squared = purrr::map(model, rsquared))
+
 
 ## Model 4: Trait shifts in space, without intraspecific variability ##
 # Step 1) Model
 mem_results_space_wi <- memodel_data_without_intra%>%
-   filter(moments %in% c("mean", "skewness")) %>% 
-   mutate(model = purrr::map(data, model_space))
- 
+  filter(moments %in% c("mean", "skewness")) %>% 
+  mutate(model = purrr::map(data, model_space))
+
 #Step 2) Tidying model output, getting predictions and R2
 tidy_space_model_predicted_mixed_wi <- mem_results_space_wi %>%
-   mutate(model_output = purrr::map(model, tidy)) %>%
-   mutate(R_squared = purrr::map(model, rsquared))
- 
+  mutate(model_output = purrr::map(model, tidy)) %>%
+  mutate(R_squared = purrr::map(model, rsquared))
+
 # mem_results_space_nottrans_wi <- memodel_data_without_intra_nottransformed %>%
 #     filter(moments %in% c("mean", "skewness")) %>% 
 #     mutate(model = purrr::map(data, model_space))
@@ -452,7 +452,7 @@ tidy_com_space_model_predicted_mixed <- mem_results_com_space %>%
 #   rename(modeled = predicted, measured = value)
 
 
- 
+
 # mem_results_time_mixed_notax <- memodel_data_fullcommunity_notax %>%
 #   filter(moments %in% c("mean", "skewness")) %>% 
 #   mutate(model = purrr::map(data, model_time))
@@ -540,7 +540,7 @@ tidy_com_space_model_predicted_mixed <- mem_results_com_space %>%
 #  AIC_all_models <- AIC_lastyeartemp %>%
 #    left_join(AIC_springtemp, by = c("Trait_trans" = "Trait_trans", "moments" = "moments")) %>% 
 #    left_join(AIC_alltemp, by = c("Trait_trans" = "Trait_trans", "moments" = "moments"))
-  
+
 #write.table(x = AIC_all_models, file = "AIC_log.csv")
 
 # Making a dataset with the model output and the test-statistics (R squared), and summarizing them.
@@ -571,7 +571,7 @@ model_output_mixed_year <-function(dat) {
   model_output <- dat %>% 
     select(Trait_trans, moments, n, model_output, R_squared) %>% 
     unnest(c(model_output, R_squared)) %>% 
-    filter(term %in% c("(Intercept)", "year")) %>% 
+    filter(term %in% c("(Intercept)", "year", "siteID", "year*siteID")) %>% 
     select(Trait_trans, moments, term, n, estimate, std.error, statistic, df, p.value, Marginal, Conditional) %>% 
     ungroup() %>% 
     group_by(Trait_trans, moments, term) %>% 
@@ -666,8 +666,8 @@ model_output_time_directional_mixed <- model_output_mixed_predicted_climate(tidy
   mutate_if(is.numeric, round, digits = 3)
 #model_output_time_mixed_nottrans <- model_output_mixed(tidy_time_model_predicted_mixed_nottrans) %>% 
 #  mutate_if(is.numeric, round, digits = 3)
-model_output_time_mixed_wi <- model_output_mixed(tidy_time_model_predicted_mixed_wi)%>% 
-  mutate_if(is.numeric, round, digits = 3)
+#model_output_time_mixed_wi <- model_output_mixed(tidy_time_model_predicted_mixed_wi)%>% 
+#  mutate_if(is.numeric, round, digits = 3)
 #model_output_time_linear <- model_output_linear(tidy_time_model_predicted_linear)
 model_output_com_time_mixed <- model_output_com_mixed(tidy_com_time_model_predicted_mixed) %>% 
   mutate_if(is.numeric, round, digits = 3)
@@ -680,8 +680,8 @@ model_output_space_mixed <- model_output_mixed(tidy_space_model_predicted_mixed)
   mutate_if(is.numeric, round, digits = 3)
 # model_output_space_mixed_nottrans <- model_output_mixed(tidy_space_model_predicted_mixed_nottrans) %>% 
 #   mutate_if(is.numeric, round, digits = 3)
-model_output_space_mixed_wi <- model_output_mixed(tidy_space_model_predicted_mixed_wi) %>% 
-  mutate_if(is.numeric, round, digits = 3)
+#model_output_space_mixed_wi <- model_output_mixed(tidy_space_model_predicted_mixed_wi) %>% 
+#  mutate_if(is.numeric, round, digits = 3)
 # model_output_space_mixed_nottrans_wi <- model_output_mixed(tidy_space_model_predicted_mixed_nottrans_wi) %>% 
 #   mutate_if(is.numeric, round, digits = 3)
 #model_output_space_mixed_notax <- model_output_mixed(tidy_space_model_predicted_mixed_notax)
@@ -701,7 +701,6 @@ write.table(model_output_com_space_mixed_nottrans, row.names = TRUE, col.names =
 
 #### Simpler mixed effect models on specific traits to make predicted plots ####
 
-### Making functional for simpler models on single traits 
 
 model_trait_summary <-function(dat, trait, moment) {
   
