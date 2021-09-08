@@ -1,8 +1,6 @@
 #### Libraries ####
 library("tidyverse")
 library("lubridate")
-#library("mosaic")
-#library(forcats)
 
 #### Load trait data ####
 
@@ -121,7 +119,6 @@ traitdata <- traitdata %>%
   mutate(SLA = Leaf_area/Dry_mass) %>%
   mutate(LDMC = Dry_mass/Wet_mass)%>%
   mutate(Lth_ave = rowMeans(select(traitdata, starts_with("Lth")), na.rm = TRUE)) %>% #Make the numbers only with four digits
-  #filter(LDMC<1) %>% 
   select(-Lth_1, -Lth_2, -Lth_3) %>% 
   filter(!LDMC > 1)
 
