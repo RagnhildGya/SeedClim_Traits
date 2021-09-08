@@ -197,28 +197,28 @@ moments_clim_long_without_intra <- Imputed_traits_without_intra %>%
 # With intraspecific variability
 memodel_data_fullcommunity <- moments_clim_long_fullcommunity %>% 
   ungroup() %>%
-  select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, temp_modeled, precip_modeled, value, year, n) %>% 
+  select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, temp_modeled, precip_modeled, Temp_level, Precip_level, value, year, n) %>% 
   mutate(value = scale(value)) %>% 
   group_by(Trait_trans, moments, n) %>% 
   nest()
 
 memodel_data_fullcommunity_nottransformed <- moments_clim_long_fullcommunity %>% 
   ungroup() %>%
-  select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, temp_modeled, precip_modeled, value, year, n) %>% 
+  select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, temp_modeled, precip_modeled, Temp_level, Precip_level, value, year, n) %>% 
   group_by(Trait_trans, moments, n) %>% 
   nest()
 
 # Without intraspecific variability
 memodel_data_without_intra <- moments_clim_long_without_intra %>% 
   ungroup() %>%
-  select(Trait_trans, moments, siteID, turfID,Temp_yearly_spring, Precip_yearly, temp_modeled, precip_modeled, value, year, n) %>% 
+  select(Trait_trans, moments, siteID, turfID,Temp_yearly_spring, Precip_yearly, temp_modeled, precip_modeled, Temp_level, Precip_level, value, year, n) %>% 
   mutate(value = scale(value)) %>% 
   group_by(Trait_trans, moments, n) %>% 
   nest()
 
 memodel_data_without_intra_nottransformed <- moments_clim_long_without_intra %>% 
   ungroup() %>%
-  select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, temp_modeled, precip_modeled, value, year, n) %>% 
+  select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, temp_modeled, precip_modeled, Temp_level, Precip_level, value, year, n) %>% 
   group_by(Trait_trans, moments, n) %>% 
   nest()
 
@@ -234,7 +234,7 @@ com_data <- community_for_analysis %>%
          other_cover = sum(woody, pteridophyte, `NA`, na.rm = TRUE)) %>% 
   left_join(env, by = c("siteID" = "siteID", "year" = "Year")) %>% 
   pivot_longer(cols = c("species_richness", "graminoid_cover", "forb_cover", "other_cover", "total_vascular", "vegetation_height"), names_to = "community_properties", values_to = "value") %>% 
-  select(siteID, turfID, Temp_yearly_spring, Precip_yearly, temp_modeled, precip_modeled, year, value, community_properties) %>% 
+  select(siteID, turfID, Temp_yearly_spring, Precip_yearly, temp_modeled, precip_modeled, Temp_level, Precip_level, year, value, community_properties) %>% 
   group_by(community_properties) %>% 
   unique() %>% 
   mutate(value = scale(value)) %>% 
@@ -251,7 +251,7 @@ com_data_nottrans <- community_for_analysis %>%
          other_cover = sum(woody, pteridophyte, `NA`, na.rm = TRUE)) %>% 
   left_join(env, by = c("siteID" = "siteID", "year" = "Year")) %>% 
   pivot_longer(cols = c("species_richness", "graminoid_cover", "forb_cover", "other_cover", "total_vascular", "vegetation_height"), names_to = "community_properties", values_to = "value") %>% 
-  select(siteID, turfID, Temp_yearly_spring, Precip_yearly, temp_modeled, precip_modeled, year, value, community_properties) %>% 
+  select(siteID, turfID, Temp_yearly_spring, Precip_yearly, temp_modeled, precip_modeled, Temp_level, Precip_level, year, value, community_properties) %>% 
   group_by(community_properties) %>% 
   unique() %>% 
   nest()
@@ -269,6 +269,13 @@ model_time <- function(df) {
 model_time_year <- function(df) {
   lmer(value ~ year + (1 | siteID), data = df)
 }
+
+## xth model testing if traits shifts in time using year as the fixed effect, depending on what site they are from.
+
+model_time_year_clim <- function(df) {
+  lmer(value ~ year + scale(Temp_yearly_spring) * scale(Precip_yearly) + (1 | siteID), data = df)
+}
+
 
 ## 2. model testing if traits shift directionally by using the modeled climate data for directional shift in temp and precip in the ten years.
 
@@ -335,6 +342,18 @@ mem_results_year_mixed <- memodel_data_fullcommunity %>%
 tidy_year_model_predicted_mixed <- mem_results_year_mixed %>%
   mutate(model_output = purrr::map(model, tidy)) %>%
   mutate(R_squared = purrr::map(model, rsquared))
+
+## Model Xth: Trait shifts with time - year climate dependent ##
+# Step 1) Model
+mem_results_year_mixed_clim <- memodel_data_fullcommunity %>%
+  filter(moments %in% c("mean", "skewness")) %>% 
+  mutate(model = purrr::map(data, model_time_year_clim))
+
+#Step 2) Tidying model output, getting predictions and R2
+tidy_year_model_predicted_mixed_clim <- mem_results_year_mixed_clim %>%
+  mutate(model_output = purrr::map(model, tidy)) %>%
+  mutate(R_squared = purrr::map(model, rsquared))
+
 
 ## Model 1 without transforming the data: Trait shifts with time/climate fluctuations
 # mem_results_time_mixed_nottrans <- memodel_data_fullcommunity_nottransformed %>%
@@ -588,6 +607,28 @@ model_output_mixed_year <-function(dat) {
   return(model_output)
 }
 
+model_output_mixed_year_clim <-function(dat) {
+  
+  model_output <- dat %>% 
+    select(Trait_trans, moments, n, model_output, R_squared) %>% 
+    unnest(c(model_output, R_squared)) %>% 
+    filter(term %in% c("(Intercept)", "year", "scale(Precip_yearly)", "scale(Temp_yearly_spring)", "scale(Temp_yearly_spring):scale(Precip_yearly)")) %>% 
+    select(Trait_trans, moments, term, n, estimate, std.error, statistic, df, p.value, Marginal, Conditional) %>% 
+    ungroup() %>% 
+    group_by(Trait_trans, moments, term) %>% 
+    summarize(effect = mean(estimate),
+              R2_marginal = mean(Marginal),
+              R2_conditional = mean(Conditional),
+              CIlow.fit = effect - sd(estimate),
+              CIhigh.fit = effect + sd(estimate),
+              std.error = mean(std.error),
+              staticstic = mean(statistic),
+              df = mean(df),
+              p.value = mean(p.value))
+  
+  return(model_output)
+}
+
 model_output_mixed_predicted_climate <-function(dat) {
   
   model_output <- dat %>% 
@@ -662,6 +703,9 @@ model_output_time_mixed <- model_output_mixed(tidy_time_model_predicted_mixed) %
 model_output_time_year_mixed <- model_output_mixed_year(tidy_year_model_predicted_mixed) %>% 
   mutate_if(is.numeric, round, digits = 6)
 
+model_output_time_year_mixed_clim <- model_output_mixed_year_clim(tidy_year_model_predicted_mixed_clim) %>% 
+  mutate_if(is.numeric, round, digits = 6)
+
 model_output_time_directional_mixed <- model_output_mixed_predicted_climate(tidy_time_directional_model_predicted_mixed)%>% 
   mutate_if(is.numeric, round, digits = 3)
 #model_output_time_mixed_nottrans <- model_output_mixed(tidy_time_model_predicted_mixed_nottrans) %>% 
@@ -728,6 +772,34 @@ models_trait_predictions <-function(model) {
   return(newdata)
 }
 
+#### Simpler mixed effect models on specific traits to make predicted plots ####
+
+
+model_trait_summary_year_clim <-function(dat, trait, moment) {
+  
+  
+  # Filter data for model
+  dat2 <- dat %>%
+    filter(Trait_trans == trait,
+           moments == moment,
+           n == 75) %>% 
+    unnest(data) %>% 
+    ungroup() 
+  
+  # Run model
+  model <- lmer(value ~ year + Temp_yearly_spring * Precip_yearly + (1 | siteID), data = dat2)
+  
+  return(model)
+}
+
+models_trait_predictions_year_clim <-function(model) {
+  
+  newdata <- expand.grid(Precip_yearly=c(0.6, 1.5, 2.3, 3.5), Temp_yearly_spring=c(6.5,8.5,10.5), year = c(2009, 2011, 2012, 2013, 2015, 2016, 2017, 2019))
+  
+  newdata$predicted <- predict(object = model, newdata = newdata, re.form = NA, allow.new.levels=TRUE)
+  
+  return(newdata)
+}
 
 ### Makgin function for simpler models on single traits with the modeled climate change in the ten year period ###
 
@@ -787,6 +859,10 @@ models_trait_predictions_siteID <-function(model) {
 #   
 #   return(newdata)
 # }
+
+SLA_mean_sum_yc <- model_trait_summary_year_clim(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean")
+SLA_mean_pred_yc <- models_trait_predictions_year_clim(SLA_mean_sum_yc)
+
 
 SLA_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean")
 SLA_mean_pred <- models_trait_predictions(SLA_mean_sum)
