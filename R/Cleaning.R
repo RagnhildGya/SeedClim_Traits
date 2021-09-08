@@ -179,7 +179,7 @@ traitdata_1 <- traitdata_1 %>%
 # Reading in and cleaning the community data 
 
 #Old community data was community <-read.csv2("Data/comdat_TTC.csv", header=TRUE, sep=",", stringsAsFactors = FALSE)
-community <-read.csv2("Data/comdat_updated_TTC.csv", header=TRUE, sep=",", stringsAsFactors = FALSE)
+community <-read.csv2("Data/comdat_2009-2019_TTC.csv", header=TRUE, sep=",", stringsAsFactors = FALSE)
 
 community <- community %>%
   mutate(latitude = as.numeric(latitude),
