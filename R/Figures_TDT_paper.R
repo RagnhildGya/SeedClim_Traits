@@ -514,7 +514,7 @@ model_output_com_space_mixed %>%
 dat <- memodel_data_fullcommunity_nottransformed
 trait <- "SLA_cm2_g_log"
 moment <- "mean"
-newdata <- SLA_mean_pred
+newdata <- SLA_mean_pred_yc
 
 plot_predictions <-function(dat, trait, moment, newdata) {
   
@@ -522,41 +522,44 @@ plot_predictions <-function(dat, trait, moment, newdata) {
     filter(Trait_trans == trait,
            moments == moment,
            n == 75) %>% 
-    unnest(data) %>% 
-    mutate(year_coloring = ifelse(year == "2009", "first",
-                                  ifelse(year == "2019", "last",
-                                         "between"))) %>% 
+     unnest(data) %>% 
+    # mutate(year_coloring = ifelse(year == "2009", "first",
+    #                               ifelse(year == "2019", "last",
+    #                                      "between"))) %>% 
     ungroup()
   
-  dat3 <- dat2 %>% 
-    group_by(Trait_trans, moments, siteID, turfID, Temp_yearly_spring) %>% 
-    pivot_wider(names_from = year, values_from = value, values_fn = length) %>% 
-    select("2009", "2019")
-  mutate(x_2009 = ifelse(year == "2009", Temp_yearly_spring,
-                         NA),
-         x_2019 = ifelse(year == "2019", Temp_yearly_spring,
-                         NA),
-         y_2009 = ifelse(year == "2009", value,
-                         NA),
-         y_2019 = ifelse(year == "2019", value,
-                         NA)) %>%
-    select(x_2009, x_2019, y_2009, y_2019) %>% 
+  # dat3 <- dat2 %>% 
+  #   group_by(Trait_trans, moments, siteID, turfID, Temp_yearly_spring) %>% 
+  #   pivot_wider(names_from = year, values_from = value, values_fn = length) %>% 
+  #   select("2009", "2019")
+  # mutate(x_2009 = ifelse(year == "2009", Temp_yearly_spring,
+  #                        NA),
+  #        x_2019 = ifelse(year == "2019", Temp_yearly_spring,
+  #                        NA),
+  #        y_2009 = ifelse(year == "2009", value,
+  #                        NA),
+  #        y_2019 = ifelse(year == "2019", value,
+  #                        NA)) %>%
+  #   select(x_2009, x_2019, y_2009, y_2019) %>% 
     
     
     plot <- ggplot(dat2, aes(x = Temp_yearly_spring, y = value)) +
-    geom_point(aes(color = year_coloring)) +
-    scale_color_manual(values = c("grey", "#2E75B6","black")) +
-    geom_segment(aes(x = x_2009, xend = x_2019, y = y_2009, yend = y_2019), na.rm = TRUE, data = dat3) +
-    new_scale_color()+
+    geom_point() +
     geom_line(aes(x = Temp_yearly_spring, y = predicted, color = factor(Precip_yearly)), data=newdata, size = 1, show.legend = TRUE) +
     scale_color_manual(values = Precip_palette) +
     theme_minimal(base_size = 15) 
+    
+    ggplot(dat2, aes(x = temp_modeled, y = value)) +
+      geom_point() +
+      geom_line(aes(x = temp_modeled, y = predicted, color = factor(precip_modeled)), data=newdata, size = 1, show.legend = TRUE) +
+      scale_color_manual(values = Precip_palette) +
+      theme_minimal(base_size = 15)
   
   return(plot)
 }
 
 
-SLA_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", SLA_mean_pred) +
+SLA_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", SLA_mean_pred_yc) +
   labs(y = "SLA (cm2/g log)", x = "", title = "Mean") +
   theme(plot.title = element_text(hjust = 0.5))
 SLA_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "skewness", SLA_skew_pred) + 
@@ -659,13 +662,22 @@ plot_predictions_year <-function(dat, trait, moment) {
            n == 75) %>% 
     unnest(data) %>% 
     ungroup() %>% 
-    left_join(env, by = c("siteID" = "siteID")) %>% 
-    select(year, value, siteID, Temp_level, Precip_level)
+    left_join(env, by = c("siteID" = "Site", "Temp_level" = "Temp_level", "Precip_level" = "Precip_level")) %>% 
+    select(year, value, siteID, Temp_level, Precip_level) %>% 
+    mutate(Precip_level = ifelse(Precip_level == 600, 0.6, 
+                                 ifelse(Precip_level == 1200, 1.5,
+                                        ifelse(Precip_level == 2000, 2.3,
+                                               ifelse(Precip_level == 2700, 3.5, NA)))))
   
-  plot <- ggplot(dat2, aes(x = year, y = value, color = Precip_level)) +
+  newdata2 <- newdata %>% 
+    mutate(Temp_level = as.factor(Temp_yearly_spring),
+           Precip_level = as.factor(Precip_yearly))
+  
+  plot <- ggplot(dat2, aes(x = year, y = value, color = factor(Precip_level))) +
+    #geom_line(aes(x = year, y = predicted, color = factor(Precip_level)), data=newdata2, size = 1, show.legend = TRUE) +
     geom_point() +
     geom_smooth(method = "lm") +
-    #geom_line(aes(x = year, y = predicted, color = factor(siteID)), data=newdata, size = 1, show.legend = TRUE) +
+    #geom_line(aes(x = year, y = predicted, color = factor(Precip_yearly)), data=newdata, size = 1, show.legend = TRUE) +
     scale_color_manual(values = Precip_palette) +
     theme_minimal(base_size = 15) +
     facet_grid(~Temp_level)
@@ -674,11 +686,11 @@ plot_predictions_year <-function(dat, trait, moment) {
 }
 
 
-plot_predictions_year(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", SLA_mean_temporal_pred) +
+plot_predictions_year(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", SLA_mean_pred_yc) +
   labs(y = "SLA (cm2/g log)", x = "", title = "Mean") +
   theme(plot.title = element_text(hjust = 0.5))
 
-plot_predictions_year(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean", Height_mean_temporal_pred) +
+plot_predictions_year(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean") +
   labs(y = "Plant height (mm log)", x = "", title = "Mean") +
   theme(plot.title = element_text(hjust = 0.5)) 
 
@@ -773,3 +785,5 @@ model_output_time_year_mixed %>%
   geom_point() +
   geom_hline(yintercept = 0) +
   geom_vline(xintercept = 0) 
+
+
