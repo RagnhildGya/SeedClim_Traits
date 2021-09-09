@@ -58,7 +58,7 @@ env %>%
   mutate(Temp_level = recode(Temp_level, "10.5" = "Boreal",
                              "8.5" = "Sub-alpine",
                              "6.5" = "Alpine")) %>% 
-  ggplot(aes(x = Year, y = Temp_summer)) +
+  ggplot(aes(x = Year, y = Temp_yearly_spring)) +
   geom_point() +
   geom_smooth(method = "lm") +
   facet_grid(~Temp_level) +
@@ -570,7 +570,7 @@ plot_predictions <-function(dat, trait, moment, newdata) {
 }
 
 
-SLA_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", SLA_mean_pred) +
+SLA_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", SLA_mean_pred_yc) +
   labs(y = "SLA (cm2/g log)", x = "", title = "Mean") +
   theme(plot.title = element_text(hjust = 0.5))
 SLA_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "skewness", SLA_skew_pred) + 
