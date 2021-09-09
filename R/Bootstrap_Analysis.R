@@ -787,7 +787,7 @@ model_trait_summary_year_clim <-function(dat, trait, moment) {
     ungroup() 
   
   # Run model
-  model <- lmer(value ~ year + Temp_yearly_spring * Precip_yearly + (1 | siteID), data = dat2)
+  model <- lm(value ~ year * Temp_yearly_spring * Precip_yearly, data = dat2)
   
   return(model)
 }
