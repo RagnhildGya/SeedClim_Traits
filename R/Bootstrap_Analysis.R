@@ -125,7 +125,7 @@ Trait_impute_without_intraA <- function(com_dat, trait_dat){
     mutate(turfID = "")
   
   com_dat <- com_dat %>% 
-    filter(siteID %in% c("Hogsete", "Ulvehaugen", "Vikesland", "Dumedalen", "Rambera", "Arhelleren"))
+    filter(siteID %in% c("Hogsete", "Ulvehaugen", "Vikesland", "Gudmedalen", "Rambera", "Arhelleren"))
   
   SeedClim_traits <- trait_np_bootstrap(trait_impute(comm = com_dat,
                                                      traits = trait_dat, 
@@ -794,7 +794,7 @@ model_trait_summary_year_clim <-function(dat, trait, moment) {
 
 models_trait_predictions_year_clim <-function(model) {
   
-  newdata <- expand.grid(Precip_yearly=c(0.6, 1.5, 2.3, 3.5), Temp_yearly_spring=c(6.5, 8.5, 10.5), year = c(2009, 2011, 2012, 2013, 2015, 2016, 2017, 2019), siteID = c("Alrust", "Arhelleren", "Fauske", "Gudmedalen", "Hogsete", "Lavisdalen", "Ovstedalen", "Rambera", "Skjelingahaugen", "Ulvehaugen", "Veskre", "Vikesland"))
+  newdata <- expand.grid(Precip_yearly=c(0.6, 1.5, 2.3, 3.5), Temp_yearly_spring=c(7, 10, 12), year = c(2009, 2011, 2012, 2013, 2015, 2016, 2017, 2019), siteID = c("Alrust", "Arhelleren", "Fauske", "Gudmedalen", "Hogsete", "Lavisdalen", "Ovstedalen", "Rambera", "Skjelingahaugen", "Ulvehaugen", "Veskre", "Vikesland"))
   
   newdata$predicted <- predict(object = model, newdata = newdata, re.form = NA, allow.new.levels=TRUE)
   
@@ -862,6 +862,9 @@ models_trait_predictions_siteID <-function(model) {
 
 SLA_mean_sum_yc <- model_trait_summary_year_clim(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean")
 SLA_mean_pred_yc <- models_trait_predictions_year_clim(SLA_mean_sum_yc)
+
+Height_mean_sum_yc <- model_trait_summary_year_clim(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean")
+Height_mean_pred_yc <- models_trait_predictions_year_clim(Height_mean_sum_yc)
 
 
 SLA_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean")
