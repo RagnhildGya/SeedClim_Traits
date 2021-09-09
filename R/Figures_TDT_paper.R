@@ -560,9 +560,9 @@ plot_predictions <-function(dat, trait, moment, newdata) {
   #   select(x_2009, x_2019, y_2009, y_2019) %>% 
     
     
-    plot <- ggplot(dat2, aes(x = year, y = value)) +
+    plot <- ggplot(dat2, aes(x = Temp_yearly_spring, y = value)) +
     geom_point() +
-    geom_line(aes(x = year, y = predicted, color = factor(Precip_yearly)), data=newdata, size = 1, show.legend = TRUE) +
+    geom_line(aes(x = Temp_yearly_spring, y = predicted, color = factor(Precip_yearly)), data=newdata, size = 1, show.legend = TRUE) +
     scale_color_manual(values = Precip_palette) +
     theme_minimal(base_size = 15) 
   
@@ -570,7 +570,7 @@ plot_predictions <-function(dat, trait, moment, newdata) {
 }
 
 
-SLA_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", SLA_mean_pred_yc) +
+SLA_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", SLA_mean_pred) +
   labs(y = "SLA (cm2/g log)", x = "", title = "Mean") +
   theme(plot.title = element_text(hjust = 0.5))
 SLA_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "skewness", SLA_skew_pred) + 
@@ -684,14 +684,14 @@ plot_predictions_year <-function(dat, trait, moment, newdata) {
     mutate(Temp_level = as.factor(Temp_yearly_spring),
            Precip_level = as.factor(Precip_yearly))
   
-  plot <- ggplot(dat2, aes(x = year, y = value, group = factor(Precip_level), color = factor(Precip_level))) +
-    geom_line(aes(x = year, y = predicted, color = factor(Precip_level)), data=newdata2, size = 1, show.legend = TRUE) +
+  plot <- ggplot(dat2, aes(x = year, y = value, group = factor(Temp_level), color = factor(Temp_level))) +
+    #geom_line(aes(x = year, y = predicted, color = factor(Temp_level)), data=newdata2, size = 1, show.legend = TRUE) +
     geom_point() +
-    #geom_smooth(method = "lm") +
+    geom_smooth(aes(y = predicted, data = newdata2, method = "lm")) +
     #geom_line(aes(x = year, y = predicted, color = factor(Precip_yearly)), data=newdata, size = 1, show.legend = TRUE) +
-    scale_color_manual(values = Precip_palette) +
+    scale_color_manual(values = Temp_palette) +
     theme_minimal(base_size = 15) +
-    facet_wrap(~Temp_level)
+    facet_wrap(~Precip_level, nrow = 1)
   
   return(plot)
 }
@@ -700,6 +700,12 @@ plot_predictions_year <-function(dat, trait, moment, newdata) {
 plot_predictions_year(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", SLA_mean_pred_yc) +
   labs(y = "SLA (cm2/g log)", x = "", title = "Mean") +
   theme(plot.title = element_text(hjust = 0.5))
+
+plot_predictions_year(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean", Height_mean_pred_yc) +
+  labs(y = "Plant height (mm log)", x = "", title = "Mean") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+
 
 plot_predictions_year(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean") +
   labs(y = "Plant height (mm log)", x = "", title = "Mean") +
