@@ -68,7 +68,7 @@ env %>%
   xlab("Year") +
   scale_x_continuous(breaks = c(2009, 2011, 2013, 2015, 2017, 2019))
 
-ggsave("Temperature_over_time.pdf", width = 20 , height = 11, units = "cm")
+#ggsave("Temperature_over_time.pdf", width = 20 , height = 11, units = "cm")
 
 
 env %>% 
@@ -86,7 +86,7 @@ env %>%
   xlab("Year") +
   scale_x_continuous(breaks = c(2009, 2011, 2013, 2015, 2017, 2019))
 
-ggsave("Precipitation_over_time.png", width = 22 , height = 11, units = "cm")
+#ggsave("Precipitation_over_time.png", width = 22 , height = 11, units = "cm")
 
 
 climate <- env %>% 
@@ -202,7 +202,7 @@ plot <- Zoomed_in_map +
   inset_element(Norway_map, left = 0.595, bottom = 0.55, right = 0.96, top = 1, align_to = "plot") +
   plot_layout(guides = 'collect', widths = 1, heights = 1) 
 
-ggsave(plot = plot, "SeedClim_climate_grid.pdf", width = 34, height = 22, units = "cm")
+#ggsave(plot = plot, "SeedClim_climate_grid.pdf", width = 34, height = 22, units = "cm")
 
 
 # png("SeedClim_climate_grid.png", width = 1285, height = 861)
@@ -360,6 +360,19 @@ Ord_plot_time <- pca_fort %>%
   labs(fill = "Yearly precipitation", color = "Yearly precipitation", shape = "Yearly precipitation") +
   guides(color = FALSE) 
 
+Ord_plot_time_precip <- pca_fort %>% 
+  ggplot(aes(x = PC1, y = PC2, colour = Precip_level, group = turfID)) +
+  geom_path() + #use geom_path not geom_line
+  geom_point(aes(size = if_else(year == 2009, 1, NA_real_)), show.legend = FALSE) +
+  #scale_color_viridis_d() +
+  scale_color_manual(name = "Summer temperature", values = Precip_palette) +
+  scale_size(range = 2) +
+  coord_equal() +
+  theme_minimal(base_size = 14) +
+  theme(legend.text=element_text(size=14), legend.title = element_text(size = 14), plot.title = element_text(hjust = 0.1), axis.title = element_blank()) +
+  labs(fill = "Yearly precipitation", color = "Yearly precipitation", shape = "Yearly precipitation") +
+  guides(color = FALSE) 
+
 
 d <- ggarrange(Ord_plot_traits, 
                ggarrange(Ord_plot_precip, Ord_plot_temp,  Ord_plot_time, ncol = 3, nrow = 1, labels = c("B", "C", "D"),legend = "none"), 
@@ -372,6 +385,10 @@ d <- ggarrange(Ord_plot_traits,
 c <- ggarrange(Ord_plot_traits, Ord_plot_time, Ord_plot_precip, Ord_plot_temp,   
                nrow = 2, ncol = 2,
                labels = c("A","B", "C", "D"),
+               legend = "none")
+
+e <- ggarrange(Ord_plot_time, Ord_plot_time_precip,   
+               nrow = 1, ncol = 2,
                legend = "none")
 
 #ggsave(plot = d, "Ord_timemean_temp_prec_new.jpg", width = 28 , height = 20, units = "cm")
@@ -543,17 +560,11 @@ plot_predictions <-function(dat, trait, moment, newdata) {
   #   select(x_2009, x_2019, y_2009, y_2019) %>% 
     
     
-    plot <- ggplot(dat2, aes(x = Temp_yearly_spring, y = value)) +
+    plot <- ggplot(dat2, aes(x = year, y = value)) +
     geom_point() +
-    geom_line(aes(x = Temp_yearly_spring, y = predicted, color = factor(Precip_yearly)), data=newdata, size = 1, show.legend = TRUE) +
+    geom_line(aes(x = year, y = predicted, color = factor(Precip_yearly)), data=newdata, size = 1, show.legend = TRUE) +
     scale_color_manual(values = Precip_palette) +
     theme_minimal(base_size = 15) 
-    
-    ggplot(dat2, aes(x = temp_modeled, y = value)) +
-      geom_point() +
-      geom_line(aes(x = temp_modeled, y = predicted, color = factor(precip_modeled)), data=newdata, size = 1, show.legend = TRUE) +
-      scale_color_manual(values = Precip_palette) +
-      theme_minimal(base_size = 15)
   
   return(plot)
 }
@@ -654,7 +665,7 @@ plot_predictions_modeled_climate(memodel_data_fullcommunity_nottransformed, "Pla
 
 ### Plotting by year ####
 
-plot_predictions_year <-function(dat, trait, moment) {
+plot_predictions_year <-function(dat, trait, moment, newdata) {
   
   dat2 <- dat %>%
     filter(Trait_trans == trait,
@@ -673,14 +684,14 @@ plot_predictions_year <-function(dat, trait, moment) {
     mutate(Temp_level = as.factor(Temp_yearly_spring),
            Precip_level = as.factor(Precip_yearly))
   
-  plot <- ggplot(dat2, aes(x = year, y = value, color = factor(Precip_level))) +
-    #geom_line(aes(x = year, y = predicted, color = factor(Precip_level)), data=newdata2, size = 1, show.legend = TRUE) +
+  plot <- ggplot(dat2, aes(x = year, y = value, group = factor(Precip_level), color = factor(Precip_level))) +
+    geom_line(aes(x = year, y = predicted, color = factor(Precip_level)), data=newdata2, size = 1, show.legend = TRUE) +
     geom_point() +
-    geom_smooth(method = "lm") +
+    #geom_smooth(method = "lm") +
     #geom_line(aes(x = year, y = predicted, color = factor(Precip_yearly)), data=newdata, size = 1, show.legend = TRUE) +
     scale_color_manual(values = Precip_palette) +
     theme_minimal(base_size = 15) +
-    facet_grid(~Temp_level)
+    facet_wrap(~Temp_level)
   
   return(plot)
 }
