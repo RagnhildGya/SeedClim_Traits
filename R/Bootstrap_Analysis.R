@@ -273,7 +273,7 @@ model_time_year <- function(df) {
 ## xth model testing if traits shifts in time using year as the fixed effect, depending on what site they are from.
 
 model_time_year_clim <- function(df) {
-  lmer(value ~ year + scale(Temp_yearly_spring) * scale(Precip_yearly) + (1 | siteID), data = df)
+  lm(value ~ year * scale(Temp_yearly_spring) * scale(Precip_yearly), data = df)
 }
 
 
@@ -345,12 +345,12 @@ tidy_year_model_predicted_mixed <- mem_results_year_mixed %>%
 
 ## Model Xth: Trait shifts with time - year climate dependent ##
 # Step 1) Model
-mem_results_year_mixed_clim <- memodel_data_fullcommunity %>%
+mem_results_year_clim <- memodel_data_fullcommunity %>%
   filter(moments %in% c("mean", "skewness")) %>% 
   mutate(model = purrr::map(data, model_time_year_clim))
 
 #Step 2) Tidying model output, getting predictions and R2
-tidy_year_model_predicted_mixed_clim <- mem_results_year_mixed_clim %>%
+tidy_year_model_predicted_clim <- mem_results_year_clim %>%
   mutate(model_output = purrr::map(model, tidy)) %>%
   mutate(R_squared = purrr::map(model, rsquared))
 
@@ -607,24 +607,24 @@ model_output_mixed_year <-function(dat) {
   return(model_output)
 }
 
-model_output_mixed_year_clim <-function(dat) {
+dat <- tidy_year_model_predicted_clim
+
+model_output_year_clim <-function(dat) {
   
   model_output <- dat %>% 
     select(Trait_trans, moments, n, model_output, R_squared) %>% 
     unnest(c(model_output, R_squared)) %>% 
-    filter(term %in% c("(Intercept)", "year", "scale(Precip_yearly)", "scale(Temp_yearly_spring)", "scale(Temp_yearly_spring):scale(Precip_yearly)")) %>% 
-    select(Trait_trans, moments, term, n, estimate, std.error, statistic, df, p.value, Marginal, Conditional) %>% 
+    filter(term %in% c("(Intercept)", "year", "scale(Precip_yearly)", "scale(Temp_yearly_spring)", "scale(Temp_yearly_spring):scale(Precip_yearly)", "year:scale(Precip_yearly)", "year:scale(Temp_yearly_spring)")) %>% 
+    select(Trait_trans, moments, term, n, estimate, std.error, statistic, p.value, R.squared) %>% 
     ungroup() %>% 
     group_by(Trait_trans, moments, term) %>% 
     summarize(effect = mean(estimate),
-              R2_marginal = mean(Marginal),
-              R2_conditional = mean(Conditional),
-              CIlow.fit = effect - sd(estimate),
-              CIhigh.fit = effect + sd(estimate),
+              #CIlow.fit = effect - sd(estimate),
+              #CIhigh.fit = effect + sd(estimate),
               std.error = mean(std.error),
               staticstic = mean(statistic),
-              df = mean(df),
-              p.value = mean(p.value))
+              p.value = mean(p.value),
+              R.squared = mean(R.squared))
   
   return(model_output)
 }
@@ -703,7 +703,7 @@ model_output_time_mixed <- model_output_mixed(tidy_time_model_predicted_mixed) %
 model_output_time_year_mixed <- model_output_mixed_year(tidy_year_model_predicted_mixed) %>% 
   mutate_if(is.numeric, round, digits = 6)
 
-model_output_time_year_mixed_clim <- model_output_mixed_year_clim(tidy_year_model_predicted_mixed_clim) %>% 
+model_output_time_year_clim <- model_output_year_clim(tidy_year_model_predicted_clim) %>% 
   mutate_if(is.numeric, round, digits = 6)
 
 model_output_time_directional_mixed <- model_output_mixed_predicted_climate(tidy_time_directional_model_predicted_mixed)%>% 
