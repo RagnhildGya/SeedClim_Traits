@@ -678,16 +678,19 @@ plot_predictions_year <-function(dat, trait, moment, newdata) {
     mutate(Precip_level = ifelse(Precip_level == 600, 0.6, 
                                  ifelse(Precip_level == 1200, 1.5,
                                         ifelse(Precip_level == 2000, 2.3,
-                                               ifelse(Precip_level == 2700, 3.5, NA)))))
+                                               ifelse(Precip_level == 2700, 3.5, NA))))) %>% 
+    mutate(Temp_level = ifelse(Temp_level == 6.5, 7,
+                               ifelse(Temp_level == 8.5, 10,
+                                      ifelse(Temp_level == 10.5, 12, NA))))
   
   newdata2 <- newdata %>% 
     mutate(Temp_level = as.factor(Temp_yearly_spring),
            Precip_level = as.factor(Precip_yearly))
   
   plot <- ggplot(dat2, aes(x = year, y = value, group = factor(Temp_level), color = factor(Temp_level))) +
-    #geom_line(aes(x = year, y = predicted, color = factor(Temp_level)), data=newdata2, size = 1, show.legend = TRUE) +
+    geom_line(aes(x = year, y = predicted, color = factor(Temp_level)), data=newdata2, size = 1, show.legend = TRUE) +
     geom_point() +
-    geom_smooth(aes(y = predicted, data = newdata2, method = "lm")) +
+    #geom_smooth(method = "lm") +
     #geom_line(aes(x = year, y = predicted, color = factor(Precip_yearly)), data=newdata, size = 1, show.legend = TRUE) +
     scale_color_manual(values = Temp_palette) +
     theme_minimal(base_size = 15) +
