@@ -794,7 +794,7 @@ model_trait_summary_year_clim <-function(dat, trait, moment) {
 
 models_trait_predictions_year_clim <-function(model) {
   
-  newdata <- expand.grid(Precip_yearly=c(0.6, 1.5, 2.3, 3.5), Temp_yearly_spring=c(7, 10, 12), year = c(2009, 2011, 2012, 2013, 2015, 2016, 2017, 2019), siteID = c("Alrust", "Arhelleren", "Fauske", "Gudmedalen", "Hogsete", "Lavisdalen", "Ovstedalen", "Rambera", "Skjelingahaugen", "Ulvehaugen", "Veskre", "Vikesland"))
+  newdata <- expand.grid(Precip_yearly=c(0.6, 1.5, 2.3, 3.5), Temp_yearly_spring=c(7, 10, 12), year = c(2009, 2011, 2012, 2013, 2015, 2016, 2017, 2019))
   
   newdata$predicted <- predict(object = model, newdata = newdata, re.form = NA, allow.new.levels=TRUE)
   
