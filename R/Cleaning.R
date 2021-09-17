@@ -242,11 +242,11 @@ community <- community %>%
    left_join(y = summer, by = c("Site" = "Site", "Year" = "Year")) %>% 
    ungroup() %>% 
    group_by(Site) %>% 
-   mutate(Temp_decade = mean(Temp_yearly_prev, na.rm = TRUE),
-          Temp_se = (sd(Temp_yearly_prev, na.rm = TRUE) / sqrt(length(Temp_yearly_prev))),
+   mutate(Temp_decade = mean(Temp_yearly_spring, na.rm = TRUE),
+          Temp_se = (sd(Temp_yearly_spring, na.rm = TRUE) / sqrt(length(Temp_yearly_spring))),
           Precip_decade = mean(Precip_yearly),
           Precip_se = (sd(Precip_yearly) / sqrt(length(Precip_yearly)))) %>% 
-   mutate(Temp_deviation_decade = Temp_yearly_prev - Temp_decade,
+   mutate(Temp_deviation_decade = Temp_yearly_spring - Temp_decade,
           Precip_deviation_decade = Precip_yearly - Precip_decade) %>% 
    left_join(y = env_old, by = "Site") %>% 
    mutate(Temp_level = fct_relevel(Temp_level, c("6.5", "8.5", "10.5"))) %>% 
