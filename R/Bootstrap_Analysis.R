@@ -63,13 +63,13 @@ env <- env %>%
          Precip_yearly_spring = Precip_yearly_spring/1000,
          Precip_decade = Precip_decade/1000,
          Precip_se = Precip_se/1000,
-         Precip_deviation_decade = Precip_deviation_decade/1000,
+         Precip_annomalies = Precip_annomalies/1000,
          Precip_century = Precip_century/1000)
 
 ## Climate data - making model for mean change in temp and precip ##
 
-temp_model <- lm(Temp_yearly_spring ~ Year + Site, data = env)
-precip_model <- lm(Precip_yearly ~ Year + Site, data = env)
+temp_model <- lmer(Temp_yearly_spring ~ Year + (1|Site), data = env)
+precip_model <- lmer(Precip_yearly ~ Year + (1|Site), data = env)
 
 # summary(temp_model)
 # rsquared(temp_model)
