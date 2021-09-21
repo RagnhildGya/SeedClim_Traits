@@ -760,11 +760,11 @@ print(z,caption="Table 1. Basic Table")
 
 Explained_variance_RDA <- read.table(header = TRUE, stringsAsFactors = TRUE, text = 
                                        "x model variance
-                               1 Temperature 0.2306
-                               1 Precipitation 0.1556
-                               1 Temp*Precip 0.1765
-                               1 Temp*Precip*Year 0.0169
-                               1 Unexplained 0.4195
+                               1 Temperature 0.2293
+                               1 Precipitation 0.1552
+                               1 Temp*Precip 0.1766
+                               1 Temp*Precip*Year 0.0183
+                               1 Unexplained 0.4206
                                ")
 
 Explained_variance_RDA %>% 
