@@ -256,7 +256,7 @@ com_data_nottrans <- community_for_analysis %>%
   unique() %>% 
   nest()
 
-### Function for model for testing traits in temp and precip in time and space ###
+### Function for running model and tidying results for a test of how traits change with temp and precip in time and space ###
 
 model_TDT <- function(df) {
   lmer(value ~ scale(Temp_decade) + scale(Precip_decade) + scale(Temp_annomalies) + scale(Precip_annomalies) + 
@@ -265,14 +265,6 @@ model_TDT <- function(df) {
          scale(Precip_decade)*scale(Temp_annomalies) + scale(Precip_decade)*scale(Precip_annomalies) +
          + (1|siteID), data = df)
 }
-
-results_TDT <- memodel_data_fullcommunity %>%
-  filter(moments %in% c("mean", "skewness")) %>% 
-  mutate(model = purrr::map(data, model_TDT))
-
-tidy_TDT <- results_TDT %>%
-  mutate(model_output = purrr::map(model, tidy)) %>%
-  mutate(R_squared = purrr::map(model, rsquared))
 
 output <-function(dat) {
   
@@ -295,23 +287,46 @@ output <-function(dat) {
   
   return(model_output)
 }
-output1<- output(tidy1) %>% 
-  mutate_if(is.numeric, round, digits = 5)
-
-## Function for predictions from the above models
-predict_without_random<-function(model) {
-  predict(object = model, re.form=NA)
-}
-
-predict_with_random<-function(model) {
-  predict(object = model, re.form=NULL)
-}
-
 
 #### Running models (time consuming), 2 steps ####
 
 # 1) Running the mixed effects model
 # 2) Tidying the model, giving the model output in a nice format. Calculating pseudo R squared values based on the method in paper Nakagawa et al 2017.
+
+results_TDT <- memodel_data_fullcommunity %>%
+  filter(moments %in% c("mean", "skewness")) %>% 
+  mutate(model = purrr::map(data, model_TDT))
+
+tidy_TDT <- results_TDT %>%
+  mutate(model_output = purrr::map(model, tidy)) %>%
+  mutate(R_squared = purrr::map(model, rsquared))
+
+
+
+output_TDT <- output(tidy_TDT) %>% 
+  mutate_if(is.numeric, round, digits = 5)
+
+## Model 1: Community shifts with time/climate fluctuations -Community ##
+# Step 1) Model
+mem_results_com_time_mixed <- com_data %>%
+  mutate(model = purrr::map(data, model_time))
+
+#Step 2) Tidying model output, getting predictions and R2
+tidy_com_time_model_predicted_mixed <- mem_results_com_time_mixed %>%
+  mutate(model_output = purrr::map(model, tidy)) %>%
+  mutate(R_squared = purrr::map(model, rsquared)) 
+
+## Function for predictions from the above models
+# predict_without_random<-function(model) {
+#   predict(object = model, re.form=NA)
+# }
+# 
+# predict_with_random<-function(model) {
+#   predict(object = model, re.form=NULL)
+# }
+# 
+
+
 
 
 ## Model 1: Trait shifts with time/climate fluctuations ##
