@@ -197,7 +197,7 @@ moments_clim_long_without_intra <- Imputed_traits_without_intra %>%
 # With intraspecific variability
 memodel_data_fullcommunity <- moments_clim_long_fullcommunity %>% 
   ungroup() %>%
-  select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, temp_modeled, precip_modeled, Temp_level, Precip_level, value, year, n) %>% 
+  select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, value, year, n) %>% 
   mutate(value = scale(value)) %>% 
   group_by(Trait_trans, moments, n) %>% 
   nest()
@@ -304,6 +304,63 @@ model_space <- function(df) {
 #   lm(value ~ Temp_yearly_spring * scale(Precip_yearly) +  siteID, data = df)
 # }
 
+## Testing new model
+
+new_model <- function(df) {
+  lmer(value ~ scale(Temp_decade) + scale(Precip_decade) + scale(Temp_annomalies) + scale(Precip_annomalies) + 
+         scale(Temp_decade)*scale(Precip_decade) + scale(Temp_annomalies)*scale(Precip_annomalies) + 
+         scale(Temp_decade)*scale(Temp_annomalies) + scale(Temp_decade)*scale(Precip_annomalies) + 
+         scale(Precip_decade)*scale(Temp_annomalies) + scale(Precip_decade)*scale(Precip_annomalies) +
+         + (1|siteID), data = df)
+}
+
+new_model_time <- function(df) {
+  lmer(value ~scale(Temp_annomalies) + scale(Precip_annomalies) + siteID +
+         scale(Temp_annomalies)*scale(Precip_annomalies) + 
+           scale(Temp_annomalies)*siteID +
+         scale(Precip_annomalies)*siteID +
+         + (1|year), data = df)
+}
+
+new_model_time <- function(df) {
+  lmer(value ~scale(Temp_annomalies) + scale(Precip_annomalies) + siteID +
+         scale(Temp_annomalies)*scale(Precip_annomalies) + 
+         scale(Temp_annomalies)*siteID +
+         scale(Precip_annomalies)*siteID +
+         + (1|year), data = df)
+}
+
+results <- memodel_data_fullcommunity %>%
+  filter(moments %in% c("mean", "skewness")) %>% 
+  mutate(model = purrr::map(data, new_model))
+
+tidy1 <- results %>%
+  mutate(model_output = purrr::map(model, tidy)) %>%
+  mutate(R_squared = purrr::map(model, rsquared))
+
+output <-function(dat) {
+  
+  model_output <- dat %>% 
+    select(Trait_trans, moments, n, model_output, R_squared) %>% 
+    unnest(c(model_output, R_squared)) %>% 
+    filter(!term %in% c("(Intercept)", "sd__(Intercept)", "sd__Observation")) %>% 
+    select(Trait_trans, moments, term, n, estimate, std.error, statistic, df, p.value, Marginal, Conditional) %>% 
+    ungroup() %>% 
+    group_by(Trait_trans, moments, term) %>% 
+    summarize(effect = mean(estimate),
+              R2_marginal = mean(Marginal),
+              R2_conditional = mean(Conditional),
+              CIlow.fit = effect - sd(estimate),
+              CIhigh.fit = effect + sd(estimate),
+              std.error = mean(std.error),
+              staticstic = mean(statistic),
+              df = mean(df),
+              p.value = mean(p.value))
+  
+  return(model_output)
+}
+output1<- output(tidy1) %>% 
+  mutate_if(is.numeric, round, digits = 5)
 
 ## Function for predictions from the above models
 predict_without_random<-function(model) {
