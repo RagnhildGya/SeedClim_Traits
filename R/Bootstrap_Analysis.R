@@ -256,57 +256,9 @@ com_data_nottrans <- community_for_analysis %>%
   unique() %>% 
   nest()
 
-### Funcitons for different models and model predictions later ###
+### Function for model for testing traits in temp and precip in time and space ###
 
-## 1. model testing if traits shift with climate fluctuations (warm years vs. cold years)
-
-model_time <- function(df) {
-  lmer(value ~ scale(Temp_yearly_spring) * scale(Precip_yearly) + (1 | siteID), data = df)
-}
-
-## 2. model testing if traits shifts in time using year as the fixed effect
-
-model_time_year <- function(df) {
-  lmer(value ~ year + (1 | siteID), data = df)
-}
-
-## xth model testing if traits shifts in time using year as the fixed effect, depending on what site they are from.
-
-model_time_year_clim <- function(df) {
-  lm(value ~ year * scale(Temp_yearly_spring) * scale(Precip_yearly), data = df)
-}
-
-
-## 2. model testing if traits shift directionally by using the modeled climate data for directional shift in temp and precip in the ten years.
-
-model_time_predicted <- function(df) {
-  lmer(value ~scale(temp_modeled) * scale(precip_modeled) + (1 | siteID), data = df)
-}
-
-## 3. and 4. model testing if traits shift along the spatial gradient. One will be using the bootstrapped traits with intraspecific variability, and one without the intraspecific variability
-
-model_space <- function(df) {
-  lmer(value ~  scale(Temp_yearly_spring) * scale(Precip_yearly) + (1 | year), data = df)
-}
-
-## Models 1-4. but with linear models. Results goes in the appendix of the paper.
-
-# model_space_linear<-function(df) {
-#   lm(value ~  Temp_yearly_spring * scale(Precip_yearly) +  year, data = df)
-# }
-
-# model_time_predicted <- function(df) {
-#   lm(value ~scale(temp_modeled) * scale(precip_modeled) + siteID, data = df)
-# }
-
-# 
-# model_time_linear<-function(df) {
-#   lm(value ~ Temp_yearly_spring * scale(Precip_yearly) +  siteID, data = df)
-# }
-
-## Testing new model
-
-new_model <- function(df) {
+model_TDT <- function(df) {
   lmer(value ~ scale(Temp_decade) + scale(Precip_decade) + scale(Temp_annomalies) + scale(Precip_annomalies) + 
          scale(Temp_decade)*scale(Precip_decade) + scale(Temp_annomalies)*scale(Precip_annomalies) + 
          scale(Temp_decade)*scale(Temp_annomalies) + scale(Temp_decade)*scale(Precip_annomalies) + 
@@ -314,27 +266,11 @@ new_model <- function(df) {
          + (1|siteID), data = df)
 }
 
-new_model_time <- function(df) {
-  lmer(value ~scale(Temp_annomalies) + scale(Precip_annomalies) + siteID +
-         scale(Temp_annomalies)*scale(Precip_annomalies) + 
-           scale(Temp_annomalies)*siteID +
-         scale(Precip_annomalies)*siteID +
-         + (1|year), data = df)
-}
-
-new_model_time <- function(df) {
-  lmer(value ~scale(Temp_annomalies) + scale(Precip_annomalies) + siteID +
-         scale(Temp_annomalies)*scale(Precip_annomalies) + 
-         scale(Temp_annomalies)*siteID +
-         scale(Precip_annomalies)*siteID +
-         + (1|year), data = df)
-}
-
-results <- memodel_data_fullcommunity %>%
+results_TDT <- memodel_data_fullcommunity %>%
   filter(moments %in% c("mean", "skewness")) %>% 
-  mutate(model = purrr::map(data, new_model))
+  mutate(model = purrr::map(data, model_TDT))
 
-tidy1 <- results %>%
+tidy_TDT <- results_TDT %>%
   mutate(model_output = purrr::map(model, tidy)) %>%
   mutate(R_squared = purrr::map(model, rsquared))
 
