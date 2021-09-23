@@ -367,13 +367,26 @@ model_trait_summary <-function(dat, trait, moment) {
   return(model)
 }
 
-models_trait_predictions <-function(model) {
+models_trait_predictions_space <-function(model) {
 
   newdata <- expand.grid(Precip_decade = c(0.8, 1.5, 2.3, 3.5), 
                          Temp_decade = seq(5.5,12, length = 200), 
                          siteID = c("Alrust", "Arhelleren", "Fauske", "Gudmedalen", "Hogsete", "Lavisdalen", "Ovstedalen", "Rambera", "Skjelingahaugen", "Ulvehaugen", "Veskre", "Vikesland"),
+                         Precip_annomalies = 0,
+                         Temp_annomalies = 0)
+  
+  newdata$predicted <- predict(object = model, newdata = newdata, re.form = NA, allow.new.levels=TRUE)
+  
+  return(newdata)
+}
+
+models_trait_predictions_time <-function(model) {
+  
+  newdata <- expand.grid(Precip_decade = 1.8, 
+                         Temp_decade = 9, 
+                         siteID = c("Alrust", "Arhelleren", "Fauske", "Gudmedalen", "Hogsete", "Lavisdalen", "Ovstedalen", "Rambera", "Skjelingahaugen", "Ulvehaugen", "Veskre", "Vikesland"),
                          Precip_annomalies = c(-1.5, 0, 1.5, 3),
-                         Temp_annomalies = seq(-3, 4.5, length = 200))
+                         Temp_annomalies = seq(-3, 2, length = 200))
   
   newdata$predicted <- predict(object = model, newdata = newdata, re.form = NA, allow.new.levels=TRUE)
   
@@ -381,10 +394,12 @@ models_trait_predictions <-function(model) {
 }
 
 
+
 #### Make datasets with modeled values for different traits for plotting ####
 
 SLA_mean_sum_yc <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean")
-SLA_mean_pred_yc <- models_trait_predictions(SLA_mean_sum_yc)
+SLA_mean_pred_space <- models_trait_predictions_space(SLA_mean_sum_yc)
+SLA_mean_pred_time <- models_trait_predictions_time(SLA_mean_sum_yc)
 
 Height_mean_sum_yc <- model_trait_summary_year_clim(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean")
 Height_mean_pred_yc <- models_trait_predictions_year_clim(Height_mean_sum_yc)
