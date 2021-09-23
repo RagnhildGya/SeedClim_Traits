@@ -358,88 +358,22 @@ model_trait_summary <-function(dat, trait, moment) {
     ungroup() 
   
   # Run model
-  model <- lmer(value ~ Temp_yearly_spring * Precip_yearly + (1 | year), data = dat2)
+  model <-   lmer(value ~ scale(Temp_decade) + scale(Precip_decade) + scale(Temp_annomalies) + scale(Precip_annomalies) + 
+                    scale(Temp_decade)*scale(Precip_decade) + scale(Temp_annomalies)*scale(Precip_annomalies) + 
+                    scale(Temp_decade)*scale(Temp_annomalies) + scale(Temp_decade)*scale(Precip_annomalies) + 
+                    scale(Precip_decade)*scale(Temp_annomalies) + scale(Precip_decade)*scale(Precip_annomalies) +
+                    + (1|siteID), data = dat2)
   
   return(model)
 }
 
 models_trait_predictions <-function(model) {
 
-  newdata <- expand.grid(Precip_yearly=c(0.6, 1.5, 2.3, 3.5), Temp_yearly_spring=seq(3,12, length=500), year = c(2009, 2011, 2012, 2013, 2015, 2016, 2017, 2019))
-  
-  newdata$predicted <- predict(object = model, newdata = newdata, re.form = NA, allow.new.levels=TRUE)
-  
-  return(newdata)
-}
-
-#### Simpler mixed effect models on specific traits to make predicted plots ####
-
-
-model_trait_summary_year_clim <-function(dat, trait, moment) {
-  
-  
-  # Filter data for model
-  dat2 <- dat %>%
-    filter(Trait_trans == trait,
-           moments == moment,
-           n == 75) %>% 
-    unnest(data) %>% 
-    ungroup() 
-  
-  # Run model
-  model <- lm(value ~ year * Temp_yearly_spring * Precip_yearly, data = dat2)
-  
-  return(model)
-}
-
-models_trait_predictions_year_clim <-function(model) {
-  
-  newdata <- expand.grid(Precip_yearly=c(0.6, 1.5, 2.3, 3.5), Temp_yearly_spring=c(7, 10, 12), year = c(2009, 2011, 2012, 2013, 2015, 2016, 2017, 2019))
-  
-  newdata$predicted <- predict(object = model, newdata = newdata, re.form = NA, allow.new.levels=TRUE)
-  
-  return(newdata)
-}
-
-### Makgin function for simpler models on single traits with the modeled climate change in the ten year period ###
-
-model_trait_summary_spatial_climate <-function(dat, trait, moment) {
-  
-  
-  # Filter data for model
-  dat2 <- dat %>%
-    filter(Trait_trans == trait,
-           moments == moment,
-           n == 75) %>% 
-    unnest(data) %>% 
-    ungroup() 
-  
-  # Run model
-  model <- lmer(value ~ Temp_yearly_spring * Precip_yearly + (1 | siteID), data = dat2)
-  
-  return(model)
-}
-
-model_trait_summary_temporal <-function(dat, trait, moment) {
-  
-  
-  # Filter data for model
-  dat2 <- dat %>%
-    filter(Trait_trans == trait,
-           moments == moment,
-           n == 75) %>% 
-    unnest(data) %>% 
-    ungroup() 
-  
-  # Run model
-  model <- lm(value ~ year * siteID, data = dat2)
-  
-  return(model)
-}
-
-models_trait_predictions_siteID <-function(model) {
-  
-  newdata <- expand.grid( year = c(2009, 2011, 2012, 2013, 2015, 2016, 2017, 2019), siteID = c("Alrust", "Arhelleren", "Fauske", "Gudmedalen", "Hogsete", "Lavisdalen", "Ovstedalen", "Rambera", "Skjelingahaugen", "Ulvehaugen", "Veskre", "Vikesland"))
+  newdata <- expand.grid(Precip_decade = c(0.8, 1.5, 2.3, 3.5), 
+                         Temp_decade = seq(5.5,12, length = 200), 
+                         siteID = c("Alrust", "Arhelleren", "Fauske", "Gudmedalen", "Hogsete", "Lavisdalen", "Ovstedalen", "Rambera", "Skjelingahaugen", "Ulvehaugen", "Veskre", "Vikesland"),
+                         Precip_annomalies = c(-1.5, 0, 1.5, 3),
+                         Temp_annomalies = seq(-3, 4.5, length = 200))
   
   newdata$predicted <- predict(object = model, newdata = newdata, re.form = NA, allow.new.levels=TRUE)
   
@@ -447,21 +381,10 @@ models_trait_predictions_siteID <-function(model) {
 }
 
 
-# models_trait_predictions_for_heatmap <-function(model, trait, moment) {
-#   
-#   newdata <- expand.grid(Precip_yearly=c(0.6, 1.5, 2.3, 3.5), Temp_yearly_spring=c(5.5, 7.5, 10.5), year = c(2009, 2011, 2012, 2013, 2015, 2016, 2017, 2019))
-#   
-#   newdata$predicted <- predict(object = model, newdata = newdata, re.form = NA, allow.new.levels=TRUE)
-#   
-#   newdata <- newdata %>% 
-#   mutate(moment = moment,
-#          trait = trait)
-#   
-#   return(newdata)
-# }
+#### Make datasets with modeled values for different traits for plotting ####
 
-SLA_mean_sum_yc <- model_trait_summary_year_clim(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean")
-SLA_mean_pred_yc <- models_trait_predictions_year_clim(SLA_mean_sum_yc)
+SLA_mean_sum_yc <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean")
+SLA_mean_pred_yc <- models_trait_predictions(SLA_mean_sum_yc)
 
 Height_mean_sum_yc <- model_trait_summary_year_clim(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean")
 Height_mean_pred_yc <- models_trait_predictions_year_clim(Height_mean_sum_yc)
