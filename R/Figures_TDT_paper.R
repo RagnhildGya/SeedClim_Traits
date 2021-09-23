@@ -462,6 +462,40 @@ model_output_space_mixed %>%
 
 #ggsave(filename = "trends_over_time_free_scales_WI.pdf",  width = 34, height = 23, units = "cm")
 
+output_TDT %>% 
+  ungroup() %>% 
+  #filter(!Trait_trans == "Wet_Mass_g_log") %>% 
+  mutate(Trait_moment = paste0(moments, "_", Trait_trans),
+         time_space = ifelse(term %in% c("scale(Precip_annomalies)", "scale(Temp_annomalies)", "scale(Temp_annomalies):scale(Precip_annomalies)"), "time",
+                             ifelse(term %in% c("scale(Precip_decade)", "scale(Temp_decade)", "scale(Temp_decade):scale(Precip_decade)"), "space", "time_and_space")),
+         sign = ifelse(p.value < 0.05, "yes", "no"))%>% 
+  #mutate(moments = factor(moments, levels = c("time", "Without ITV", "mean"))) %>% 
+  filter(time_space %in% c("time", "space")) %>% 
+  mutate(term = as.factor(recode(term, "scale(Precip_decade)" = "Precipitation", "scale(Temp_decade)" = "SummerTemp", "scale(Temp_decade):scale(Precip_decade)" = "SummerTemp:Precipitation", "scale(Precip_annomalies)" = "Precipitation", "scale(Temp_annomalies)" = "SummerTemp", "scale(Temp_annomalies):scale(Precip_annomalies)" = "SummerTemp:Precipitation"))) %>% 
+  mutate(Trait_trans = factor(Trait_trans, levels = c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent", "SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))) %>%
+  mutate(time_space = factor(time_space, levels = c("time", "space"))) %>% 
+  filter(!moments == "skewness") %>% 
+  ggplot(aes(x = fct_rev(Trait_trans), y = effect, fill = time_space)) +
+  geom_bar(aes(color = sign), stat = "identity", position = position_dodge(width=0.7), width = 0.7) +
+  #geom_point(aes(size = if_else(p.value <0.05, 0.3, NA_real_)), position = position_dodge(width=0.6), show.legend = FALSE) +
+  #geom_bar_pattern(aes(pattern = 'stripe'), stat = "identity", position = "dodge") +
+  geom_errorbar(aes(ymin = CIlow.fit, ymax = CIhigh.fit), position = position_dodge(width=0.7), width = 0.3) +
+  facet_grid(~term) +
+  scale_fill_manual(values = c("#676767", "lightgrey")) +
+  # scale_fill_gradient(low = "#213964", ##2E75B6
+  #                     high = "#BAD8F7",
+  #                     guide = "colourbar") +
+  #scale_color_manual(values = c("black", "black", "black")) +
+  #scale_alpha_continuous(range = c(0.9, 0.1)) +
+  geom_hline(yintercept =  0) +
+  theme_bw(base_size = 18) +
+  coord_flip() +
+  #guides(fill = "none", color = "none", size = "none") +
+  theme(axis.title.y=element_blank())
+  #guides(color = FALSE, alpha = FALSE, fill = FALSE)
+
+ggsave(filename = "trends_with_temp_precip_decade_annomalies.pdf",  width = 34, height = 23, units = "cm")
+
 ## Community model output figure ##
 
 time_com_mixed <- model_output_com_time_mixed %>% 
@@ -533,47 +567,51 @@ trait <- "SLA_cm2_g_log"
 moment <- "mean"
 newdata <- SLA_mean_pred_yc
 
-plot_predictions <-function(dat, trait, moment, newdata) {
+plot_predictions_space <-function(dat, trait, moment, newdata) {
   
   dat2 <- dat %>%
     filter(Trait_trans == trait,
            moments == moment,
            n == 75) %>% 
-     unnest(data) %>% 
-    # mutate(year_coloring = ifelse(year == "2009", "first",
-    #                               ifelse(year == "2019", "last",
-    #                                      "between"))) %>% 
+    unnest(data) %>% 
     ungroup()
-  
-  # dat3 <- dat2 %>% 
-  #   group_by(Trait_trans, moments, siteID, turfID, Temp_yearly_spring) %>% 
-  #   pivot_wider(names_from = year, values_from = value, values_fn = length) %>% 
-  #   select("2009", "2019")
-  # mutate(x_2009 = ifelse(year == "2009", Temp_yearly_spring,
-  #                        NA),
-  #        x_2019 = ifelse(year == "2019", Temp_yearly_spring,
-  #                        NA),
-  #        y_2009 = ifelse(year == "2009", value,
-  #                        NA),
-  #        y_2019 = ifelse(year == "2019", value,
-  #                        NA)) %>%
-  #   select(x_2009, x_2019, y_2009, y_2019) %>% 
+ 
     
-    
-    plot <- ggplot(dat2, aes(x = Temp_yearly_spring, y = value)) +
-    geom_point() +
-    geom_line(aes(x = Temp_yearly_spring, y = predicted, color = factor(Precip_yearly)), data=newdata, size = 1, show.legend = TRUE) +
+    plot <- ggplot(dat2, aes(x = Temp_decade, y = value)) +
+    geom_point(color = "lightgrey") +
+    geom_line(aes(x = Temp_decade, y = predicted, color = factor(Precip_decade)), data=newdata, size = 1, show.legend = TRUE) +
     scale_color_manual(values = Precip_palette) +
     theme_minimal(base_size = 15) 
   
   return(plot)
 }
 
+plot_predictions_time <-function(dat, trait, moment, newdata) {
+  
+  dat2 <- dat %>%
+    filter(Trait_trans == trait,
+           moments == moment,
+           n == 75) %>% 
+    unnest(data) %>% 
+    ungroup()
+  
+  
+  plot <- ggplot(dat2, aes(x = Temp_annomalies, y = value)) +
+    geom_point(color = "lightgrey") +
+    geom_line(aes(x = Temp_annomalies, y = predicted, color = factor(Precip_annomalies)), data=newdata, size = 1, show.legend = TRUE) +
+    scale_color_manual(values = Precip_palette) +
+    theme_minimal(base_size = 15) 
+  
+  return(plot)
+}
 
-SLA_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", SLA_mean_pred_yc) +
+SLA_mean_plot <- plot_predictions_space(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", SLA_mean_pred_space) +
   labs(y = "SLA (cm2/g log)", x = "", title = "Mean") +
   theme(plot.title = element_text(hjust = 0.5))
-SLA_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "skewness", SLA_skew_pred) + 
+SLA_mean_plot <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", SLA_mean_pred_time) +
+  labs(y = "SLA (cm2/g log)", x = "", title = "Mean") +
+  theme(plot.title = element_text(hjust = 0.5))
+'SLA_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "skewness", SLA_skew_pred) + 
   geom_hline(yintercept = 0, color = "black", linetype = 2) +
   labs(y = "", x = "", title = "Skewness") +
   theme(plot.title = element_text(hjust = 0.5)) +
