@@ -204,21 +204,21 @@ memodel_data_fullcommunity <- moments_clim_long_fullcommunity %>%
 
 memodel_data_fullcommunity_nottransformed <- moments_clim_long_fullcommunity %>% 
   ungroup() %>%
-  select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, temp_modeled, precip_modeled, Temp_level, Precip_level, value, year, n) %>% 
+  select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, value, year, n) %>% 
   group_by(Trait_trans, moments, n) %>% 
   nest()
 
 # Without intraspecific variability
 memodel_data_without_intra <- moments_clim_long_without_intra %>% 
   ungroup() %>%
-  select(Trait_trans, moments, siteID, turfID,Temp_yearly_spring, Precip_yearly, temp_modeled, precip_modeled, Temp_level, Precip_level, value, year, n) %>% 
+  select(Trait_trans, moments, siteID, turfID,Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, value, year, n) %>% 
   mutate(value = scale(value)) %>% 
   group_by(Trait_trans, moments, n) %>% 
   nest()
 
 memodel_data_without_intra_nottransformed <- moments_clim_long_without_intra %>% 
   ungroup() %>%
-  select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, temp_modeled, precip_modeled, Temp_level, Precip_level, value, year, n) %>% 
+  select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, value, year, n) %>% 
   group_by(Trait_trans, moments, n) %>% 
   nest()
 
@@ -234,7 +234,7 @@ com_data <- community_for_analysis %>%
          other_cover = sum(woody, pteridophyte, `NA`, na.rm = TRUE)) %>% 
   left_join(env, by = c("siteID" = "siteID", "year" = "Year")) %>% 
   pivot_longer(cols = c("species_richness", "graminoid_cover", "forb_cover", "other_cover", "total_vascular", "vegetation_height"), names_to = "community_properties", values_to = "value") %>% 
-  select(siteID, turfID, Temp_yearly_spring, Precip_yearly, temp_modeled, precip_modeled, Temp_level, Precip_level, year, value, community_properties) %>% 
+  select(siteID, turfID, Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, year, value, community_properties) %>% 
   group_by(community_properties) %>% 
   unique() %>% 
   mutate(value = scale(value)) %>% 
@@ -251,7 +251,7 @@ com_data_nottrans <- community_for_analysis %>%
          other_cover = sum(woody, pteridophyte, `NA`, na.rm = TRUE)) %>% 
   left_join(env, by = c("siteID" = "siteID", "year" = "Year")) %>% 
   pivot_longer(cols = c("species_richness", "graminoid_cover", "forb_cover", "other_cover", "total_vascular", "vegetation_height"), names_to = "community_properties", values_to = "value") %>% 
-  select(siteID, turfID, Temp_yearly_spring, Precip_yearly, temp_modeled, precip_modeled, Temp_level, Precip_level, year, value, community_properties) %>% 
+  select(siteID, turfID, Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies,Temp_level, Precip_level, year, value, community_properties) %>% 
   group_by(community_properties) %>% 
   unique() %>% 
   nest()
@@ -288,7 +288,7 @@ output <-function(dat) {
   return(model_output)
 }
 
-#### Running models (time consuming), 2 steps ####
+#### Running models - traits ####
 
 # 1) Running the mixed effects model
 # 2) Tidying the model, giving the model output in a nice format. Calculating pseudo R squared values based on the method in paper Nakagawa et al 2017.
@@ -297,367 +297,21 @@ results_TDT <- memodel_data_fullcommunity %>%
   filter(moments %in% c("mean", "skewness")) %>% 
   mutate(model = purrr::map(data, model_TDT))
 
+#Tidying up the model output
+
 tidy_TDT <- results_TDT %>%
   mutate(model_output = purrr::map(model, tidy)) %>%
   mutate(R_squared = purrr::map(model, rsquared))
 
-
+# Making a dataset with the model output and the test-statistics (R squared), sumarrizing across boootstraps.
 
 output_TDT <- output(tidy_TDT) %>% 
   mutate_if(is.numeric, round, digits = 5)
 
-## Model 1: Community shifts with time/climate fluctuations -Community ##
-# Step 1) Model
-mem_results_com_time_mixed <- com_data %>%
-  mutate(model = purrr::map(data, model_time))
-
-#Step 2) Tidying model output, getting predictions and R2
-tidy_com_time_model_predicted_mixed <- mem_results_com_time_mixed %>%
-  mutate(model_output = purrr::map(model, tidy)) %>%
-  mutate(R_squared = purrr::map(model, rsquared)) 
-
-## Function for predictions from the above models
-# predict_without_random<-function(model) {
-#   predict(object = model, re.form=NA)
-# }
-# 
-# predict_with_random<-function(model) {
-#   predict(object = model, re.form=NULL)
-# }
-# 
+write.table(output_TDT, row.names = TRUE, col.names = TRUE, file = "model_output_TDT.csv")
 
 
-
-
-## Model 1: Trait shifts with time/climate fluctuations ##
-# Step 1) Model
-mem_results_time_mixed <- memodel_data_fullcommunity %>%
-  filter(moments %in% c("mean", "skewness")) %>% 
-  mutate(model = purrr::map(data, model_time))
-
-#Step 2) Tidying model output, getting predictions and R2
-tidy_time_model_predicted_mixed <- mem_results_time_mixed %>%
-  mutate(model_output = purrr::map(model, tidy)) %>%
-  mutate(R_squared = purrr::map(model, rsquared))
-
-## Model 2: Trait shifts with time - year ##
-# Step 1) Model
-mem_results_year_mixed <- memodel_data_fullcommunity %>%
-  filter(moments %in% c("mean", "skewness")) %>% 
-  mutate(model = purrr::map(data, model_time_year))
-
-#Step 2) Tidying model output, getting predictions and R2
-tidy_year_model_predicted_mixed <- mem_results_year_mixed %>%
-  mutate(model_output = purrr::map(model, tidy)) %>%
-  mutate(R_squared = purrr::map(model, rsquared))
-
-## Model Xth: Trait shifts with time - year climate dependent ##
-# Step 1) Model
-mem_results_year_clim <- memodel_data_fullcommunity %>%
-  filter(moments %in% c("mean", "skewness")) %>% 
-  mutate(model = purrr::map(data, model_time_year_clim))
-
-#Step 2) Tidying model output, getting predictions and R2
-tidy_year_model_predicted_clim <- mem_results_year_clim %>%
-  mutate(model_output = purrr::map(model, tidy)) %>%
-  mutate(R_squared = purrr::map(model, rsquared))
-
-
-## Model 1 without transforming the data: Trait shifts with time/climate fluctuations
-# mem_results_time_mixed_nottrans <- memodel_data_fullcommunity_nottransformed %>%
-#   filter(moments %in% c("mean", "skewness")) %>% 
-#   mutate(model = purrr::map(data, model_time))
-# 
-# tidy_time_model_predicted_mixed_nottrans <- mem_results_time_mixed_nottrans %>%
-#   mutate(model_output = purrr::map(model, tidy)) %>%
-#   mutate(R_squared = purrr::map(model, rsquared))
-
-
-## Model 1: Community shifts with time/climate fluctuations -Community ##
-# Step 1) Model
-mem_results_com_time_mixed <- com_data %>%
-  mutate(model = purrr::map(data, model_time))
-
-#Step 2) Tidying model output, getting predictions and R2
-tidy_com_time_model_predicted_mixed <- mem_results_com_time_mixed %>%
-  mutate(model_output = purrr::map(model, tidy)) %>%
-  mutate(R_squared = purrr::map(model, rsquared)) 
-
-## Model 2: Trait shifts with time - year - Community ##
-# Step 1) Model
-mem_results_com_time_year_mixed <- com_data %>%
-  mutate(model = purrr::map(data, model_time_year))
-
-#Step 2) Tidying model output, getting predictions and R2
-tidy_com_time_year_model_predicted_mixed <- mem_results_com_time_year_mixed %>%
-  mutate(model_output = purrr::map(model, tidy)) %>%
-  mutate(R_squared = purrr::map(model, rsquared)) 
-
-## Model 1 without transforming the data: Community shifts with time/climate flucuations
-# mem_results_com_time_mixed_nottrans <- com_data_nottrans %>%
-#   mutate(model = purrr::map(data, model_time))
-# 
-# tidy_com_time_model_predicted_mixed_nottrans <- mem_results_com_time_mixed_nottrans %>%
-#   mutate(model_output = purrr::map(model, tidy)) %>%
-#   mutate(R_squared = purrr::map(model, rsquared)) 
-
-
-## Model 2: Trait shifts with time, directional shifts ##
-# Step 1) Model
-mem_results_time_directional_mixed <- memodel_data_fullcommunity %>%
-  filter(moments %in% c("mean", "skewness")) %>% 
-  mutate(model = purrr::map(data, model_time_predicted))
-
-#Step 2) Tidying model output, getting predictions and R2
-tidy_time_directional_model_predicted_mixed <- mem_results_time_directional_mixed %>%
-  mutate(model_output = purrr::map(model, tidy)) %>%
-  mutate(R_squared = purrr::map(model, rsquared))
-
-
-
-## Model 3: Trait shifts in space, with intraspecific variability ##
-# Step 1) Model
-mem_results_space <- memodel_data_fullcommunity %>%
-  filter(moments %in% c("mean", "skewness")) %>% 
-  mutate(model = purrr::map(data, model_space))
-
-#Step 2) Tidying model output, getting predictions and R2
-tidy_space_model_predicted_mixed <- mem_results_space %>%
-  mutate(model_output = purrr::map(model, tidy)) %>%
-  mutate(R_squared = purrr::map(model, rsquared))
-
-# mem_results_space_nottrans <- memodel_data_fullcommunity_nottransformed %>%
-#   filter(moments %in% c("mean", "skewness")) %>% 
-#   mutate(model = purrr::map(data, model_space))
-# 
-# tidy_space_model_predicted_mixed_nottrans <- mem_results_space_nottrans %>%
-#   mutate(model_output = purrr::map(model, tidy)) %>%
-#   mutate(R_squared = purrr::map(model, rsquared))
-
-
-## Model 4: Trait shifts in space, without intraspecific variability ##
-# Step 1) Model
-mem_results_space_wi <- memodel_data_without_intra%>%
-  filter(moments %in% c("mean", "skewness")) %>% 
-  mutate(model = purrr::map(data, model_space))
-
-#Step 2) Tidying model output, getting predictions and R2
-tidy_space_model_predicted_mixed_wi <- mem_results_space_wi %>%
-  mutate(model_output = purrr::map(model, tidy)) %>%
-  mutate(R_squared = purrr::map(model, rsquared))
-
-# mem_results_space_nottrans_wi <- memodel_data_without_intra_nottransformed %>%
-#     filter(moments %in% c("mean", "skewness")) %>% 
-#     mutate(model = purrr::map(data, model_space))
-#   
-# tidy_space_model_predicted_mixed_nottrans_wi <- mem_results_space_nottrans_wi %>%
-#     mutate(model_output = purrr::map(model, tidy)) %>%
-#     mutate(R_squared = purrr::map(model, rsquared))
-
-
-## Model space community: Community shifts in space ##
-# Step 1) Model
-mem_results_com_space <- com_data %>%
-  mutate(model = purrr::map(data, model_space))
-
-#Step 2) Tidying model output, getting predictions and R2
-tidy_com_space_model_predicted_mixed <- mem_results_com_space %>%
-  mutate(model_output = purrr::map(model, tidy)) %>%
-  mutate(R_squared = purrr::map(model, rsquared))
-
-# mem_results_com_space_nottrans <- com_data_nottrans %>%
-#   mutate(model = purrr::map(data, model_space))
-# 
-# tidy_com_space_model_predicted_mixed_nottrans <- mem_results_com_space_nottrans %>%
-#   mutate(model_output = purrr::map(model, tidy)) %>%
-#   mutate(R_squared = purrr::map(model, rsquared))
-
-# predicted_values_space_mixed <- tidy_space_model_predicted %>%
-#   ungroup() %>%
-#   select(Trait_trans, moments, data, predicted) %>%
-#   unnest(c(data, predicted)) %>%
-#   rename(modeled = predicted, measured = value)
-
-
-
-# mem_results_time_mixed_notax <- memodel_data_fullcommunity_notax %>%
-#   filter(moments %in% c("mean", "skewness")) %>% 
-#   mutate(model = purrr::map(data, model_time))
-# 
-# tidy_time_model_predicted_mixed_notax <- mem_results_time_mixed_notax %>%
-#   mutate(model_output = purrr::map(model, tidy)) %>%
-#   mutate(predicted = purrr::map(model, predict_with_random)) %>% 
-#   mutate(R_squared = purrr::map(model, rsquared))
-
-# predicted_values_time <- tidy_time_model_predicted %>%
-#   ungroup() %>%
-#   select(Trait_trans, moments, data, predicted) %>%
-#   unnest(c(data, predicted)) %>%
-#   rename(modeled = predicted, measured = value)
-
-
-## Space linear ##
-# mem_results_space_linear <- memodel_data_fullcommunity %>%
-#   filter(moments %in% c("mean", "skewness"),
-#          n == 4) %>% 
-#   mutate(model = purrr::map(data, model_space_linear))
-# 
-# tidy_space_model_predicted_linear <- mem_results_space_linear %>%
-#   mutate(model_output = purrr::map(model, tidy)) %>% 
-#   mutate(predicted = purrr::map(model, predict)) %>% 
-#   mutate(R_squared = purrr::map(model, rsquared))
-# 
-# predicted_values_space_ <- tidy_space_model_predicted %>%
-#    ungroup() %>%
-#    select(Trait_trans, moments, data, predicted) %>%
-#    unnest(c(data, predicted)) %>%
-#    rename(modeled = predicted, measured = value)
-
-
-# ## Without intraspecific variability ##
-# mem_results_space_without_intra <- memodel_data_without_intra %>%
-#   mutate(model = map(data, model_space))
-# 
-# tidy_space_model_predicted_without_intra <- mem_results_space_without_intra %>%
-#   mutate(model_output = map(model, tidy)) %>%
-#   #mutate(predicted = map(model, predict_with_random)) %>% 
-#   mutate(R_squared = map(model, rsquared))
-# 
-# predicted_values_space_without_intra <- tidy_space_model_predicted_without_intra %>%
-#   ungroup() %>%
-#   select(Trait_trans, moments, data, predicted) %>%
-#   unnest(c(data, predicted)) %>%
-#   rename(modeled = predicted, measured = value)
-
-
-## Time linear ##
-# mem_results_time_linear <- memodel_data_fullcommunity %>%
-#   filter(moments %in% c("mean", "skewness"),
-#          n == 4) %>% 
-#   mutate(model = purrr::map(data, model_time_linear))
-# 
-# tidy_time_model_predicted_linear <- mem_results_time_linear %>%
-#   mutate(model_output = purrr::map(model, tidy)) %>% 
-#   mutate(predicted = purrr::map(model, predict)) %>% 
-#   mutate(R_squared = purrr::map(model, rsquared))
-
-# Making a function for AIC tests
-# 
-#  AIC_models <-function(dat, model_type) {
-#    
-#    dat2 <- dat %>% 
-#      mutate(AIC = map(model, AIC)) %>% 
-#      select(Trait_trans, moments, n, AIC) %>% 
-#      unnest(c(AIC)) %>% 
-#      ungroup() %>% 
-#      group_by(Trait_trans, moments) %>% 
-#      mutate(AIC = mean(AIC)) %>% 
-#      select(-n) %>% 
-#      unique()
-#    
-#    return(dat2)
-#  }
-#  
-#  # Get AIC for all models and compare which is better
-#  
-#  AIC_lastyeartemp <- AIC_models(tidy_space_model_predicted_lastyeartemp, "Last year temp") %>% rename(Lastyeartemp_AIC = AIC)
-#  AIC_springtemp <- AIC_models(tidy_space_model_predicted_springtemp, "Spring temp") %>% rename(Springtemp_AIC = AIC)
-#  AIC_alltemp <- AIC_models(tidy_space_model_predicted, "full temp") %>% rename(full_AIC = AIC)
-#  
-#  AIC_all_models <- AIC_lastyeartemp %>%
-#    left_join(AIC_springtemp, by = c("Trait_trans" = "Trait_trans", "moments" = "moments")) %>% 
-#    left_join(AIC_alltemp, by = c("Trait_trans" = "Trait_trans", "moments" = "moments"))
-
-#write.table(x = AIC_all_models, file = "AIC_log.csv")
-
-# Making a dataset with the model output and the test-statistics (R squared), and summarizing them.
-model_output_mixed <-function(dat) {
-  
-  model_output <- dat %>% 
-    select(Trait_trans, moments, n, model_output, R_squared) %>% 
-    unnest(c(model_output, R_squared)) %>% 
-    filter(term %in% c("scale(Precip_yearly)", "scale(Temp_yearly_spring)", "scale(Temp_yearly_spring):scale(Precip_yearly)")) %>% 
-    select(Trait_trans, moments, term, n, estimate, std.error, statistic, df, p.value, Marginal, Conditional) %>% 
-    ungroup() %>% 
-    group_by(Trait_trans, moments, term) %>% 
-    summarize(effect = mean(estimate),
-              R2_marginal = mean(Marginal),
-              R2_conditional = mean(Conditional),
-              CIlow.fit = effect - sd(estimate),
-              CIhigh.fit = effect + sd(estimate),
-              std.error = mean(std.error),
-              staticstic = mean(statistic),
-              df = mean(df),
-              p.value = mean(p.value))
-  
-  return(model_output)
-}
-
-model_output_mixed_year <-function(dat) {
-  
-  model_output <- dat %>% 
-    select(Trait_trans, moments, n, model_output, R_squared) %>% 
-    unnest(c(model_output, R_squared)) %>% 
-    filter(term %in% c("(Intercept)", "year", "siteID", "year*siteID")) %>% 
-    select(Trait_trans, moments, term, n, estimate, std.error, statistic, df, p.value, Marginal, Conditional) %>% 
-    ungroup() %>% 
-    group_by(Trait_trans, moments, term) %>% 
-    summarize(effect = mean(estimate),
-              R2_marginal = mean(Marginal),
-              R2_conditional = mean(Conditional),
-              CIlow.fit = effect - sd(estimate),
-              CIhigh.fit = effect + sd(estimate),
-              std.error = mean(std.error),
-              staticstic = mean(statistic),
-              df = mean(df),
-              p.value = mean(p.value))
-  
-  return(model_output)
-}
-
-dat <- tidy_year_model_predicted_clim
-
-model_output_year_clim <-function(dat) {
-  
-  model_output <- dat %>% 
-    select(Trait_trans, moments, n, model_output, R_squared) %>% 
-    unnest(c(model_output, R_squared)) %>% 
-    filter(term %in% c("(Intercept)", "year", "scale(Precip_yearly)", "scale(Temp_yearly_spring)", "scale(Temp_yearly_spring):scale(Precip_yearly)", "year:scale(Precip_yearly)", "year:scale(Temp_yearly_spring)")) %>% 
-    select(Trait_trans, moments, term, n, estimate, std.error, statistic, p.value, R.squared) %>% 
-    ungroup() %>% 
-    group_by(Trait_trans, moments, term) %>% 
-    summarize(effect = mean(estimate),
-              #CIlow.fit = effect - sd(estimate),
-              #CIhigh.fit = effect + sd(estimate),
-              std.error = mean(std.error),
-              staticstic = mean(statistic),
-              p.value = mean(p.value),
-              R.squared = mean(R.squared))
-  
-  return(model_output)
-}
-
-model_output_mixed_predicted_climate <-function(dat) {
-  
-  model_output <- dat %>% 
-    select(Trait_trans, moments, n, model_output, R_squared) %>% 
-    unnest(c(model_output, R_squared)) %>% 
-    filter(term %in% c( "scale(temp_modeled)", "scale(temp_modeled):scale(precip_modeled)")) %>% 
-    select(Trait_trans, moments, term, n, estimate, std.error, statistic, df, p.value, Marginal, Conditional) %>% 
-    ungroup() %>% 
-    group_by(Trait_trans, moments, term) %>% 
-    summarize(effect = mean(estimate),
-              R2_marginal = mean(Marginal),
-              R2_conditional = mean(Conditional),
-              CIlow.fit = effect - sd(estimate),
-              CIhigh.fit = effect + sd(estimate),
-              std.error = mean(std.error),
-              staticstic = mean(statistic),
-              df = mean(df),
-              p.value = mean(p.value))
-  
-  return(model_output)
-}
+#### Running models - community ####
 
 model_output_com_mixed <-function(dat) {
   
@@ -671,85 +325,7 @@ model_output_com_mixed <-function(dat) {
   return(model_output)
 }
 
-model_output_com_year_mixed <-function(dat) {
-  
-  model_output <- dat %>% 
-    select(community_properties, model_output, R_squared) %>% 
-    unnest(c(model_output, R_squared)) %>% 
-    filter(term %in% c("year")) %>% 
-    select(community_properties, term, estimate, std.error, statistic, df, p.value, Marginal, Conditional) %>% 
-    ungroup() 
-  
-  return(model_output)
-}
 
-
-
-model_output_linear <-function(dat) {
-  
-  model_output <- dat %>% 
-    select(Trait_trans, moments, n, model_output, R_squared) %>% 
-    #filter(Trait_trans %in% c("CN_ratio_log", "SLA_cm2_g_log") & moments %in% c("mean", "variance")) %>% 
-    #filter(!Trait_trans == "CN_ratio_log" | moments == "variance") %>% 
-    unnest(c(model_output, R_squared)) %>% 
-    filter(term %in% c("scale(Precip_yearly)", "scale(Temp_yearly_spring)", "scale(Temp_yearly_spring):scale(Precip_yearly)")) %>% 
-    select(Trait_trans, moments, term, n, estimate, std.error, statistic, p.value, R.squared) %>% 
-    ungroup() %>% 
-    group_by(Trait_trans, moments, term) %>% 
-    summarize(effect = mean(estimate),
-              R2 = mean(R.squared),
-              std.error = mean(std.error),
-              staticstic = mean(statistic),
-              p.value = mean(p.value))
-  return(model_output)
-}
-
-
-model_output_time_mixed <- model_output_mixed(tidy_time_model_predicted_mixed) %>% 
-  mutate_if(is.numeric, round, digits = 5)
-
-model_output_time_year_mixed <- model_output_mixed_year(tidy_year_model_predicted_mixed) %>% 
-  mutate_if(is.numeric, round, digits = 6)
-
-model_output_time_year_clim <- model_output_year_clim(tidy_year_model_predicted_clim) %>% 
-  mutate_if(is.numeric, round, digits = 6)
-
-model_output_time_directional_mixed <- model_output_mixed_predicted_climate(tidy_time_directional_model_predicted_mixed)%>% 
-  mutate_if(is.numeric, round, digits = 3)
-#model_output_time_mixed_nottrans <- model_output_mixed(tidy_time_model_predicted_mixed_nottrans) %>% 
-#  mutate_if(is.numeric, round, digits = 3)
-#model_output_time_mixed_wi <- model_output_mixed(tidy_time_model_predicted_mixed_wi)%>% 
-#  mutate_if(is.numeric, round, digits = 3)
-#model_output_time_linear <- model_output_linear(tidy_time_model_predicted_linear)
-model_output_com_time_mixed <- model_output_com_mixed(tidy_com_time_model_predicted_mixed) %>% 
-  mutate_if(is.numeric, round, digits = 3)
-model_output_com_time_year_mixed <- model_output_com_year_mixed(tidy_com_time_year_model_predicted_mixed) %>% 
-  mutate_if(is.numeric, round, digits = 3)
-# model_output_com_time_mixed_nottrans <- model_output_com_mixed(tidy_com_time_model_predicted_mixed_nottrans) %>% 
-#   mutate_if(is.numeric, round, digits = 3)
-
-model_output_space_mixed <- model_output_mixed(tidy_space_model_predicted_mixed) %>% 
-  mutate_if(is.numeric, round, digits = 3)
-# model_output_space_mixed_nottrans <- model_output_mixed(tidy_space_model_predicted_mixed_nottrans) %>% 
-#   mutate_if(is.numeric, round, digits = 3)
-#model_output_space_mixed_wi <- model_output_mixed(tidy_space_model_predicted_mixed_wi) %>% 
-#  mutate_if(is.numeric, round, digits = 3)
-# model_output_space_mixed_nottrans_wi <- model_output_mixed(tidy_space_model_predicted_mixed_nottrans_wi) %>% 
-#   mutate_if(is.numeric, round, digits = 3)
-#model_output_space_mixed_notax <- model_output_mixed(tidy_space_model_predicted_mixed_notax)
-#model_output_space_linear <- model_output_linear(tidy_space_model_predicted_linear)
-model_output_com_space_mixed <- model_output_com_mixed(tidy_com_space_model_predicted_mixed)%>% 
-  mutate_if(is.numeric, round, digits = 3)
-# model_output_com_space_mixed_nottrans <- model_output_com_mixed(tidy_com_space_model_predicted_mixed_nottrans) %>% 
-#   mutate_if(is.numeric, round, digits = 3)
-
-
-write.table(model_output_time_mixed_nottrans, row.names = TRUE, col.names = TRUE, file = "model_output_time.csv")
-write.table(model_output_space_mixed_nottrans, row.names = TRUE, col.names = TRUE, file = "model_output_space.csv")
-write.table(model_output_space_mixed_nottrans_wi, row.names = TRUE, col.names = TRUE, file = "model_output_space_withoutITV.csv")
-
-write.table(model_output_com_time_mixed_nottrans, row.names = TRUE, col.names = TRUE, file = "model_output_com_time.csv")
-write.table(model_output_com_space_mixed_nottrans, row.names = TRUE, col.names = TRUE, file = "model_output_com_space.csv")
 
 #### Simpler mixed effect models on specific traits to make predicted plots ####
 
