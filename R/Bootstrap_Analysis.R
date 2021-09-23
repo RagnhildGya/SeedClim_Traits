@@ -1,4 +1,4 @@
-#### Run analysis ####
+#### Bottstrapping and analysis for trait driver theory paper with climate in time and space ####
 
 #### Source ####
 
@@ -93,7 +93,7 @@ env_pred <- env_predictions(temp_model, precip_model) %>%
 env <- env %>% 
   left_join(env_pred, by = c("Site" = "Site", "Year" = "Year"))
 
-#### Trait impute ####
+#### Bootstrapping ####
 
 Trait_impute_per_year <- function(com_dat, trait_dat){
   
@@ -190,9 +190,9 @@ moments_clim_long_without_intra <- Imputed_traits_without_intra %>%
   left_join(env, by = c("siteID" = "siteID", "year" = "Year"))
 
 
-#### Mixed effect model testing ####
+###### Mixed effect model testing ######
 
-### Making dataset for models ###
+#### Making dataset for models ####
 
 # With intraspecific variability
 memodel_data_fullcommunity <- moments_clim_long_fullcommunity %>% 
@@ -256,7 +256,7 @@ com_data_nottrans <- community_for_analysis %>%
   unique() %>% 
   nest()
 
-### Function for running model and tidying results for a test of how traits change with temp and precip in time and space ###
+#### Functions for models and model outputs ####
 
 model_TDT <- function(df) {
   lmer(value ~ scale(Temp_decade) + scale(Precip_decade) + scale(Temp_annomalies) + scale(Precip_annomalies) + 
@@ -288,10 +288,22 @@ output <-function(dat) {
   return(model_output)
 }
 
+output_com <-function(dat) {
+  
+  model_output <- dat %>% 
+    select(community_properties, model_output, R_squared) %>% 
+    unnest(c(model_output, R_squared)) %>% 
+    filter(!term %in% c("(Intercept)", "sd__(Intercept)", "sd__Observation")) %>% 
+    select(community_properties, term, estimate, std.error, statistic, df, p.value, Marginal, Conditional) %>% 
+    ungroup() 
+  
+  return(model_output)
+}
+
+
 #### Running models - traits ####
 
-# 1) Running the mixed effects model
-# 2) Tidying the model, giving the model output in a nice format. Calculating pseudo R squared values based on the method in paper Nakagawa et al 2017.
+# Running the mixed effects model
 
 results_TDT <- memodel_data_fullcommunity %>%
   filter(moments %in% c("mean", "skewness")) %>% 
@@ -308,23 +320,27 @@ tidy_TDT <- results_TDT %>%
 output_TDT <- output(tidy_TDT) %>% 
   mutate_if(is.numeric, round, digits = 5)
 
-write.table(output_TDT, row.names = TRUE, col.names = TRUE, file = "model_output_TDT.csv")
+#write.table(output_TDT, row.names = TRUE, col.names = TRUE, file = "model_output_TDT.csv")
 
 
 #### Running models - community ####
 
-model_output_com_mixed <-function(dat) {
-  
-  model_output <- dat %>% 
-    select(community_properties, model_output, R_squared) %>% 
-    unnest(c(model_output, R_squared)) %>% 
-    filter(term %in% c("scale(Precip_yearly)", "scale(Temp_yearly_spring)", "scale(Temp_yearly_spring):scale(Precip_yearly)")) %>% 
-    select(community_properties, term, estimate, std.error, statistic, df, p.value, Marginal, Conditional) %>% 
-    ungroup() 
-  
-  return(model_output)
-}
+#Running the mixed effect model
 
+results_TDT_com <- com_data %>%
+  mutate(model = purrr::map(data, model_TDT))
+
+#Tidying up the model output
+
+tidy_TDT_com <- results_TDT_com %>%
+  mutate(model_output = purrr::map(model, tidy)) %>%
+  mutate(R_squared = purrr::map(model, rsquared))
+
+
+# Making a dataset with the model output and the test-statistics (R squared)
+
+output_TDT_com <- output_com(tidy_TDT_com) %>% 
+  mutate_if(is.numeric, round, digits = 5)
 
 
 #### Simpler mixed effect models on specific traits to make predicted plots ####
