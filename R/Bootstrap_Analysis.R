@@ -309,6 +309,20 @@ results_TDT <- memodel_data_fullcommunity %>%
   filter(moments %in% c("mean", "skewness")) %>% 
   mutate(model = purrr::map(data, model_TDT))
 
+data2 <- memodel_data_fullcommunity %>% 
+  filter(Trait_trans == trait,
+         moments == moment,
+         n == 75) %>% 
+  unnest(data) %>% 
+  ungroup() 
+mod <- lmer(value ~ scale(Temp_decade) + scale(Precip_decade) + scale(Temp_annomalies) + scale(Precip_annomalies) + 
+       scale(Temp_decade)*scale(Precip_decade) + scale(Temp_annomalies)*scale(Precip_annomalies) + 
+       scale(Temp_decade)*scale(Temp_annomalies) + scale(Temp_decade)*scale(Precip_annomalies) + 
+       scale(Precip_decade)*scale(Temp_annomalies) + scale(Precip_decade)*scale(Precip_annomalies) +
+       + (1|siteID), data = data2)
+
+partR2(mod, data = data2, partvars = c("scale(Temp_decade)", "scale(Precip_decade)", "scale(Temp_annomalies)", "scale(Precip_annomalies)"), R2_type = "marginal", nboot = 10)
+
 #Tidying up the model output
 
 tidy_TDT <- results_TDT %>%
