@@ -462,13 +462,15 @@ model_output_space_mixed %>%
 
 #ggsave(filename = "trends_over_time_free_scales_WI.pdf",  width = 34, height = 23, units = "cm")
 
+### Effect size temp, precip, temp_precip time and space seperatly ###
+
 output_TDT %>% 
   ungroup() %>% 
   #filter(!Trait_trans == "Wet_Mass_g_log") %>% 
   mutate(Trait_moment = paste0(moments, "_", Trait_trans),
          time_space = ifelse(term %in% c("scale(Precip_annomalies)", "scale(Temp_annomalies)", "scale(Temp_annomalies):scale(Precip_annomalies)"), "time",
                              ifelse(term %in% c("scale(Precip_decade)", "scale(Temp_decade)", "scale(Temp_decade):scale(Precip_decade)"), "space", "time_and_space")),
-         sign = ifelse(p.value < 0.05, "yes", "no"))%>% 
+         significant = ifelse(p.value < 0.05, "yes", "no"))%>% 
   #mutate(moments = factor(moments, levels = c("time", "Without ITV", "mean"))) %>% 
   filter(time_space %in% c("time", "space")) %>% 
   mutate(term = as.factor(recode(term, "scale(Precip_decade)" = "Precipitation", "scale(Temp_decade)" = "SummerTemp", "scale(Temp_decade):scale(Precip_decade)" = "SummerTemp:Precipitation", "scale(Precip_annomalies)" = "Precipitation", "scale(Temp_annomalies)" = "SummerTemp", "scale(Temp_annomalies):scale(Precip_annomalies)" = "SummerTemp:Precipitation"))) %>% 
@@ -476,7 +478,7 @@ output_TDT %>%
   mutate(time_space = factor(time_space, levels = c("time", "space"))) %>% 
   filter(!moments == "skewness") %>% 
   ggplot(aes(x = fct_rev(Trait_trans), y = effect, fill = time_space)) +
-  geom_bar(aes(color = sign), stat = "identity", position = position_dodge(width=0.7), width = 0.7) +
+  geom_bar(aes(color = significant), stat = "identity", position = position_dodge(width=0.7), width = 0.7) +
   #geom_point(aes(size = if_else(p.value <0.05, 0.3, NA_real_)), position = position_dodge(width=0.6), show.legend = FALSE) +
   #geom_bar_pattern(aes(pattern = 'stripe'), stat = "identity", position = "dodge") +
   geom_errorbar(aes(ymin = CIlow.fit, ymax = CIhigh.fit), position = position_dodge(width=0.7), width = 0.3) +
@@ -491,10 +493,45 @@ output_TDT %>%
   theme_bw(base_size = 18) +
   coord_flip() +
   #guides(fill = "none", color = "none", size = "none") +
-  theme(axis.title.y=element_blank())
+  theme(axis.title.y=element_blank()) 
   #guides(color = FALSE, alpha = FALSE, fill = FALSE)
 
-ggsave(filename = "trends_with_temp_precip_decade_annomalies.pdf",  width = 34, height = 23, units = "cm")
+#ggsave(filename = "trends_with_temp_precip_decade_annomalies.pdf",  width = 34, height = 23, units = "cm")
+
+### Effect size interaction between time and space ###
+
+output_TDT %>% 
+  ungroup() %>% 
+  #filter(!Trait_trans == "Wet_Mass_g_log") %>% 
+  mutate(Trait_moment = paste0(moments, "_", Trait_trans),
+         time_space = ifelse(term %in% c("scale(Precip_annomalies)", "scale(Temp_annomalies)", "scale(Temp_annomalies):scale(Precip_annomalies)"), "time",
+                             ifelse(term %in% c("scale(Precip_decade)", "scale(Temp_decade)", "scale(Temp_decade):scale(Precip_decade)"), "space", "time_and_space")),
+         significant = ifelse(p.value < 0.05, "yes", "no"))%>% 
+  #mutate(moments = factor(moments, levels = c("time", "Without ITV", "mean"))) %>% 
+  filter(time_space == "time_and_space") %>% 
+  mutate(term = as.factor(recode(term, "scale(Precip_decade):scale(Precip_annomalies)" = "Precip time:space", "scale(Precip_decade):scale(Temp_annomalies)" = "Precip space:Temp time", "scale(Temp_decade):scale(Precip_annomalies)" = "Temp space:Precip time", "scale(Temp_decade):scale(Temp_annomalies)" = "Temp time:space"))) %>% 
+  mutate(Trait_trans = factor(Trait_trans, levels = c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent", "SLA_cm2_g_log", "N_percent", "CN_ratio_log", "LDMC", "Leaf_Thickness_Ave_mm"))) %>%
+  filter(!moments == "skewness") %>% 
+  ggplot(aes(x = fct_rev(Trait_trans), y = effect)) +
+  geom_bar(aes(fill = significant), stat = "identity", position = position_dodge(width=0.7), width = 0.7) +
+  #geom_point(aes(size = if_else(p.value <0.05, 0.3, NA_real_)), position = position_dodge(width=0.6), show.legend = FALSE) +
+  #geom_bar_pattern(aes(pattern = 'stripe'), stat = "identity", position = "dodge") +
+  geom_errorbar(aes(ymin = CIlow.fit, ymax = CIhigh.fit), position = position_dodge(width=0.7), width = 0.3) +
+  facet_grid(~term) +
+  scale_fill_manual(values = c("lightgrey", "#676767")) +
+  # scale_fill_gradient(low = "#213964", ##2E75B6
+  #                     high = "#BAD8F7",
+  #                     guide = "colourbar") +
+  #scale_color_manual(values = c("black", "black", "black")) +
+  #scale_alpha_continuous(range = c(0.9, 0.1)) +
+  geom_hline(yintercept =  0) +
+  theme_bw(base_size = 18) +
+  coord_flip() +
+  #guides(fill = "none", color = "none", size = "none") +
+  theme(axis.title.y=element_blank()) #Force the x axis to be the same as in the figure above
+#guides(color = FALSE, alpha = FALSE, fill = FALSE)
+
+#ggsave(filename = "trends_with_temp_precip_time_space_interactions.pdf",  width = 34, height = 18, units = "cm")
 
 ## Community model output figure ##
 
