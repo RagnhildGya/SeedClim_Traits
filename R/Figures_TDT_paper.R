@@ -611,7 +611,7 @@ SLA_mean_plot <- plot_predictions_space(memodel_data_fullcommunity_nottransforme
 SLA_mean_plot <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", SLA_mean_pred_time) +
   labs(y = "SLA (cm2/g log)", x = "", title = "Mean") +
   theme(plot.title = element_text(hjust = 0.5))
-'SLA_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "skewness", SLA_skew_pred) + 
+SLA_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "skewness", SLA_skew_pred) + 
   geom_hline(yintercept = 0, color = "black", linetype = 2) +
   labs(y = "", x = "", title = "Skewness") +
   theme(plot.title = element_text(hjust = 0.5)) +
