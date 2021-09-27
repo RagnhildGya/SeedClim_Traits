@@ -13,6 +13,7 @@ library(mapdata)
 library(grid)
 library(ggvegan)
 library(ggnewscale)
+library(gghighlight)
 
 ## Color palettes ##
 Temp_palette <- c("#d8c593", "#dd7631", "#bb3b0e")
@@ -602,7 +603,7 @@ model_output_com_space_mixed %>%
 dat <- memodel_data_fullcommunity_nottransformed
 trait <- "SLA_cm2_g_log"
 moment <- "mean"
-newdata <- SLA_mean_pred_yc
+newdata <- SLA_mean_pred_time
 
 plot_predictions_space <-function(dat, trait, moment, newdata) {
   
@@ -615,7 +616,7 @@ plot_predictions_space <-function(dat, trait, moment, newdata) {
  
     
     plot <- ggplot(dat2, aes(x = Temp_decade, y = value)) +
-    geom_point(color = "lightgrey") +
+    geom_jitter(color = "lightgrey") +
     geom_line(aes(x = Temp_decade, y = predicted, color = factor(Precip_decade)), data=newdata, size = 1, show.legend = TRUE) +
     scale_color_manual(values = Precip_palette) +
     theme_minimal(base_size = 15) 
@@ -623,8 +624,8 @@ plot_predictions_space <-function(dat, trait, moment, newdata) {
   return(plot)
 }
 
-plot_predictions_time <-function(dat, trait, moment, newdata) {
-  
+plot_predictions_time <-function(dat, trait, moment, site, model) {
+
   dat2 <- dat %>%
     filter(Trait_trans == trait,
            moments == moment,
@@ -632,12 +633,23 @@ plot_predictions_time <-function(dat, trait, moment, newdata) {
     unnest(data) %>% 
     ungroup()
   
+  newdata <- expand.grid(Precip_decade = ifelse(site %in% c("Skjelingahaugen", "Ovstedalen"), 3,
+                                                ifelse(site %in% c("Ulvehaugen", "Fauske"), 0.6, NA)), 
+                         Temp_decade = ifelse(site %in% c("Skjelingahaugen", "Ulvehaugen"), 6.5,
+                                              ifelse(site %in% c("Ovstedalen", "Fauske"), 11, NA)), 
+                         siteID = c("Alrust", "Arhelleren", "Fauske", "Gudmedalen", "Hogsete", "Lavisdalen", "Ovstedalen", "Rambera", "Skjelingahaugen", "Ulvehaugen", "Veskre", "Vikesland"),
+                         Precip_annomalies = c(-1.5, 0, 1.5, 3),
+                         Temp_annomalies = seq(-3, 1.5, length = 200))
+  
+  newdata$predicted <- predict(object = model, newdata = newdata, re.form = NA, allow.new.levels=TRUE)
   
   plot <- ggplot(dat2, aes(x = Temp_annomalies, y = value)) +
-    geom_point(color = "lightgrey") +
+    geom_point(aes(color = siteID)) +
+    gghighlight(siteID == site) +
     geom_line(aes(x = Temp_annomalies, y = predicted, color = factor(Precip_annomalies)), data=newdata, size = 1, show.legend = TRUE) +
-    scale_color_manual(values = Precip_palette) +
-    theme_minimal(base_size = 15) 
+    scale_color_manual(values = c(Precip_palette, "#696969")) +
+    theme_minimal(base_size = 15)
+    
   
   return(plot)
 }
@@ -645,9 +657,42 @@ plot_predictions_time <-function(dat, trait, moment, newdata) {
 SLA_mean_plot <- plot_predictions_space(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", SLA_mean_pred_space) +
   labs(y = "SLA (cm2/g log)", x = "", title = "Mean") +
   theme(plot.title = element_text(hjust = 0.5))
-SLA_mean_plot <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", SLA_mean_pred_time) +
+
+plot_predictions_time(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", "Skjelingahaugen", SLA_mean_sum_yc) +
   labs(y = "SLA (cm2/g log)", x = "", title = "Mean") +
   theme(plot.title = element_text(hjust = 0.5))
+
+plot_predictions_time(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", "Ulvehaugen", SLA_mean_sum_yc) +
+  labs(y = "SLA (cm2/g log)", x = "", title = "Mean") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+plot_predictions_time(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", "Ovstedalen", SLA_mean_sum_yc) +
+  labs(y = "SLA (cm2/g log)", x = "", title = "Mean") +
+  theme(plot.title = element_text(hjust = 0.5))
+plot_predictions_time(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", "Fauske", SLA_mean_sum_yc) +
+  labs(y = "SLA (cm2/g log)", x = "", title = "Mean") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+plot_predictions_space(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", LDMC_mean_pred_space) +
+  labs(y = "LDMC", x = "", title = "Mean") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", "Skjelingahaugen", LDMC_mean_sum ) +
+  labs(y = "LDMC", x = "", title = "Mean") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", "Ulvehaugen", LDMC_mean_sum ) +
+  labs(y = "LDMC", x = "", title = "Mean") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", "Ovstedalen", LDMC_mean_sum ) +
+  labs(y = "LDMC", x = "", title = "Mean") +
+  theme(plot.title = element_text(hjust = 0.5))
+plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", "Fauske", LDMC_mean_sum ) +
+  labs(y = "LDMC", x = "", title = "Mean") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+
 SLA_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "skewness", SLA_skew_pred) + 
   geom_hline(yintercept = 0, color = "black", linetype = 2) +
   labs(y = "", x = "", title = "Skewness") +
