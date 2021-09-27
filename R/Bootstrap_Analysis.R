@@ -396,11 +396,11 @@ models_trait_predictions_space <-function(model) {
 
 models_trait_predictions_time <-function(model) {
   
-  newdata <- expand.grid(Precip_decade = 1.8, 
-                         Temp_decade = 9, 
+  newdata <- expand.grid(Precip_decade = 3, 
+                         Temp_decade = 6, 
                          siteID = c("Alrust", "Arhelleren", "Fauske", "Gudmedalen", "Hogsete", "Lavisdalen", "Ovstedalen", "Rambera", "Skjelingahaugen", "Ulvehaugen", "Veskre", "Vikesland"),
                          Precip_annomalies = c(-1.5, 0, 1.5, 3),
-                         Temp_annomalies = seq(-3, 2, length = 200))
+                         Temp_annomalies = seq(-3, 1.5, length = 200))
   
   newdata$predicted <- predict(object = model, newdata = newdata, re.form = NA, allow.new.levels=TRUE)
   
@@ -468,7 +468,7 @@ Mass_skew_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, 
 Mass_skew_pred <- models_trait_predictions(Mass_skew_sum)
 
 LDMC_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "LDMC", "mean")
-LDMC_mean_pred <- models_trait_predictions(LDMC_mean_sum)
+LDMC_mean_pred_space <- models_trait_predictions_space(LDMC_mean_sum)
 LDMC_skew_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "LDMC", "skewness")
 LDMC_skew_pred <- models_trait_predictions(LDMC_skew_sum)
 
