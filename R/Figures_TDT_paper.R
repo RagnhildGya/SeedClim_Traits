@@ -693,6 +693,26 @@ plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LDMC", "mean",
   theme(plot.title = element_text(hjust = 0.5))
 
 
+plot_predictions_space(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean", Height_mean_pred_space) +
+  labs(y = "Plant_Height_mm_log", x = "", title = "Mean") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+plot_predictions_time(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean", "Skjelingahaugen", Height_mean_sum) +
+  labs(y = "Plant_Height_mm_log", x = "", title = "Mean") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+plot_predictions_time(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean", "Ulvehaugen", Height_mean_sum) +
+  labs(y = "Plant_Height_mm_log", x = "", title = "Mean") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+plot_predictions_time(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean", "Ovstedalen", Height_mean_sum) +
+  labs(y = "Plant_Height_mm_log", x = "", title = "Mean") +
+  theme(plot.title = element_text(hjust = 0.5))
+plot_predictions_time(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean", "Fauske", Height_mean_sum) +
+  labs(y = "Plant_Height_mm_log", x = "", title = "Mean") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+
 SLA_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "skewness", SLA_skew_pred) + 
   geom_hline(yintercept = 0, color = "black", linetype = 2) +
   labs(y = "", x = "", title = "Skewness") +
