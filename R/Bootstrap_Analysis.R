@@ -19,6 +19,7 @@ library(ggcorrplot)
 library(traitstrap)
 library(vegan)
 library(ggvegan)
+library(partR2)
 #library(drake)
 #library(default)
 #library(conflicted)
@@ -309,20 +310,6 @@ results_TDT <- memodel_data_fullcommunity %>%
   filter(moments %in% c("mean", "skewness")) %>% 
   mutate(model = purrr::map(data, model_TDT))
 
-data2 <- memodel_data_fullcommunity %>% 
-  filter(Trait_trans == trait,
-         moments == moment,
-         n == 75) %>% 
-  unnest(data) %>% 
-  ungroup() 
-mod <- lmer(value ~ scale(Temp_decade) + scale(Precip_decade) + scale(Temp_annomalies) + scale(Precip_annomalies) + 
-       scale(Temp_decade)*scale(Precip_decade) + scale(Temp_annomalies)*scale(Precip_annomalies) + 
-       scale(Temp_decade)*scale(Temp_annomalies) + scale(Temp_decade)*scale(Precip_annomalies) + 
-       scale(Precip_decade)*scale(Temp_annomalies) + scale(Precip_decade)*scale(Precip_annomalies) +
-       + (1|siteID), data = data2)
-
-partR2(mod, data = data2, partvars = c("scale(Temp_decade)", "scale(Precip_decade)", "scale(Temp_annomalies)", "scale(Precip_annomalies)"), R2_type = "marginal", nboot = 10)
-
 #Tidying up the model output
 
 tidy_TDT <- results_TDT %>%
@@ -407,6 +394,28 @@ models_trait_predictions_time <-function(model) {
   return(newdata)
 }
 
+#### Get partial R2 for all models and traits ####
+
+partR2_func <-function(dat) {
+  
+data2 <- memodel_data_fullcommunity %>% 
+  filter(Trait_trans == trait,
+         moments == moment,
+         n == 75) %>% 
+  unnest(data) %>% 
+  ungroup() 
+
+mod <- lmer(value ~ scale(Temp_decade) + scale(Precip_decade) + scale(Temp_annomalies) + scale(Precip_annomalies) + 
+              scale(Temp_decade)*scale(Precip_decade) + scale(Temp_annomalies)*scale(Precip_annomalies) + 
+              scale(Temp_decade)*scale(Temp_annomalies) + scale(Temp_decade)*scale(Precip_annomalies) + 
+              scale(Precip_decade)*scale(Temp_annomalies) + scale(Precip_decade)*scale(Precip_annomalies) +
+              + (1|siteID), data = data2)
+
+R2 <- partR2(mod, data = data2, partvars = c("scale(Temp_decade)", "scale(Precip_decade)", "scale(Temp_annomalies)", "scale(Precip_annomalies)"), R2_type = "conditional", nboot = 10)
+
+R2a <- R2 %>% 
+  
+  select(Model, R2)
 
 
 #### Make datasets with modeled values for different traits for plotting ####
@@ -422,7 +431,7 @@ Height_mean_pred_space <- models_trait_predictions_space(Height_mean_sum)
 SLA_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean")
 SLA_mean_pred <- models_trait_predictions(SLA_mean_sum)
 SLA_skew_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "skewness")
-SLA_skew_pred <- models_trait_predictions(SLA_skew_sum)
+SLA_skew_pred_space <- models_trait_predictions_space(SLA_skew_sum)
 
 SLA_mean_spatial_climate_sum <- model_trait_summary_spatial_climate(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean")
 SLA_mean_spatial_pred <- models_trait_predictions_siteID(SLA_mean_spatial_climate_sum)
