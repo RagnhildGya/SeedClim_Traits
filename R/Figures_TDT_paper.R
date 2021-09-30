@@ -708,6 +708,7 @@ plot_predictions_time(memodel_data_fullcommunity_nottransformed, "Plant_Height_m
 plot_predictions_time(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean", "Ovstedalen", Height_mean_sum) +
   labs(y = "Plant_Height_mm_log", x = "", title = "Mean") +
   theme(plot.title = element_text(hjust = 0.5))
+
 plot_predictions_time(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean", "Fauske", Height_mean_sum) +
   labs(y = "Plant_Height_mm_log", x = "", title = "Mean") +
   theme(plot.title = element_text(hjust = 0.5))
