@@ -396,58 +396,56 @@ models_trait_predictions_time <-function(model) {
 
 #### Get partial R2 for all models and traits ####
 
-partR2_func <-function(dat) {
-  
-data2 <- memodel_data_fullcommunity %>% 
-  filter(Trait_trans == trait,
-         moments == moment,
-         n == 75) %>% 
-  unnest(data) %>% 
-  ungroup() 
-
-mod <- lmer(value ~ scale(Temp_decade) + scale(Precip_decade) + scale(Temp_annomalies) + scale(Precip_annomalies) + 
-              scale(Temp_decade)*scale(Precip_decade) + scale(Temp_annomalies)*scale(Precip_annomalies) + 
-              scale(Temp_decade)*scale(Temp_annomalies) + scale(Temp_decade)*scale(Precip_annomalies) + 
-              scale(Precip_decade)*scale(Temp_annomalies) + scale(Precip_decade)*scale(Precip_annomalies) +
-              + (1|siteID), data = data2)
-mod1 <- lmer(value ~ scale(Temp_decade) + scale(Precip_decade) + scale(Temp_annomalies) + scale(Precip_annomalies)
-              + (1|siteID), data = data2)
-
-part1 <- partR2(mod, data = data2, partvars = c("scale(Temp_decade):scale(Precip_decade)", "scale(Temp_annomalies):scale(Precip_annomalies)", "scale(Temp_annomalies):scale(Temp_decade)", "scale(Precip_annomalies):scale(Precip_decade)"), R2_type = "conditional", nboot = 10)
-part2 <- partR2(mod1, data = data2, partvars = c("scale(Temp_decade)", "scale(Precip_decade)", "scale(Temp_annomalies)", "scale(Precip_annomalies)"), R2_type = "conditional", nboot = 10)
-
-k <- mergeR2(part2, part1)
-
-R2 <- partR2(mod, data = data2, partvars = c("scale(Temp_decade)", "scale(Precip_decade)", "scale(Temp_annomalies)", "scale(Precip_annomalies)", "scale(Temp_decade):scale(Precip_decade)", "scale(Temp_annomalies):scale(Precip_annomalies)", "scale(Temp_annomalies):scale(Temp_decade)", "scale(Precip_annomalies):scale(Precip_decade)"), R2_type = "conditional", nboot = 10)
-
-R2_test <- partR2(mod, data = data2, partbatch = list(Temp_space = c("scale(Temp_decade)", "scale(Temp_decade):scale(Precip_decade)"),
-                                                      Precip_space = c("scale(Precip_decade)", "scale(Temp_decade):scale(Precip_decade)"),
-                                                      Temp_time = c("scale(Temp_annomalies)", "scale(Temp_annomalies):scale(Precip_annomalies)"),
-                                                      Precip_time = c("scale(Precip_annomalies)", "scale(Temp_annomalies):scale(Precip_annomalies)"),
-                                                      Time_and_space = c("scale(Temp_annomalies):scale(Temp_decade)", "scale(Precip_annomalies):scale(Precip_decade)")), R2_type = "conditional", nboot = 10)
-
-part_space <- partR2(mod, data = data2, partvars = c("scale(Temp_decade)", "scale(Precip_decade)", "scale(Temp_decade):scale(Precip_decade)"), R2_type = "conditional", nboot = 10)
-
-part_time <- partR2(mod, data = data2, partvars = c("scale(Temp_annomalies)", "scale(Precip_annomalies)", "scale(Temp_annomalies):scale(Precip_annomalies)"), R2_type = "conditional", nboot = 10)
-
-part_space$R2 %>% 
-  select(term, estimate) %>% 
-  pivot_wider(names_from = term, values_from = estimate) %>% 
-  mutate()
-
-
-genes <- paste("gene",1:1000,sep="")
-x <- list(
-  A = sample(genes,300), 
-  B = sample(genes,525), 
-  C = sample(genes,440),
-  D = sample(genes,350)
-)
-
-ggVennDiagram(x)
-
-R2a <- R2$R2 %>% 
-  filter(term %in% c("Full", "scale(Temp_decade)", "scale(Precip_decade)", "scale(Temp_annomalies)", "scale(Precip_annomalies)", "scale(Temp_decade):scale(Precip_decade)", "scale(Temp_annomalies):scale(Precip_annomalies)", "scale(Temp_annomalies):scale(Temp_decade)", "scale(Precip_annomalies):scale(Precip_decade)"))
+# partR2_func <-function(dat) {
+#   
+# data2 <- memodel_data_fullcommunity %>% 
+#   filter(Trait_trans == trait,
+#          moments == moment,
+#          n == 75) %>% 
+#   unnest(data) %>% 
+#   ungroup() 
+# 
+# mod <- lmer(value ~ scale(Temp_decade) + scale(Precip_decade) + scale(Temp_annomalies) + scale(Precip_annomalies) + 
+#               scale(Temp_decade)*scale(Precip_decade) + scale(Temp_annomalies)*scale(Precip_annomalies) + 
+#               scale(Temp_decade)*scale(Temp_annomalies) + scale(Temp_decade)*scale(Precip_annomalies) + 
+#               scale(Precip_decade)*scale(Temp_annomalies) + scale(Precip_decade)*scale(Precip_annomalies) +
+#               + (1|siteID), data = data2)
+# mod1 <- lmer(value ~ scale(Temp_decade) + scale(Precip_decade) + scale(Temp_annomalies) + scale(Precip_annomalies)
+#               + (1|siteID), data = data2)
+# 
+# part1 <- partR2(mod, data = data2, partvars = c("scale(Temp_decade):scale(Precip_decade)", "scale(Temp_annomalies):scale(Precip_annomalies)", "scale(Temp_annomalies):scale(Temp_decade)", "scale(Precip_annomalies):scale(Precip_decade)"), R2_type = "conditional", nboot = 10)
+# part2 <- partR2(mod1, data = data2, partvars = c("scale(Temp_decade)", "scale(Precip_decade)", "scale(Temp_annomalies)", "scale(Precip_annomalies)"), R2_type = "conditional", nboot = 10)
+# 
+# k <- mergeR2(part2, part1)
+# 
+# R2 <- partR2(mod, data = data2, partvars = c("scale(Temp_decade)", "scale(Precip_decade)", "scale(Temp_annomalies)", "scale(Precip_annomalies)", "scale(Temp_decade):scale(Precip_decade)", "scale(Temp_annomalies):scale(Precip_annomalies)", "scale(Temp_annomalies):scale(Temp_decade)", "scale(Precip_annomalies):scale(Precip_decade)"), R2_type = "conditional", nboot = 10)
+# 
+# R2_test <- partR2(mod, data = data2, partbatch = list(Temp_precip_space = c("scale(Temp_decade)", "scale(Precip_decade)", "scale(Temp_decade):scale(Precip_decade)"),
+#                                                       Temp_precip_time = c("scale(Temp_annomalies)", "scale(Precip_annomalies)", "scale(Temp_annomalies):scale(Precip_annomalies)"),
+#                                                       Time_and_space = c("scale(Temp_annomalies):scale(Temp_decade)", "scale(Precip_annomalies):scale(Precip_decade)", "scale(Temp_decade)*scale(Precip_annomalies)", "scale(Precip_decade)*scale(Temp_annomalies)")), R2_type = "conditional", nboot = 10)
+# 
+# part_space <- partR2(mod, data = data2, partvars = c("scale(Temp_decade)", "scale(Precip_decade)", "scale(Temp_decade):scale(Precip_decade)"), R2_type = "conditional", nboot = 10)
+# 
+# part_time <- partR2(mod, data = data2, partvars = c("scale(Temp_annomalies)", "scale(Precip_annomalies)", "scale(Temp_annomalies):scale(Precip_annomalies)"), R2_type = "conditional", nboot = 10)
+# 
+# part_space$R2 %>% 
+#   select(term, estimate) %>% 
+#   pivot_wider(names_from = term, values_from = estimate) %>% 
+#   mutate()
+# 
+# 
+# genes <- paste("gene",1:1000,sep="")
+# x <- list(
+#   A = sample(genes,300), 
+#   B = sample(genes,525), 
+#   C = sample(genes,440),
+#   D = sample(genes,350)
+# )
+# 
+# ggVennDiagram(x)
+# 
+# R2a <- R2$R2 %>% 
+#   filter(term %in% c("Full", "scale(Temp_decade)", "scale(Precip_decade)", "scale(Temp_annomalies)", "scale(Precip_annomalies)", "scale(Temp_decade):scale(Precip_decade)", "scale(Temp_annomalies):scale(Precip_annomalies)", "scale(Temp_annomalies):scale(Temp_decade)", "scale(Precip_annomalies):scale(Precip_decade)"))
 
 
 #### Make datasets with modeled values for different traits for plotting ####
