@@ -316,7 +316,7 @@ tidy_TDT <- results_TDT %>%
   mutate(model_output = purrr::map(model, tidy)) %>%
   mutate(R_squared = purrr::map(model, rsquared))
 
-# Making a dataset with the model output and the test-statistics (R squared), sumarrizing across boootstraps.
+# Making a dataset with the model output and the test-statistics (R squared), summarizing across boootstraps.
 
 output_TDT <- output(tidy_TDT) %>% 
   mutate_if(is.numeric, round, digits = 5)
