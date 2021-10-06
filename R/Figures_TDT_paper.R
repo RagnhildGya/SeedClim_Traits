@@ -14,6 +14,7 @@ library(grid)
 library(ggvegan)
 library(ggnewscale)
 library(gghighlight)
+library(merTools)
 
 ## Color palettes ##
 Temp_palette <- c("#d8c593", "#dd7631", "#bb3b0e")
@@ -623,6 +624,8 @@ plot_predictions_space <-function(dat, trait, moment, newdata) {
   
   return(plot)
 }
+site = "Skjelingahaugen"
+model = SLA_mean_sum_yc
 
 plot_predictions_time <-function(dat, trait, moment, site, model) {
 
@@ -642,11 +645,23 @@ plot_predictions_time <-function(dat, trait, moment, site, model) {
                                                     ifelse(site %in% c("Ulvehaugen", "Fauske"), 0.6, NA)),
                          Temp_annomalies = seq(-3, 1.5, length = 200))
   
-  newdata$predicted <- predict(object = model, newdata = newdata, re.form = NA, allow.new.levels=TRUE, se.fit = TRUE)
+  #newdata$predicted <- predict(object = model, newdata = newdata, re.form = NA, allow.new.levels=TRUE, se.fit = TRUE)
+
+    
+    output1 <- predictInterval(merMod = model, newdata = newdata,
+                          level = 0.95, n.sims = 1000,
+                          stat = "median", type="linear.prediction",
+                          include.resid.var = TRUE)
+    
+  newdata1 <- newdata %>% 
+    mutate(model.fit = output1$fit,
+           model.upr = output1$upr,
+           model.lwr = output1$lwr)
   
   plot <- ggplot(dat2, aes(x = Temp_annomalies, y = value)) +
-    geom_point(aes(color = "#696969", alpha = 0.3)) +
-    geom_line(aes(x = Temp_annomalies, y = predicted), data=newdata, size = 1, show.legend = TRUE) +
+    geom_point() +
+    geom_line(aes(x = Temp_annomalies, y = model.fit), data = newdata1, size = 1, show.legend = TRUE) +
+    geom_ribbon(aes(ymin = model.lwr, ymax = model.upr, alpha = 0.3), data = newdata) +
     scale_color_manual(values = c("#696969")) +
     theme_minimal(base_size = 15)
     
