@@ -626,7 +626,14 @@ plot_predictions_space <-function(dat, trait, moment, newdata) {
 }
 site = "Skjelingahaugen"
 model = SLA_mean_sum_yc
-clim = "Temp_annomalies"
+clim = "Precip_annomalies"
+
+dat <- memodel_data_fullcommunity_nottransformed
+trait <- "SLA_cm2_g_log"
+moment <- "mean"
+site <- "Skjelingahaugen"
+model <- SLA_mean_sum_yc
+clim <- "Temp_annomalies"
 
 plot_predictions_time <-function(dat, trait, moment, site, model, clim) {
 
@@ -653,7 +660,7 @@ plot_predictions_time <-function(dat, trait, moment, site, model, clim) {
   newdata$predicted <- predict(object = model, newdata = newdata, re.form = NA, allow.new.levels=TRUE)
   
   
-  ggplot(aes(x = .data[[clim]], y = value), data = dat2) +
+  plot <- ggplot(aes(x = .data[[clim]], y = value), data = dat2) +
     geom_point(color = "lightgrey") +
     geom_line(aes(x = .data[[clim]], y = predicted), data = newdata, size = 1, show.legend = TRUE) +
     theme_minimal(base_size = 15) + 
@@ -662,13 +669,16 @@ plot_predictions_time <-function(dat, trait, moment, site, model, clim) {
   return(plot)
 }
 
+SLA_SKJ <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", "Skjelingahaugen", SLA_mean_sum_yc, "Temp_annomalies") +
+  labs(y = "SLA (cm2/g log)",  title = "Cold & Wet") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+
 SLA_mean_plot <- plot_predictions_space(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", SLA_mean_pred_space) +
   labs(y = "SLA (cm2/g log)", title = "Mean") +
   theme(plot.title = element_text(hjust = 0.5))
 
-SLA_SKJ <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", "Skjelingahaugen", SLA_mean_sum_yc, "Temp_annomalies") +
-  labs(y = "SLA (cm2/g log)",  title = "Cold & Wet") +
-  theme(plot.title = element_text(hjust = 0.5))
+
 
 SLA_ULV <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", "Ulvehaugen", SLA_mean_sum_yc) +
   labs(y = "SLA (cm2/g log)",  title = "Cold & Dry") +
@@ -689,7 +699,7 @@ plot_predictions_space(memodel_data_fullcommunity_nottransformed, "LDMC", "mean"
   labs(y = "LDMC", title = "Mean") +
   theme(plot.title = element_text(hjust = 0.5))
 
-LDMC_SKJ <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", "Skjelingahaugen", LDMC_mean_sum ) +
+LDMC_SKJ <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", "Skjelingahaugen", LDMC_mean_sum,"Precip_annomalies") +
   labs(y = "LDMC",  title = "Cold & Wet") +
   theme(plot.title = element_text(hjust = 0.5))
 
