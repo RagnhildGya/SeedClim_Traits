@@ -640,29 +640,28 @@ plot_predictions_time <-function(dat, trait, moment, site, model) {
                                                 ifelse(site %in% c("Ulvehaugen", "Fauske"), 0.6, NA)), 
                          Temp_decade = ifelse(site %in% c("Skjelingahaugen", "Ulvehaugen"), 6.5,
                                               ifelse(site %in% c("Ovstedalen", "Fauske"), 11, NA)), 
-                         siteID = c("Alrust", "Arhelleren", "Fauske", "Gudmedalen", "Hogsete", "Lavisdalen", "Ovstedalen", "Rambera", "Skjelingahaugen", "Ulvehaugen", "Veskre", "Vikesland"),
+                         siteID = "Skjelingahaugen",
                          Precip_annomalies = ifelse(site %in% c("Skjelingahaugen", "Ovstedalen"), 3,
                                                     ifelse(site %in% c("Ulvehaugen", "Fauske"), 0.6, NA)),
                          Temp_annomalies = seq(-3, 1.5, length = 200))
   
-  #newdata$predicted <- predict(object = model, newdata = newdata, re.form = NA, allow.new.levels=TRUE, se.fit = TRUE)
+  newdata$predicted <- predict(object = model, newdata = newdata, re.form = NA, allow.new.levels=TRUE, se.fit = TRUE)
 
     
-    output1 <- predictInterval(merMod = model, newdata = newdata,
-                          level = 0.95, n.sims = 1000,
-                          stat = "median", type="linear.prediction",
-                          include.resid.var = TRUE)
-    
-  newdata1 <- newdata %>% 
-    mutate(model.fit = output1$fit,
-           model.upr = output1$upr,
-           model.lwr = output1$lwr)
+  #   output1 <- predictInterval(merMod = model, newdata = newdata,
+  #                         level = 0.95, n.sims = 1000,
+  #                         stat = "median", type="linear.prediction",
+  #                         include.resid.var = TRUE)
+  #   
+  # newdata1 <- newdata %>% 
+  #   mutate(model.fit = output1$fit,
+  #          model.upr = output1$upr,
+  #          model.lwr = output1$lwr)
   
-  plot <- ggplot(dat2, aes(x = Temp_annomalies, y = value)) +
+  plot <- ggplot(aes(x = Temp_annomalies, y = value), data = dat2) +
     geom_point() +
-    geom_line(aes(x = Temp_annomalies, y = model.fit), data = newdata1, size = 1, show.legend = TRUE) +
-    geom_ribbon(aes(ymin = model.lwr, ymax = model.upr, alpha = 0.3), data = newdata) +
-    scale_color_manual(values = c("#696969")) +
+    geom_line(aes(x = Temp_annomalies, y = predicted), data = newdata, size = 1, show.legend = TRUE) +
+    scale_color_manual(values = c("grey")) +
     theme_minimal(base_size = 15)
     
   
