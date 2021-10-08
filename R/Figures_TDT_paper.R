@@ -626,8 +626,9 @@ plot_predictions_space <-function(dat, trait, moment, newdata) {
 }
 site = "Skjelingahaugen"
 model = SLA_mean_sum_yc
+clim = dat2$Temp_annomalies
 
-plot_predictions_time <-function(dat, trait, moment, site, model) {
+plot_predictions_time <-function(dat, trait, moment, site, model, clim) {
 
   dat2 <- dat %>%
     filter(Trait_trans == trait,
@@ -641,95 +642,92 @@ plot_predictions_time <-function(dat, trait, moment, site, model) {
                          Temp_decade = ifelse(site %in% c("Skjelingahaugen", "Ulvehaugen"), 6.5,
                                               ifelse(site %in% c("Ovstedalen", "Fauske"), 11, NA)), 
                          siteID = "Skjelingahaugen",
-                         Precip_annomalies = ifelse(site %in% c("Skjelingahaugen", "Ovstedalen"), 3,
-                                                    ifelse(site %in% c("Ulvehaugen", "Fauske"), 0.6, NA)),
-                         Temp_annomalies = seq(-3, 1.5, length = 200))
+                         Precip_annomalies = ifelse(clim == "Precip_annomalies", seq(-2, 3, length = 200),
+                                                    ifelse(clim == "Temp_annomalies", ifelse(site %in% c("Skjelingahaugen", "Ovstedalen"), 3,
+                                                                                             ifelse(site %in% c("Ulvehaugen", "Fauske"), 0.6, NA)))),
+                         Temp_annomalies = ifelse(clim == "Precip_annomalies", ifelse(site %in% c("Skjelingahaugen", "Ovstedalen"), 6.5,
+                                                                                      ifelse(site %in% c("Ulvehaugen", "Fauske"), 11, NA)),
+                                                  ifelse(clim == "Temp_annomalies", seq(-3, 2, length = 200))))
   
-  newdata$predicted <- predict(object = model, newdata = newdata, re.form = NA, allow.new.levels=TRUE, se.fit = TRUE)
-
-    
-  #   output1 <- predictInterval(merMod = model, newdata = newdata,
-  #                         level = 0.95, n.sims = 1000,
-  #                         stat = "median", type="linear.prediction",
-  #                         include.resid.var = TRUE)
-  #   
-  # newdata1 <- newdata %>% 
-  #   mutate(model.fit = output1$fit,
-  #          model.upr = output1$upr,
-  #          model.lwr = output1$lwr)
+  newdata$predicted <- predict(object = model, newdata = newdata, re.form = NA, allow.new.levels=TRUE)
   
-  plot <- ggplot(aes(x = Temp_annomalies, y = value), data = dat2) +
-    geom_point() +
-    geom_line(aes(x = Temp_annomalies, y = predicted), data = newdata, size = 1, show.legend = TRUE) +
-    scale_color_manual(values = c("grey")) +
-    theme_minimal(base_size = 15)
-    
+  plot <- ggplot(aes(x = clim, y = value), data = dat2) +
+    geom_point(color = "lightgrey") +
+    geom_line(aes(x = clim, y = predicted), data = newdata, size = 1, show.legend = TRUE) +
+    theme_minimal(base_size = 15) +
+    xlab(ifelse(clim == "Precip_annomalies", "Precipitation annomalies (m)",
+                ifelse(clim == "Temp_annomalies", "Temperature annomalies (C)", NA)))
   
   return(plot)
 }
 
 SLA_mean_plot <- plot_predictions_space(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", SLA_mean_pred_space) +
-  labs(y = "SLA (cm2/g log)", x = "", title = "Mean") +
+  labs(y = "SLA (cm2/g log)", title = "Mean") +
   theme(plot.title = element_text(hjust = 0.5))
 
-SLA_SKJ <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", "Skjelingahaugen", SLA_mean_sum_yc) +
-  labs(y = "SLA (cm2/g log)", x = "", title = "Mean") +
+SLA_SKJ <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", "Skjelingahaugen", SLA_mean_sum_yc, "Temp_annomalies") +
+  labs(y = "SLA (cm2/g log)",  title = "Cold & Wet") +
   theme(plot.title = element_text(hjust = 0.5))
 
 SLA_ULV <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", "Ulvehaugen", SLA_mean_sum_yc) +
-  labs(y = "SLA (cm2/g log)", x = "", title = "Mean") +
+  labs(y = "SLA (cm2/g log)",  title = "Cold & Dry") +
   theme(plot.title = element_text(hjust = 0.5))
 
 SLA_OVS <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", "Ovstedalen", SLA_mean_sum_yc) +
-  labs(y = "SLA (cm2/g log)", x = "", title = "Mean") +
+  labs(y = "SLA (cm2/g log)",  title = "Warm & Wet") +
   theme(plot.title = element_text(hjust = 0.5))
 
 SLA_FAU <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", "Fauske", SLA_mean_sum_yc) +
-  labs(y = "SLA (cm2/g log)", x = "", title = "Mean") +
+  labs(y = "SLA (cm2/g log)",  title = "Warm & Dry") +
   theme(plot.title = element_text(hjust = 0.5))
 
 
 figure <- ggarrange(SLA_SKJ, SLA_ULV, SLA_OVS, SLA_FAU, nrow = 2, ncol = 2, legend = "bottom")
 
 plot_predictions_space(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", LDMC_mean_pred_space) +
-  labs(y = "LDMC", x = "", title = "Mean") +
+  labs(y = "LDMC", title = "Mean") +
   theme(plot.title = element_text(hjust = 0.5))
 
-plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", "Skjelingahaugen", LDMC_mean_sum ) +
-  labs(y = "LDMC", x = "", title = "Mean") +
+LDMC_SKJ <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", "Skjelingahaugen", LDMC_mean_sum ) +
+  labs(y = "LDMC",  title = "Cold & Wet") +
   theme(plot.title = element_text(hjust = 0.5))
 
-plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", "Ulvehaugen", LDMC_mean_sum ) +
-  labs(y = "LDMC", x = "", title = "Mean") +
+LDMC_ULV <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", "Ulvehaugen", LDMC_mean_sum ) +
+  labs(y = "LDMC",  title = "Cold & Dry") +
   theme(plot.title = element_text(hjust = 0.5))
 
-plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", "Ovstedalen", LDMC_mean_sum ) +
-  labs(y = "LDMC", x = "", title = "Mean") +
+LDMC_OVS <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", "Ovstedalen", LDMC_mean_sum ) +
+  labs(y = "LDMC",  title = "Warm & Wet") +
   theme(plot.title = element_text(hjust = 0.5))
-plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", "Fauske", LDMC_mean_sum ) +
-  labs(y = "LDMC", x = "", title = "Mean") +
+
+LDMC_FAU <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", "Fauske", LDMC_mean_sum ) +
+  labs(y = "LDMC",  title = "Warm & Dry") +
   theme(plot.title = element_text(hjust = 0.5))
+
+figure_LDMC_precip <- ggarrange(LDMC_SKJ, LDMC_ULV, LDMC_OVS, LDMC_FAU, nrow = 2, ncol = 2, legend = "bottom")
 
 
 plot_predictions_space(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean", Height_mean_pred_space) +
-  labs(y = "Plant_Height_mm_log", x = "", title = "Mean") +
+  labs(y = "Plant_Height_mm_log",  title = "Mean") +
   theme(plot.title = element_text(hjust = 0.5))
 
-plot_predictions_time(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean", "Skjelingahaugen", Height_mean_sum) +
-  labs(y = "Plant_Height_mm_log", x = "", title = "Mean") +
+Height_SKJ <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean", "Skjelingahaugen", Height_mean_sum) +
+  labs(y = "Plant_Height_mm_log",  title = "Cold & Wet") +
   theme(plot.title = element_text(hjust = 0.5))
 
-plot_predictions_time(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean", "Ulvehaugen", Height_mean_sum) +
-  labs(y = "Plant_Height_mm_log", x = "", title = "Mean") +
+Height_ULV <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean", "Ulvehaugen", Height_mean_sum) +
+  labs(y = "Plant_Height_mm_log",  title = "Cold & Dry") +
   theme(plot.title = element_text(hjust = 0.5))
 
-plot_predictions_time(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean", "Ovstedalen", Height_mean_sum) +
-  labs(y = "Plant_Height_mm_log", x = "", title = "Mean") +
+Height_OVS <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean", "Ovstedalen", Height_mean_sum) +
+  labs(y = "Plant_Height_mm_log",  title = "Warm & Wet") +
   theme(plot.title = element_text(hjust = 0.5))
 
-plot_predictions_time(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean", "Fauske", Height_mean_sum) +
-  labs(y = "Plant_Height_mm_log", x = "", title = "Mean") +
+Height_FAU <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean", "Fauske", Height_mean_sum) +
+  labs(y = "Plant_Height_mm_log",  title = "Warm & Dry") +
   theme(plot.title = element_text(hjust = 0.5))
+
+figure_height_precip <- ggarrange(Height_SKJ, Height_ULV, Height_OVS, Height_FAU, nrow = 2, ncol = 2, legend = "bottom")
 
 
 SLA_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "skewness", SLA_skew_pred) + 
