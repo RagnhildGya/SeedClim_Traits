@@ -626,7 +626,7 @@ plot_predictions_space <-function(dat, trait, moment, newdata) {
 }
 site = "Skjelingahaugen"
 model = SLA_mean_sum_yc
-clim = dat2$Temp_annomalies
+clim = "Temp_annomalies"
 
 plot_predictions_time <-function(dat, trait, moment, site, model, clim) {
 
@@ -637,26 +637,27 @@ plot_predictions_time <-function(dat, trait, moment, site, model, clim) {
     unnest(data) %>% 
     ungroup()
   
-  newdata <- expand.grid(Precip_decade = ifelse(site %in% c("Skjelingahaugen", "Ovstedalen"), 3,
-                                                ifelse(site %in% c("Ulvehaugen", "Fauske"), 0.6, NA)), 
-                         Temp_decade = ifelse(site %in% c("Skjelingahaugen", "Ulvehaugen"), 6.5,
-                                              ifelse(site %in% c("Ovstedalen", "Fauske"), 11, NA)), 
-                         siteID = "Skjelingahaugen",
-                         Precip_annomalies = ifelse(clim == "Precip_annomalies", seq(-2, 3, length = 200),
-                                                    ifelse(clim == "Temp_annomalies", ifelse(site %in% c("Skjelingahaugen", "Ovstedalen"), 3,
-                                                                                             ifelse(site %in% c("Ulvehaugen", "Fauske"), 0.6, NA)))),
-                         Temp_annomalies = ifelse(clim == "Precip_annomalies", ifelse(site %in% c("Skjelingahaugen", "Ovstedalen"), 6.5,
-                                                                                      ifelse(site %in% c("Ulvehaugen", "Fauske"), 11, NA)),
-                                                  ifelse(clim == "Temp_annomalies", seq(-3, 2, length = 200))))
+  #case_when
+  newdata <- crossing(Precip_decade = case_when(site %in% c("Skjelingahaugen", "Ovstedal") ~ 3,
+                                                site %in% c("Ulvehaugen", "Fauske") ~ 0.6),
+                      Temp_decade = case_when(site %in% c("Skjelingahaugen", "Ulvehaugen") ~ 6.5,
+                                              site %in% c("Ovstedalen", "Fauske") ~ 11),
+  siteID = site,
+  Precip_annomalies = case_when({{clim}} == "Precip_annomalies" ~ seq(-2, 3, length = 200),
+                                {{clim}} == "Temp_annomalies" & (site %in% c("Skjelingahaugen", "Ovstedalen")) ~ 6.5,
+                                {{clim}} == "Temp_annomalies" & (site %in% c("Ulvehaugen", "Fauske")) ~ 11),
+  Temp_annomalies = case_when({{clim}} == "Precip_annomalies" & (site %in% c("Skjelingahaugen", "Ovstedalen")) ~ 3,
+                              {{clim}} == "Precip_annomalies" & (site %in% c("Ulvehaugen", "Fauske")) ~ 0.6,
+                              {{clim}} == "Temp_annomalies" ~ seq(-3, 2, length = 200)))
   
   newdata$predicted <- predict(object = model, newdata = newdata, re.form = NA, allow.new.levels=TRUE)
   
-  plot <- ggplot(aes(x = clim, y = value), data = dat2) +
+  
+  ggplot(aes(x = .data[[clim]], y = value), data = dat2) +
     geom_point(color = "lightgrey") +
-    geom_line(aes(x = clim, y = predicted), data = newdata, size = 1, show.legend = TRUE) +
-    theme_minimal(base_size = 15) +
-    xlab(ifelse(clim == "Precip_annomalies", "Precipitation annomalies (m)",
-                ifelse(clim == "Temp_annomalies", "Temperature annomalies (C)", NA)))
+    geom_line(aes(x = .data[[clim]], y = predicted), data = newdata, size = 1, show.legend = TRUE) +
+    theme_minimal(base_size = 15) + 
+    xlab(ifelse({{clim}} == "Precip_annomalies", "Precipitation annomalies (m)","Temperature annomalies (C)"))
   
   return(plot)
 }
