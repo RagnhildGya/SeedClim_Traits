@@ -15,6 +15,7 @@ library(ggvegan)
 library(ggnewscale)
 library(gghighlight)
 library(merTools)
+library(patchwork)
 
 ## Color palettes ##
 Temp_palette <- c("#d8c593", "#dd7631", "#bb3b0e")
@@ -197,14 +198,12 @@ Zoomed_in_map <- ggplot(dat, aes(x = Longitude, y = Latitude, fill = Precipitati
 
 ## Code for saving the figure
 
-library(patchwork)
-
 plot <- Zoomed_in_map +
   inset_element(climate, left = 0.18, bottom = 0.55, right = 0.65, top = 1, align_to = "plot") +
   inset_element(Norway_map, left = 0.595, bottom = 0.55, right = 0.96, top = 1, align_to = "plot") +
   plot_layout(guides = 'collect', widths = 1, heights = 1) 
 
-#ggsave(plot = plot, "SeedClim_climate_grid.pdf", width = 34, height = 22, units = "cm")
+#ggsave(plot = plot, "SeedClim_climate_grid1.pdf", width = 34, height = 22, units = "cm")
 
 
 # png("SeedClim_climate_grid.png", width = 1285, height = 861)
