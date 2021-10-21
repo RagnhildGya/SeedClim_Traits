@@ -307,7 +307,7 @@ output_com <-function(dat) {
 # Running the mixed effects model
 
 results_TDT <- memodel_data_fullcommunity %>%
-  filter(moments %in% c("mean", "skewness")) %>% 
+  filter(moments %in% c("mean")) %>% 
   mutate(model = purrr::map(data, model_TDT))
 
 #Tidying up the model output
