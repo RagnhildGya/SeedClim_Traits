@@ -629,6 +629,35 @@ plot_predictions_space <-function(dat, trait, moment, newdata) {
   
   return(plot)
 }
+
+plot_predictions_space_precip <-function(dat, trait, moment, model) {
+  
+  dat2 <- dat %>%
+    filter(Trait_trans == trait,
+           moments == moment,
+           n == 75) %>% 
+    unnest(data) %>% 
+    ungroup()
+  
+  newdata <- expand.grid(Temp_decade = c(6.5, 8.5, 10.5), 
+                         Precip_decade = seq(0.5,4.5, length = 200), 
+                         siteID = c("Alrust", "Arhelleren", "Fauske", "Gudmedalen", "Hogsete", "Lavisdalen", "Ovstedalen", "Rambera", "Skjelingahaugen", "Ulvehaugen", "Veskre", "Vikesland"),
+                         Precip_annomalies = 0,
+                         Temp_annomalies = 0)
+  
+  newdata$predicted <- predict(object = model, newdata = newdata, re.form = NA, allow.new.levels=TRUE)
+  
+  
+  plot <- ggplot() +
+    geom_jitter(aes (x = Precip_decade, y = value), data = dat2, color = "lightgrey") +
+    geom_line(aes(x = Precip_decade, y = predicted, color = factor(Temp_decade)), data = newdata, size = 1, show.legend = TRUE) +
+    scale_color_manual(values = Temp_palette) +
+    theme_minimal(base_size = 15) +
+    theme(legend.position = "bottom") 
+  
+  return(plot)
+}
+
 site = "Skjelingahaugen"
 model = SLA_mean_sum_yc
 clim = "Precip_annomalies"
@@ -700,7 +729,7 @@ SLA_FAU <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "SLA
 
 figure <- ggarrange(SLA_SKJ, SLA_ULV, SLA_OVS, SLA_FAU, nrow = 2, ncol = 2, legend = "bottom")
 
-plot_predictions_space(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", LDMC_mean_pred_space) +
+LDMC_space <- plot_predictions_space_precip(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", LDMC_mean_sum_yc) +
   labs(y = "LDMC", title = "Mean") +
   theme(plot.title = element_text(hjust = 0.5))
 
@@ -720,10 +749,11 @@ LDMC_FAU <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LD
   labs(y = "LDMC",  title = "Warm & Dry") +
   theme(plot.title = element_text(hjust = 0.5))
 
-(LDMC_SKJ | LDMC_ULV) /
-  (LDMC_OVS | LDMC_FAU)
-
-figure_LDMC_precip <- ggarrange(LDMC_SKJ, LDMC_ULV, LDMC_OVS, LDMC_FAU, nrow = 2, ncol = 2, legend = "bottom")
+LDMC_space/
+  (LDMC_SKJ | LDMC_ULV) /
+  (LDMC_OVS | LDMC_FAU) +
+  plot_layout(widths = c(1,1), heights = c(2,1,1))
+  
 
 
 plot_predictions_space(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean", Height_mean_pred_space) +
