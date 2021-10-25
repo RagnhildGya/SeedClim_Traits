@@ -779,64 +779,48 @@ Height_FAU <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "
 figure_height_precip <- ggarrange(Height_SKJ, Height_ULV, Height_OVS, Height_FAU, nrow = 2, ncol = 2, legend = "bottom")
 
 
-SLA_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "skewness", SLA_skew_pred) + 
-  geom_hline(yintercept = 0, color = "black", linetype = 2) +
-  labs(y = "", x = "", title = "Skewness") +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  ylim(-2, 4)
+SLA_space <- plot_predictions_space(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", SLA_mean_pred_space) +
+  labs(y = "SLA (cm2/g log)", x = "") +
+  guides(color = "none")
 
-CN_ratio_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "CN_ratio_log", "mean", CN_ratio_mean_pred) +
-  labs(y = "C/N ratio (log))", x = "") 
-CN_ratio_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "CN_ratio_log", "skewness", CN_ratio_skew_pred) + geom_hline(yintercept = 0, color = "black", linetype = 2) +
-  labs(y = "", x = "") +
-  ylim(-2, 4)
+LDMC_space <- plot_predictions_space(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", LDMC_mean_pred_space) +
+  labs(y = "LDMC", x = "") +
+  guides(color = "none")
 
-LA_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "Leaf_Area_cm2_log", "mean", LA_mean_pred) +
-  labs(y = "Leaf area (cm2 log)", x = "", title = "Mean") +
-  theme(plot.title = element_text(hjust = 0.5))
-LA_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "Leaf_Area_cm2_log", "skewness", LA_skew_pred)+ geom_hline(yintercept = 0, color = "black", linetype = 2) +
-  labs(y = "", x = "", title = "Skewness") +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  ylim(-2, 4)
-
-C_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "C_percent", "mean", C_mean_pred) +
-  labs(y = "Carbon %", x = "") 
-C_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "C_percent", "skewness", C_skew_pred) + geom_hline(yintercept = 0, color = "black", linetype = 2) +
-  labs(y = "", x = "") +
-  ylim(-2, 4)
-
-N_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "N_percent", "mean", N_mean_pred) +
-  labs(y = "Nitrogen %", x = "") 
-N_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "N_percent", "skewness", N_skew_pred) + geom_hline(yintercept = 0, color = "black", linetype = 2) +
-  labs(y = "", x = "") +
-  ylim(-2, 4)
-
-Height_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean", Height_mean_pred) +
-  labs(y = "Plant height", x = "") 
-Height_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "skewness", Height_skew_pred) + geom_hline(yintercept = 0, color = "black", linetype = 2) +
-  labs(y = "", x = "") +
-  ylim(-2, 4)
-
-Mass_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "Dry_Mass_g_log", "mean", Mass_mean_pred) +
-  labs(y = "Dry mass", x = "") 
-Mass_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "Dry_Mass_g_log", "skewness", Mass_skew_pred) + geom_hline(yintercept = 0, color = "black", linetype = 2) +
-  labs(y = "", x = "") +
-  ylim(-2, 4)
-
-LDMC_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", LDMC_mean_pred) +
-  labs(y = "LDMC", x = "") 
-LDMC_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "LDMC", "skewness", LDMC_skew_pred) + geom_hline(yintercept = 0, color = "black", linetype = 2) +
-  labs(y = "", x = "") +
-  ylim(-2, 4)
-
-Lth_mean_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "Leaf_Thickness_Ave_mm", "mean", Lth_mean_pred) +
-  labs(y = "Leaf thickness", x = "") 
-Lth_skew_plot <- plot_predictions(memodel_data_fullcommunity_nottransformed, "Leaf_Thickness_Ave_mm", "skewness", Lth_skew_pred) + geom_hline(yintercept = 0, color = "black", linetype = 2) +
-  labs(y = "", x = "") +
-  ylim(-2, 4)
+CN_space <- plot_predictions_space(memodel_data_fullcommunity_nottransformed, "CN_ratio_log", "mean", CN_ratio_mean_pred_space) +
+  labs(y = "C/N ratio (log)", x = "") +
+  guides(color = "none")
 
 
-figure <- ggarrange(SLA_mean_plot, SLA_skew_plot, LA_mean_plot, LA_skew_plot, N_mean_plot, N_skew_plot, Height_mean_plot, Height_skew_plot, CN_ratio_mean_plot, CN_ratio_skew_plot, Mass_mean_plot, Mass_skew_plot, LDMC_mean_plot, LDMC_skew_plot, C_mean_plot, C_skew_plot, Lth_mean_plot, Lth_skew_plot, nrow = 5, ncol = 4, common.legend = TRUE, legend = "bottom")
+LA_space <- plot_predictions_space(memodel_data_fullcommunity_nottransformed, "Leaf_Area_cm2_log", "mean", LA_mean_pred_space) +
+  labs(y = "Leaf area (cm2 log)", x = "") +
+  guides(color = "none")
+
+
+C_space <- plot_predictions_space(memodel_data_fullcommunity_nottransformed, "C_percent", "mean", C_mean_pred_space) +
+  labs(y = "Carbon %", x = "") +
+  guides(color = "none")
+
+
+N_space <- plot_predictions_space(memodel_data_fullcommunity_nottransformed, "N_percent", "mean", N_mean_pred_space) +
+  labs(y = "Nitrogen %", x = "") +
+  guides(color = "none")
+
+
+Height_space <- plot_predictions_space(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean", Height_mean_pred_space) +
+  labs(y = "Plant height", x = "")  +
+  guides(color = "none")
+
+Mass_space <- plot_predictions_space(memodel_data_fullcommunity_nottransformed, "Dry_Mass_g_log", "mean", Mass_mean_pred_space) +
+  labs(y = "Dry mass", x = "")  +
+  guides(color = "none")
+
+
+Lth_space <- plot_predictions_space(memodel_data_fullcommunity_nottransformed, "Leaf_Thickness_Ave_mm", "mean", Lth_mean_pred_space) +
+  labs(y = "Leaf thickness", x = "")  +
+  guides(color = "none")
+
+figure <- ggarrange(SLA_space, LA_space, N_space, Height_space, CN_space, Mass_space, LDMC_space, C_space, Lth_space, nrow = 5, ncol = 2, common.legend = TRUE, legend = "bottom")
 
 ggsave(plot = figure, filename = "mean_skewness_figure_centered.pdf",  width = 25, height = 29, units = "cm")
 
