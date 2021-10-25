@@ -473,64 +473,48 @@ LDMC_mean_pred_time <- models_trait_predictions_time(LDMC_mean_sum_yc)
 Height_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean")
 Height_mean_pred_space <- models_trait_predictions_space(Height_mean_sum)
 
-
-SLA_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean")
-SLA_mean_pred <- models_trait_predictions(SLA_mean_sum)
-SLA_skew_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "skewness")
-SLA_skew_pred_space <- models_trait_predictions_space(SLA_skew_sum)
-
-SLA_mean_spatial_climate_sum <- model_trait_summary_spatial_climate(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean")
-SLA_mean_spatial_pred <- models_trait_predictions_siteID(SLA_mean_spatial_climate_sum)
-
-
-Height_mean_temporal_sum <- model_trait_summary_temporal(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean")
-Height_mean_temporal_pred <- models_trait_predictions_siteID(Height_mean_temporal_sum)
-
-Height_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean")
-Height_mean_pred <- models_trait_predictions(Height_mean_sum)
-
-
-
 CN_ratio_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "CN_ratio_log", "mean")
-CN_ratio_mean_pred <- models_trait_predictions(CN_ratio_mean_sum)
-CN_ratio_skew_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "CN_ratio_log", "skewness")
-CN_ratio_skew_pred <- models_trait_predictions(CN_ratio_skew_sum)
+CN_ratio_mean_pred_space <- models_trait_predictions_space(CN_ratio_mean_sum)
+
+
+# SLA_mean_spatial_climate_sum <- model_trait_summary_spatial_climate(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean")
+# SLA_mean_spatial_pred <- models_trait_predictions_siteID(SLA_mean_spatial_climate_sum)
+
+# Height_mean_temporal_sum <- model_trait_summary_temporal(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean")
+# Height_mean_temporal_pred <- models_trait_predictions_siteID(Height_mean_temporal_sum)
+
+# Height_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean")
+# Height_mean_pred <- models_trait_predictions(Height_mean_sum)
+
+
+
+
+
 
 LA_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Leaf_Area_cm2_log", "mean")
-LA_mean_pred <- models_trait_predictions(LA_mean_sum)
-LA_skew_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Leaf_Area_cm2_log", "skewness")
-LA_skew_pred <- models_trait_predictions(LA_skew_sum)
+LA_mean_pred_space <- models_trait_predictions_space(LA_mean_sum)
+
 
 
 C_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "C_percent", "mean")
-C_mean_pred <- models_trait_predictions(C_mean_sum)
-C_skew_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "C_percent", "skewness")
-C_skew_pred <- models_trait_predictions(C_skew_sum)
+C_mean_pred_space <- models_trait_predictions_space(C_mean_sum)
+
 
 N_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "N_percent", "mean")
-N_mean_pred <- models_trait_predictions(N_mean_sum)
-N_skew_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "N_percent", "skewness")
-N_skew_pred <- models_trait_predictions(N_skew_sum)
+N_mean_pred_space <- models_trait_predictions_space(N_mean_sum)
 
-Height_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean")
-Height_mean_pred <- models_trait_predictions(Height_mean_sum)
-Height_skew_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "skewness")
-Height_skew_pred <- models_trait_predictions(Height_skew_sum)
+
 
 Mass_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Dry_Mass_g_log", "mean")
-Mass_mean_pred <- models_trait_predictions(Mass_mean_sum)
-Mass_skew_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Dry_Mass_g_log", "skewness")
-Mass_skew_pred <- models_trait_predictions(Mass_skew_sum)
+Mass_mean_pred_space <- models_trait_predictions_space(Mass_mean_sum)
+
 
 LDMC_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "LDMC", "mean")
 LDMC_mean_pred_space <- models_trait_predictions_space(LDMC_mean_sum)
-LDMC_skew_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "LDMC", "skewness")
-LDMC_skew_pred <- models_trait_predictions(LDMC_skew_sum)
+
 
 Lth_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Leaf_Thickness_Ave_mm", "mean")
-Lth_mean_pred <- models_trait_predictions(Lth_mean_sum)
-Lth_skew_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Leaf_Thickness_Ave_mm", "skewness")
-Lth_skew_pred <- models_trait_predictions(Lth_skew_sum)
+Lth_mean_pred_space <- models_trait_predictions_space(Lth_mean_sum)
 
 
 ### Finding the start values for skewness in 2009 to see change in time ###
