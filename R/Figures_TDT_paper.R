@@ -1,6 +1,6 @@
 #### Figures - Trait driver theory paper ####
 
-## Libraries ##
+#### Libraries ####
 library(ggpubr)
 library(ggridges)
 library(ggfortify)
@@ -16,8 +16,14 @@ library(ggnewscale)
 library(gghighlight)
 library(merTools)
 library(patchwork)
+library(conflicted)
 
-## Color palettes ##
+#### Setting conflict standards ####
+
+conflict_prefer("select", winner = "dplyr")
+conflict_prefer("corrpot", winner = "corrplot")
+
+#### Color palettes ####
 Temp_palette <- c("#d8c593", "#dd7631", "#bb3b0e")
 Precip_palette <- c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")
 
