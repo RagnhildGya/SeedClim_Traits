@@ -31,7 +31,7 @@ set.seed(47)
 conflict_prefer("map", winner="purrr")
 conflict_prefer("filter", winner = "dplyr")
 conflict_prefer("select", winner = "dplyr")
-
+conflict_prefer("lmer", winner = "lmerTest")
 
 #### Making data ready for traitstrap and merging ####
 
@@ -398,6 +398,9 @@ models_trait_predictions_time <-function(model) {
 #### Get partial R2 for all models and traits ####
 
  #partR2_func <-function(dat) {
+
+trait <- "SLA_cm2_g_log"
+moment <- "mean"
    
  data2 <- memodel_data_fullcommunity %>% 
    filter(Trait_trans == trait,
