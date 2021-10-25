@@ -466,6 +466,10 @@ SLA_mean_sum_yc <- model_trait_summary(memodel_data_fullcommunity_nottransformed
 SLA_mean_pred_space <- models_trait_predictions_space(SLA_mean_sum_yc)
 SLA_mean_pred_time <- models_trait_predictions_time(SLA_mean_sum_yc)
 
+LDMC_mean_sum_yc <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "LDMC", "mean")
+LDMC_mean_pred_space <- models_trait_predictions_space(LDMC_mean_sum_yc)
+LDMC_mean_pred_time <- models_trait_predictions_time(LDMC_mean_sum_yc)
+
 Height_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean")
 Height_mean_pred_space <- models_trait_predictions_space(Height_mean_sum)
 
