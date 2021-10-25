@@ -397,12 +397,12 @@ models_trait_predictions_time <-function(model) {
 
 #### Get partial R2 for all models and traits ####
 
- #partR2_func <-function(dat) {
+library(ggpubr)
+library(patchwork)
 
-trait <- "SLA_cm2_g_log"
-moment <- "mean"
+ partR2_func <-function(dat, trait, moment) {
    
- data2 <- memodel_data_fullcommunity %>% 
+   data2 <- dat %>% 
    filter(Trait_trans == trait,
           moments == moment,
           n == 75) %>% 
@@ -414,22 +414,51 @@ moment <- "mean"
                scale(Temp_decade)*scale(Temp_annomalies) + scale(Temp_decade)*scale(Precip_annomalies) + 
                scale(Precip_decade)*scale(Temp_annomalies) + scale(Precip_decade)*scale(Precip_annomalies) +
                + (1|siteID), data = data2)
- mod1 <- lmer(value ~ scale(Temp_decade) + scale(Precip_decade) + scale(Temp_annomalies) + scale(Precip_annomalies)
-               + (1|siteID), data = data2)
  
  # R2 <- partR2(mod, data = data2, partvars = c("scale(Temp_decade)", "scale(Precip_decade)", "scale(Temp_annomalies)", "scale(Precip_annomalies)", "scale(Temp_decade):scale(Precip_decade)", "scale(Temp_annomalies):scale(Precip_annomalies)", "scale(Temp_annomalies):scale(Temp_decade)", "scale(Precip_annomalies):scale(Precip_decade)"), R2_type = "conditional", nboot = 10)
  
- R2_test <- partR2(mod, data = data2, partbatch = list(Temp_precip_space = c("scale(Temp_decade)", "scale(Precip_decade)", "scale(Temp_decade):scale(Precip_decade)"),
-                                                       Temp_precip_time = c("scale(Temp_annomalies)", "scale(Precip_annomalies)", "scale(Temp_annomalies):scale(Precip_annomalies)"),
-                                                       Time_and_space = c("scale(Temp_annomalies):scale(Temp_decade)", "scale(Precip_annomalies):scale(Precip_decade)", "scale(Temp_decade)*scale(Precip_annomalies)", "scale(Precip_decade)*scale(Temp_annomalies)")), R2_type = "conditional", nboot = 10)
+ # R2_test <- partR2(mod, data = data2, partbatch = list(Space = c("scale(Temp_decade)", "scale(Precip_decade)", "scale(Temp_decade):scale(Precip_decade)"),
+ #                                                       Time = c("scale(Temp_annomalies)", "scale(Precip_annomalies)", "scale(Temp_annomalies):scale(Precip_annomalies)"),
+ #                                                       Time_and_space = c("scale(Temp_annomalies):scale(Temp_decade)", "scale(Precip_annomalies):scale(Precip_decade)", "scale(Temp_decade)*scale(Precip_annomalies)", "scale(Precip_decade)*scale(Temp_annomalies)")), R2_type = "conditional", nboot = 10)
+ # 
+ # forestplot(R2_test, type = "R2")
  
  part_space <- partR2(mod, data = data2, partvars = c("scale(Temp_decade)", "scale(Precip_decade)", "scale(Temp_decade):scale(Precip_decade)"), R2_type = "conditional", nboot = 10)
  
  part_time <- partR2(mod, data = data2, partvars = c("scale(Temp_annomalies)", "scale(Precip_annomalies)", "scale(Temp_annomalies):scale(Precip_annomalies)"), R2_type = "conditional", nboot = 10)
  
  
+ plot1 <- forestplot(part_space, type = "R2") +
+   ggtitle(paste0(trait, " - Space")) +
+   theme(axis.text.y = element_blank()) +
+   xlim(0,1)
  
-
+ plot2 <- forestplot(part_time, type = "R2") +
+   ggtitle(paste0(trait, " - Time")) +
+   theme(axis.text.y = element_blank()) +
+   xlim(0,1)
+ 
+ plot <- plot1 / plot2
+ 
+ return(plot)
+ }
+ 
+ LDMC_partR2_plot <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "LDMC")
+ SLA_partR2_plot <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "SLA_cm2_g_log")
+ Height_partR2_plot <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "Plant_Height_mm_log")
+ CN_partR2_plot <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "CN_ratio_log")
+ LA_partR2_plot <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "Leaf_Area_cm2_log")
+ Lth_partR2_plot <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "Leaf_Thickness_Ave_mm")
+ N_partR2_plot <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "N_percent")
+ C_partR2_plot <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "C_percent")
+ Mass_partR2_plot <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "Dry_Mass_g_log")
+ 
+ 
+ 
+ Partial_R2_plot <- (SLA_partR2_plot | LDMC_partR2_plot | Lth_partR2_plot | CN_partR2_plot | N_partR2_plot) /
+   (Height_partR2_plot | LA_partR2_plot | Mass_partR2_plot | C_partR2_plot | plot_spacer())
+ 
+ ggsave("Partial_R2.pdf", width = 20 , height = 11, units = "cm", plot = Partial_R2_plot)
 
 #### Make datasets with modeled values for different traits for plotting ####
 
