@@ -634,11 +634,11 @@ model = SLA_mean_sum_yc
 clim = "Precip_annomalies"
 
 dat <- memodel_data_fullcommunity_nottransformed
-trait <- "SLA_cm2_g_log"
+trait <- "LDMC"
 moment <- "mean"
-site <- "Skjelingahaugen"
-model <- SLA_mean_sum_yc
-clim <- "Temp_annomalies"
+site <- "Ovstedalen"
+model <- LDMC_mean_sum_yc
+clim <- "Precip_annomalies"
 
 plot_predictions_time <-function(dat, trait, moment, site, model, clim) {
 
@@ -650,7 +650,7 @@ plot_predictions_time <-function(dat, trait, moment, site, model, clim) {
     ungroup()
   
   #case_when
-  newdata <- crossing(Precip_decade = case_when(site %in% c("Skjelingahaugen", "Ovstedal") ~ 3,
+  newdata <- crossing(Precip_decade = case_when(site %in% c("Skjelingahaugen", "Ovstedalen") ~ 3,
                                                 site %in% c("Ulvehaugen", "Fauske") ~ 0.6),
                       Temp_decade = case_when(site %in% c("Skjelingahaugen", "Ulvehaugen") ~ 6.5,
                                               site %in% c("Ovstedalen", "Fauske") ~ 11),
@@ -704,21 +704,24 @@ plot_predictions_space(memodel_data_fullcommunity_nottransformed, "LDMC", "mean"
   labs(y = "LDMC", title = "Mean") +
   theme(plot.title = element_text(hjust = 0.5))
 
-LDMC_SKJ <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", "Skjelingahaugen", LDMC_mean_sum,"Precip_annomalies") +
+LDMC_SKJ <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", "Skjelingahaugen", LDMC_mean_sum_yc,"Precip_annomalies") +
   labs(y = "LDMC",  title = "Cold & Wet") +
   theme(plot.title = element_text(hjust = 0.5))
 
-LDMC_ULV <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", "Ulvehaugen", LDMC_mean_sum ) +
+LDMC_ULV <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", "Ulvehaugen", LDMC_mean_sum_yc, "Precip_annomalies") +
   labs(y = "LDMC",  title = "Cold & Dry") +
   theme(plot.title = element_text(hjust = 0.5))
 
-LDMC_OVS <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", "Ovstedalen", LDMC_mean_sum ) +
+LDMC_OVS <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", "Ovstedalen", LDMC_mean_sum_yc, "Precip_annomalies") +
   labs(y = "LDMC",  title = "Warm & Wet") +
   theme(plot.title = element_text(hjust = 0.5))
 
-LDMC_FAU <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", "Fauske", LDMC_mean_sum ) +
+LDMC_FAU <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", "Fauske", LDMC_mean_sum_yc, "Precip_annomalies") +
   labs(y = "LDMC",  title = "Warm & Dry") +
   theme(plot.title = element_text(hjust = 0.5))
+
+(LDMC_SKJ | LDMC_ULV) /
+  (LDMC_OVS | LDMC_FAU)
 
 figure_LDMC_precip <- ggarrange(LDMC_SKJ, LDMC_ULV, LDMC_OVS, LDMC_FAU, nrow = 2, ncol = 2, legend = "bottom")
 
