@@ -252,7 +252,7 @@ Climate_corr <- Corr_traits %>%
          Temp_summer_MayJuly = Temp_yearly_spring)
 
 corr <- round(cor(Trait_climate_corr), 1) 
-corr1 <- round(cor(Climate_corr), 1) 
+corr1 <- round(cor(Climate_corr, use = "complete.obs"), 2) 
 
 
 # P-values 
@@ -269,6 +269,7 @@ ggcorrplot(corr1, hc.order = FALSE,
            type = "lower", lab = TRUE,)
 
 #ggsave("Correlation_plot.jpg", width = 30 , height = 20, units = "cm")
+#ggsave("Correlation_plot_climate.jpg", width = 20 , height = 15, units = "cm")
 
 #### Ordination ####
 
@@ -309,12 +310,12 @@ Ord_plot_traits <- fviz_pca_biplot(pca_trait, repel = TRUE,
                                    label = "var",
                                    labelsize = 5) +
   theme_minimal(base_size = 14) +
-  guides(shape = FALSE) +
+  guides(shape = "none") +
   #scale_color_manual(name = "Summer temperature", values = c("#8DD5E1", "#FCB971", "#B93B3B")) +
   coord_fixed() +
   labs(title = "") +
-  xlab("PCA1 (44.2%)") +
-  ylab("PCA2 (19.5%)") +
+  xlab("PCA1 (43.9%)") +
+  ylab("PCA2 (19.0%)") +
   theme(plot.title = element_text(hjust = 0.1))
 
 #ggsave("Ordination_LES_Size.svg", width = 22 , height = 16, units = "cm", dpi = 600)
