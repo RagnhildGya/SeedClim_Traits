@@ -405,6 +405,31 @@ e <- ggarrange(Ord_plot_time, Ord_plot_time_precip,
                nrow = 1, ncol = 2,
                legend = "none")
 
+### RDA variance explained ordination plot ###
+
+Explained_variance_RDA <- read.table(header = TRUE, stringsAsFactors = TRUE, text = 
+                                       "x model variance
+                               1 Temperature 0.2288
+                               1 Precipitation 0.1523
+                               1 Temp*Precip 0.1788
+                               1 Temp*Precip*Year 0.0187
+                               1 Unexplained 0.4214
+                               ")
+
+Explained_variance_RDA %>% 
+  mutate(model = factor(model, levels = c("Unexplained", "Temp*Precip*Year", "Temp*Precip",  "Temperature", "Precipitation"))) %>% 
+  ggplot(aes(x = x, fill = model, y = variance)) +
+  geom_bar(position = "stack", stat = "identity") +
+  scale_fill_manual(values = c("#CCCBCC", "#BAD8F7", "#89B7E1", "#2E75B6", "#213964")) +
+  theme_minimal(base_size = 18) +
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        legend.title = element_blank()) +
+  ylab("Variance explained")
+
+ggsave(filename = "Variance_explained.png",  width = 20, height = 14, units = "cm")
+
 
 #ggsave(plot = c, "Ord_timemean_temp_prec_four.pdf", width = 28 , height = 20, units = "cm")
 
@@ -954,28 +979,7 @@ library(ztable)
 z <- ztable(model_output_everything) 
 print(z,caption="Table 1. Basic Table")
 
-Explained_variance_RDA <- read.table(header = TRUE, stringsAsFactors = TRUE, text = 
-                                       "x model variance
-                               1 Temperature 0.2293
-                               1 Precipitation 0.1552
-                               1 Temp*Precip 0.1766
-                               1 Temp*Precip*Year 0.0183
-                               1 Unexplained 0.4206
-                               ")
 
-Explained_variance_RDA %>% 
-  mutate(model = factor(model, levels = c("Unexplained", "Temp*Precip*Year", "Temp*Precip",  "Temperature", "Precipitation"))) %>% 
-  ggplot(aes(x = x, fill = model, y = variance)) +
-  geom_bar(position = "stack", stat = "identity") +
-  scale_fill_manual(values = c("#CCCBCC", "#BAD8F7", "#89B7E1", "#2E75B6", "#213964")) +
-  theme_minimal(base_size = 18) +
-  theme(axis.title.x=element_blank(),
-        axis.text.x=element_blank(),
-        axis.ticks.x=element_blank(),
-        legend.title = element_blank()) +
-  ylab("Variance explained")
-
-ggsave(filename = "Variance_explained.png",  width = 20, height = 14, units = "cm")
 
 ## Mean & Skewness figures ##
 
