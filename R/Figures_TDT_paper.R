@@ -242,8 +242,18 @@ plot <- Zoomed_in_map +
 
 # Correlations 
 
-corr <- round(cor(Corr_traits), 1) 
-head(corr[, 1:6])
+Trait_climate_corr <- Corr_traits %>% 
+  select(-Temp_yearly_prev, -Temp_summer, -Precip_yearly_spring) %>% 
+  rename(Temp_summer = Temp_yearly_spring)
+
+Climate_corr <- Corr_traits %>% 
+  select(Temp_yearly_prev, Temp_summer, Precip_yearly_spring, Precip_yearly, Temp_yearly_spring) %>% 
+  rename(Temp_summer_MaySeptember = Temp_summer,
+         Temp_summer_MayJuly = Temp_yearly_spring)
+
+corr <- round(cor(Trait_climate_corr), 1) 
+corr1 <- round(cor(Climate_corr), 1) 
+
 
 # P-values 
 
@@ -253,6 +263,9 @@ p.mat <- cor_pmat(Corr_traits)
 # Correlation plot
 
 ggcorrplot(corr, hc.order = FALSE,
+           type = "lower", lab = TRUE,)
+
+ggcorrplot(corr1, hc.order = FALSE,
            type = "lower", lab = TRUE,)
 
 #ggsave("Correlation_plot.jpg", width = 30 , height = 20, units = "cm")
