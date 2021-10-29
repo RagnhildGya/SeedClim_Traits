@@ -126,9 +126,7 @@ traitdata_trans <- traitdata %>%
   mutate(Height = log(Height),
          Wet_mass = log(Wet_mass),
          Dry_mass = log(Dry_mass),
-         Leaf_area = log(Leaf_area),
-         CN_ratio = log(CN_ratio),
-         SLA = log(SLA)) %>% 
+         Leaf_area = log(Leaf_area)) %>% 
   tidyr::gather(Trait, Value, Height, Wet_mass, Dry_mass, Leaf_area, N_percent, C_percent, CN_ratio, SLA, LDMC, Lth_ave) %>% 
   mutate(Trait = recode(Trait, "Leaf_area" = "Leaf_Area_cm2",
                         "SLA" = "SLA_cm2_g",
@@ -140,9 +138,7 @@ traitdata_trans <- traitdata %>%
                               "Plant_Height_mm" = "Plant_Height_mm_log",
                               "Wet_Mass_g" = "Wet_Mass_g_log",
                               "Dry_Mass_g" = "Dry_Mass_g_log",
-                              "Leaf_Area_cm2" = "Leaf_Area_cm2_log",
-                              "SLA_cm2_g" = "SLA_cm2_g_log",
-                              "CN_ratio" = "CN_ratio_log"))
+                              "Leaf_Area_cm2" = "Leaf_Area_cm2_log"))
 
 
 #### Add info about species ####
