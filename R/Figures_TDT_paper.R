@@ -17,6 +17,7 @@ library(gghighlight)
 library(merTools)
 library(patchwork)
 library(conflicted)
+library(broom)
 
 #### Setting conflict standards ####
 
@@ -363,13 +364,13 @@ Ord_plot_precip <- fviz_pca_ind(pca_trait, repel = TRUE,
 ## Ordination over time ##
 
 
-pca_fort <- fortify(pca_trait, display = "Sites") %>% 
+pca_fort <- augment(pca_trait, display = "Sites") %>% 
   bind_cols(Ord_boot_traits[1:6]) %>% 
   filter(year %in% c(2009, 2019)) 
 
 
 Ord_plot_time <- pca_fort %>% 
-  ggplot(aes(x = PC1, y = PC2, colour = Temp_level, group = turfID)) +
+  ggplot(aes(x = .fittedPC1, y = .fittedPC2, colour = Temp_level, group = turfID)) +
   geom_path() + #use geom_path not geom_line
   geom_point(aes(size = if_else(year == 2009, 1, NA_real_)), show.legend = FALSE) +
   #scale_color_viridis_d() +
@@ -379,10 +380,10 @@ Ord_plot_time <- pca_fort %>%
   theme_minimal(base_size = 14) +
   theme(legend.text=element_text(size=14), legend.title = element_text(size = 14), plot.title = element_text(hjust = 0.1), axis.title = element_blank()) +
   labs(fill = "Yearly precipitation", color = "Yearly precipitation", shape = "Yearly precipitation") +
-  guides(color = FALSE) 
+  guides(color = "none") 
 
 Ord_plot_time_precip <- pca_fort %>% 
-  ggplot(aes(x = PC1, y = PC2, colour = Precip_level, group = turfID)) +
+  ggplot(aes(x = .fittedPC1, y = .fittedPC2, colour = Precip_level, group = turfID)) +
   geom_path() + #use geom_path not geom_line
   geom_point(aes(size = if_else(year == 2009, 1, NA_real_)), show.legend = FALSE) +
   #scale_color_viridis_d() +
@@ -392,15 +393,7 @@ Ord_plot_time_precip <- pca_fort %>%
   theme_minimal(base_size = 14) +
   theme(legend.text=element_text(size=14), legend.title = element_text(size = 14), plot.title = element_text(hjust = 0.1), axis.title = element_blank()) +
   labs(fill = "Yearly precipitation", color = "Yearly precipitation", shape = "Yearly precipitation") +
-  guides(color = FALSE) 
-
-
-d <- ggarrange(Ord_plot_traits, 
-               ggarrange(Ord_plot_precip, Ord_plot_temp,  Ord_plot_time, ncol = 3, nrow = 1, labels = c("B", "C", "D"),legend = "none"), 
-               nrow = 2, ncol = 1,
-               labels = "A",
-               widths = c(6, 2), 
-               heights = c(2, 1))
+  guides(color = "none") 
 
 
 c <- ggarrange(Ord_plot_traits, Ord_plot_time, Ord_plot_precip, Ord_plot_temp,   
