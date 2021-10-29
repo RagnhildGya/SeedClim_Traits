@@ -555,7 +555,7 @@ Ord_boot_traits <- sum_moments_climate_fullcommunity %>%
   #unite(temp, Trait, Moment) %>% 
   pivot_wider(names_from = Trait_trans, values_from = mean_mean) %>% 
   column_to_rownames("uniqueID") %>% 
-  rename("C % "= "C_percent", "C/N" = "CN_ratio", "Dry mass" = "Dry_Mass_g_log", "Leaf area" = "Leaf_Area_cm2_log", "Leaf thickness" = "Leaf_Thickness_Ave_mm", "N %" = "N_percent", "Plant height" = "Plant_Height_mm_log", "SLA" = "SLA_cm2_g")
+  rename("Leaf C "= "C_percent", "Leaf C/N" = "CN_ratio", "Dry mass" = "Dry_Mass_g_log", "Leaf area" = "Leaf_Area_cm2_log", "Leaf thickness" = "Leaf_Thickness_Ave_mm", "Leaf N" = "N_percent", "Plant height" = "Plant_Height_mm_log", "SLA" = "SLA_cm2_g")
 
 ### Do ordination
 pca_trait <- prcomp(Ord_boot_traits[, -(1:6)], scale = TRUE)
