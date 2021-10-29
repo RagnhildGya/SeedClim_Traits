@@ -401,8 +401,9 @@ library(ggpubr)
 library(patchwork)
 
  partR2_func <-function(dat, trait, moment) {
+  
    
-   data2 <- dat %>% 
+   dat2 <- dat %>% 
    filter(Trait_trans == trait,
           moments == moment,
           n == 75) %>% 
@@ -413,7 +414,7 @@ library(patchwork)
                scale(Temp_decade)*scale(Precip_decade) + scale(Temp_annomalies)*scale(Precip_annomalies) + 
                scale(Temp_decade)*scale(Temp_annomalies) + scale(Temp_decade)*scale(Precip_annomalies) + 
                scale(Precip_decade)*scale(Temp_annomalies) + scale(Precip_decade)*scale(Precip_annomalies) +
-               + (1|siteID), data = data2)
+               + (1|siteID), data = dat2)
  
  # R2 <- partR2(mod, data = data2, partvars = c("scale(Temp_decade)", "scale(Precip_decade)", "scale(Temp_annomalies)", "scale(Precip_annomalies)", "scale(Temp_decade):scale(Precip_decade)", "scale(Temp_annomalies):scale(Precip_annomalies)", "scale(Temp_annomalies):scale(Temp_decade)", "scale(Precip_annomalies):scale(Precip_decade)"), R2_type = "conditional", nboot = 10)
  
@@ -423,42 +424,78 @@ library(patchwork)
  # 
  # forestplot(R2_test, type = "R2")
  
- part_space <- partR2(mod, data = data2, partvars = c("scale(Temp_decade)", "scale(Precip_decade)", "scale(Temp_decade):scale(Precip_decade)"), R2_type = "conditional", nboot = 10)
+ part_space <- partR2(mod, data = dat2, partvars = c("scale(Temp_decade)", "scale(Precip_decade)", "scale(Temp_decade):scale(Precip_decade)"), R2_type = "conditional", nboot = 10)
  
- part_time <- partR2(mod, data = data2, partvars = c("scale(Temp_annomalies)", "scale(Precip_annomalies)", "scale(Temp_annomalies):scale(Precip_annomalies)"), R2_type = "conditional", nboot = 10)
+ part_time <- partR2(mod, data = dat2, partvars = c("scale(Temp_annomalies)", "scale(Precip_annomalies)", "scale(Temp_annomalies):scale(Precip_annomalies)"), R2_type = "conditional", nboot = 10)
  
+ part_space_and_time <- partR2(mod, data = dat2, partbatch = list(Space_and_Time = c("scale(Temp_annomalies):scale(Temp_decade)", "scale(Precip_annomalies):scale(Precip_decade)", "scale(Temp_decade)*scale(Precip_annomalies)", "scale(Precip_decade)*scale(Temp_annomalies)")), R2_type = "conditional", nboot = 10)
  
- plot1 <- forestplot(part_space, type = "R2") +
-   ggtitle(paste0(trait, " - Space")) +
-   theme(axis.text.y = element_blank()) +
-   xlim(0,1)
+ data <- part_space$R2 %>% 
+   filter(term %in% c("Full", "scale(Temp_decade)", "scale(Precip_decade)", "scale(Temp_decade):scale(Precip_decade)")) %>% 
+   mutate(model = "space")
  
- plot2 <- forestplot(part_time, type = "R2") +
-   ggtitle(paste0(trait, " - Time")) +
-   theme(axis.text.y = element_blank()) +
-   xlim(0,1)
+ data2 <- part_time$R2 %>% 
+   filter(term %in% c("scale(Temp_annomalies)", "scale(Precip_annomalies)", "scale(Temp_annomalies):scale(Precip_annomalies)")) %>% 
+   mutate(model = "time")
  
- plot <- plot1 / plot2
+ data3 <- part_space_and_time$R2 %>% 
+   filter(term == "Space_and_Time") %>% 
+   mutate(model = "space_and_time")
  
- return(plot)
+ data <- data %>% 
+   full_join(data2) %>% 
+   full_join(data3) %>% 
+   mutate(traits = trait)
+
+ # plot1 <- forestplot(part_space, type = "R2") +
+ #   ggtitle(paste0(trait, " - Space")) +
+ #   theme(axis.text.y = element_blank()) +
+ #   xlim(0,1)
+ # 
+ # plot2 <- forestplot(part_time, type = "R2") +
+ #   ggtitle(paste0(trait, " - Time")) +
+ #   theme(axis.text.y = element_blank()) +
+ #   xlim(0,1)
+ # 
+ # plot <- plot1 / plot2
+ 
+ return(data)
  }
  
- LDMC_partR2_plot <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "LDMC")
- SLA_partR2_plot <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "SLA_cm2_g")
- Height_partR2_plot <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "Plant_Height_mm_log")
- CN_partR2_plot <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "CN_ratio")
- LA_partR2_plot <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "Leaf_Area_cm2_log")
- Lth_partR2_plot <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "Leaf_Thickness_Ave_mm")
- N_partR2_plot <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "N_percent")
- C_partR2_plot <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "C_percent")
- Mass_partR2_plot <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "Dry_Mass_g_log")
+ LDMC_partR2 <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "LDMC")
+ SLA_partR2 <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "SLA_cm2_g")
+ Height_partR2 <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "Plant_Height_mm_log")
+ CN_partR2 <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "CN_ratio")
+ LA_partR2 <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "Leaf_Area_cm2_log")
+ Lth_partR2 <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "Leaf_Thickness_Ave_mm")
+ N_partR2 <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "N_percent")
+ C_partR2 <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "C_percent")
+ Mass_partR2 <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "Dry_Mass_g_log")
  
+ partR2_data <- LDMC_partR2 %>% 
+   full_join(SLA_partR2) %>% 
+   full_join(Height_partR2) %>% 
+   full_join(CN_partR2) %>% 
+   full_join(LA_partR2) %>% 
+   full_join(Lth_partR2) %>% 
+   full_join(N_partR2) %>% 
+   full_join(C_partR2) %>% 
+   full_join(Mass_partR2)
  
+ partR2_data <- partR2_data %>% 
+   group_by(traits) %>% 
+   mutate(Full = first(estimate)) %>% 
+   ungroup()
  
- Partial_R2_plot <- (SLA_partR2_plot | LDMC_partR2_plot | Lth_partR2_plot | CN_partR2_plot | N_partR2_plot) /
-   (Height_partR2_plot | LA_partR2_plot | Mass_partR2_plot | C_partR2_plot | plot_spacer())
+ ggplot(aes(x = estimate, y = term), data = partR2_data) +
+   geom_point() +
+   geom_vline(aes(xintercept = Full), color = "red") +
+   facet_grid(~traits) 
  
- ggsave("Partial_R2.pdf", width = 20 , height = 11, units = "cm", plot = Partial_R2_plot)
+ # Partial_R2_plot <- (SLA_partR2_plot | LDMC_partR2_plot | Lth_partR2_plot | CN_partR2_plot | N_partR2_plot) /
+ #   (Height_partR2_plot | LA_partR2_plot | Mass_partR2_plot | C_partR2_plot | plot_spacer())
+ # 
+ # ggsave("Partial_R2.pdf", width = 20 , height = 11, units = "cm", plot = Partial_R2_plot)
 
 #### Make datasets with modeled values for different traits for plotting ####
 
@@ -549,7 +586,7 @@ Ord_boot_traits <- sum_moments_climate_fullcommunity %>%
   group_by(uniqueID, Trait_trans) %>% 
   mutate(mean_mean = mean(mean)) %>% 
   filter(!Trait_trans == "Wet_Mass_g_log") %>% 
-  select(uniqueID, Site, year, templevel_year, turfID, Trait_trans, Temp_level, Precip_level, mean_mean) %>%
+  select(uniqueID, Site, year, templevel_year, turfID, Trait_trans, Temp_level, Precip_level, mean_mean, Temp_annomalies, Precip_annomalies) %>%
   unique() %>% 
   #gather(Moment, Value, -(turfID:P_cat)) %>% 
   #unite(temp, Trait, Moment) %>% 
@@ -558,7 +595,7 @@ Ord_boot_traits <- sum_moments_climate_fullcommunity %>%
   rename("Leaf C "= "C_percent", "Leaf C/N" = "CN_ratio", "Dry mass" = "Dry_Mass_g_log", "Leaf area" = "Leaf_Area_cm2_log", "Leaf thickness" = "Leaf_Thickness_Ave_mm", "Leaf N" = "N_percent", "Plant height" = "Plant_Height_mm_log", "SLA" = "SLA_cm2_g")
 
 ### Do ordination
-pca_trait <- prcomp(Ord_boot_traits[, -(1:6)], scale = TRUE)
+pca_trait <- prcomp(Ord_boot_traits[, -(1:8)], scale = TRUE)
 
 ### Get variable
 var <- get_pca_var(pca_trait)
@@ -567,9 +604,13 @@ var <- get_pca_var(pca_trait)
 pca_trait_results <- get_pca_ind(pca_trait)
 
 #### Constrained ordination ####
-RDA_temp <- rda(Ord_boot_traits[, -(1:6)]~ Temp_level, scale = TRUE, data = Ord_boot_traits)
-RDA_precip <- rda(Ord_boot_traits[, -(1:6)]~ Precip_level, scale = TRUE, data = Ord_boot_traits)
-RDA_space_additive <- rda(Ord_boot_traits[, -(1:6)]~ Temp_level+Precip_level, scale = TRUE, data = Ord_boot_traits)
+RDA_temp <- rda(Ord_boot_traits[, -(1:8)]~ Temp_level, scale = TRUE, data = Ord_boot_traits)
+RDA_precip <- rda(Ord_boot_traits[, -(1:8)]~ Precip_level, scale = TRUE, data = Ord_boot_traits)
+RDA_space_additive <- rda(Ord_boot_traits[, -(1:8)]~ Temp_level+Precip_level, scale = TRUE, data = Ord_boot_traits)
+
+RDA_space_and_time <- rda(Ord_boot_traits[, -(1:8)]~ Temp_level*Precip_level + Temp_annomalies*Precip_annomalies, scale = TRUE, data = Ord_boot_traits)
+
+RDA_temp_space <- rda(Ord_boot_traits[, -(1:6)]~ Temp_annomalies, scale = TRUE, data = Ord_boot_traits)
 
 RDA_space <- rda(Ord_boot_traits[, -(1:6)]~ Temp_level*Precip_level, scale = TRUE, data = Ord_boot_traits)
 RDA_without_interaction <- rda(Ord_boot_traits[, -(1:6)]~ Temp_level*Precip_level + year, scale = TRUE, data = Ord_boot_traits)
