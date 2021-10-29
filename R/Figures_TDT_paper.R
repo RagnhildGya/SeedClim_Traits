@@ -405,7 +405,6 @@ e <- ggarrange(Ord_plot_time, Ord_plot_time_precip,
                nrow = 1, ncol = 2,
                legend = "none")
 
-#ggsave(plot = d, "Ord_timemean_temp_prec_new.jpg", width = 28 , height = 20, units = "cm")
 
 #ggsave(plot = c, "Ord_timemean_temp_prec_four.pdf", width = 28 , height = 20, units = "cm")
 
