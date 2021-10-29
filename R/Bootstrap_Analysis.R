@@ -444,9 +444,9 @@ library(patchwork)
  }
  
  LDMC_partR2_plot <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "LDMC")
- SLA_partR2_plot <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "SLA_cm2_g_log")
+ SLA_partR2_plot <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "SLA_cm2_g")
  Height_partR2_plot <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "Plant_Height_mm_log")
- CN_partR2_plot <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "CN_ratio_log")
+ CN_partR2_plot <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "CN_ratio")
  LA_partR2_plot <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "Leaf_Area_cm2_log")
  Lth_partR2_plot <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "Leaf_Thickness_Ave_mm")
  N_partR2_plot <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "N_percent")
@@ -462,7 +462,7 @@ library(patchwork)
 
 #### Make datasets with modeled values for different traits for plotting ####
 
-SLA_mean_sum_yc <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean")
+SLA_mean_sum_yc <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g", "mean")
 SLA_mean_pred_space <- models_trait_predictions_space(SLA_mean_sum_yc)
 SLA_mean_pred_time <- models_trait_predictions_time(SLA_mean_sum_yc)
 
@@ -473,7 +473,7 @@ LDMC_mean_pred_time <- models_trait_predictions_time(LDMC_mean_sum_yc)
 Height_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean")
 Height_mean_pred_space <- models_trait_predictions_space(Height_mean_sum)
 
-CN_ratio_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "CN_ratio_log", "mean")
+CN_ratio_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "CN_ratio", "mean")
 CN_ratio_mean_pred_space <- models_trait_predictions_space(CN_ratio_mean_sum)
 
 
@@ -555,7 +555,7 @@ Ord_boot_traits <- sum_moments_climate_fullcommunity %>%
   #unite(temp, Trait, Moment) %>% 
   pivot_wider(names_from = Trait_trans, values_from = mean_mean) %>% 
   column_to_rownames("uniqueID") %>% 
-  rename("C % "= "C_percent", "C/N" = "CN_ratio_log", "Dry mass" = "Dry_Mass_g_log", "Leaf area" = "Leaf_Area_cm2_log", "Leaf thickness" = "Leaf_Thickness_Ave_mm", "N %" = "N_percent", "Plant height" = "Plant_Height_mm_log", "SLA" = "SLA_cm2_g_log")
+  rename("C % "= "C_percent", "C/N" = "CN_ratio", "Dry mass" = "Dry_Mass_g_log", "Leaf area" = "Leaf_Area_cm2_log", "Leaf thickness" = "Leaf_Thickness_Ave_mm", "N %" = "N_percent", "Plant height" = "Plant_Height_mm_log", "SLA" = "SLA_cm2_g")
 
 ### Do ordination
 pca_trait <- prcomp(Ord_boot_traits[, -(1:6)], scale = TRUE)
