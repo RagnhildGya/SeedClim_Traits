@@ -487,7 +487,7 @@ library(patchwork)
    mutate(Full = first(estimate)) %>%
    ungroup() %>% 
    mutate(term = as.character(recode(term, "scale(Temp_decade)" = "Space: Temperature", "scale(Precip_decade)" = "Space: Precipitation", "scale(Temp_decade):scale(Precip_decade)" = "Space: T:P interaction", "scale(Temp_annomalies)" = "Time: Temperature", "scale(Precip_annomalies)" = "Time: Precipitation", "scale(Temp_annomalies):scale(Precip_annomalies)" = "Time: T:P Interaction", "Space_and_Time" = "Interactions Time and Space", "Full" = "Full model"))) %>% 
-   mutate(term = as.character(term, levels = c("Full", "Space: Temperature", "Space: Precipitation", "Space: T:P interaction", "Time: Temperature", "Time: Precipitation", "Time: T:P Interaction", "Interactions Time and Space"))) %>% 
+   mutate(term = factor(term, levels = c("Interactions Time and Space", "Time: T:P Interaction", "Time: Precipitation",  "Time: Temperature","Space: T:P interaction", "Space: Precipitation",  "Space: Temperature", "Full model"))) %>% 
    mutate(traits = as.character(recode(traits, "CN_ratio" = "Leaf C/N", "N_percent" = "Leaf N", "C_percent" = "Leaf C"))) %>% 
    mutate(Space_or_time = case_when(term %in% c("Space: Temperature", "Space: Precipitation", "Space: T:P interaction") ~ "Space",
                                     term %in% c("Time: Temperature", "Time: Precipitation", "Time: T:P Interaction") ~ "Time",
@@ -497,14 +497,17 @@ library(patchwork)
                                      term %in% c("Space: Precipitation", "Time: Precipitation") ~ "Precip",
                                      term %in% c("Space: T:P interaction", "Time: T:P Interaction", "Interactions Time and Space") ~ "Interactions",
                                      term == "Full model" ~ "Full model")) %>% 
+   mutate(Space_or_time = factor(Space_or_time, levels = c("Full model","Space", "Time", "Interactions Time and Space")),
+          Temp_or_precip = factor(Temp_or_precip, levels = c("Full model","Temp", "Precip", "Interactions"))) %>% 
    mutate(proportion = estimate/Full * 100)
  
- ggplot(aes(x = estimate, y = term, xmin = CI_lower, xmax = CI_upper, color = Space_or_time, shape = Temp_or_precip), data = partR2_data) +
+ ggplot(aes(x = estimate, y = term, xmin = CI_lower, xmax = CI_upper, color = Space_or_time), data = partR2_data) +
    geom_pointrange() +
    geom_vline(aes(xintercept = Full), color = "grey40") +
-   facet_wrap(~traits, nrow = 2) +
+   facet_wrap(~factor(traits, levels = c("SLA_cm2_g", "Leaf N", "Leaf C/N", "LDMC", "Leaf_Thickness_Ave_mm", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Leaf C"),), nrow = 2) +
    theme_minimal() +
-   scale_color_manual(values = c("grey40","darkolivegreen2", "darkolivegreen3", "darkolivegreen4"))
+   xlim(0,1) +
+   scale_color_manual(values = c("grey40","darkorange3", "chartreuse4", "mediumpurple1"))
  
  # Partial_R2_plot <- (SLA_partR2_plot | LDMC_partR2_plot | Lth_partR2_plot | CN_partR2_plot | N_partR2_plot) /
  #   (Height_partR2_plot | LA_partR2_plot | Mass_partR2_plot | C_partR2_plot | plot_spacer())
@@ -579,7 +582,7 @@ skewness_2009 <- moments_clim_long_fullcommunity %>%
             CIlow = skewness - sd(value),
             CIhigh = skewness + sd(value))
 
-#### Correlation #### Needs to be updated
+#### Correlation ####
 
 # Making data ready for correlation tests
 
