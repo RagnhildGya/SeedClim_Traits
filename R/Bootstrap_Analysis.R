@@ -484,13 +484,22 @@ library(patchwork)
  
  partR2_data <- partR2_data %>% 
    group_by(traits) %>% 
-   mutate(Full = first(estimate)) %>% 
-   ungroup()
+   mutate(Full = first(estimate)) %>%
+   ungroup() %>% 
+   mutate(term = as.character(recode(term, "scale(Temp_decade)" = "Space: Temperature", "scale(Precip_decade)" = "Space: Precipitation", "scale(Temp_decade):scale(Precip_decade)" = "Space: T:P interaction", "scale(Temp_annomalies)" = "Time: Temperature", "scale(Precip_annomalies)" = "Time: Precipitation", "scale(Temp_annomalies):scale(Precip_annomalies)" = "Time: T:P Interaction", "Space_and_Time" = "Interactions Time and Space", "Full" = "Full model"))) %>% 
+   mutate(term = as.character(term, levels = c("Full", "Space: Temperature", "Space: Precipitation", "Space: T:P interaction", "Time: Temperature", "Time: Precipitation", "Time: T:P Interaction", "Interactions Time and Space"))) %>% 
+   mutate(traits = as.character(recode(traits, "CN_ratio" = "Leaf C/N", "N_percent" = "Leaf N", "C_percent" = "Leaf C"))) %>% 
+   mutate(Space_or_time = case_when(term %in% c("Space: Temperature", "Space: Precipitation", "Space: T:P interaction") ~ "Space",
+                                    term %in% c("Time: Temperature", "Time: Precipitation", "Time: T:P Interaction") ~ "Time",
+                                    term == "Full model" ~ "Full model",
+                                    term == "Interactions Time and Space" ~ "Interactions Time and Space"))
  
- ggplot(aes(x = estimate, y = term), data = partR2_data) +
-   geom_point() +
-   geom_vline(aes(xintercept = Full), color = "red") +
-   facet_grid(~traits) 
+ ggplot(aes(x = estimate, y = term, xmin = CI_lower, xmax = CI_upper, color = Space_or_time), data = partR2_data) +
+   geom_pointrange() +
+   geom_vline(aes(xintercept = Full), color = "black") +
+   facet_wrap(~traits, nrow = 2) +
+   theme_minimal() +
+   scale_color_manual(values = Precip_palette)
  
  # Partial_R2_plot <- (SLA_partR2_plot | LDMC_partR2_plot | Lth_partR2_plot | CN_partR2_plot | N_partR2_plot) /
  #   (Height_partR2_plot | LA_partR2_plot | Mass_partR2_plot | C_partR2_plot | plot_spacer())
