@@ -492,14 +492,18 @@ library(patchwork)
    mutate(Space_or_time = case_when(term %in% c("Space: Temperature", "Space: Precipitation", "Space: T:P interaction") ~ "Space",
                                     term %in% c("Time: Temperature", "Time: Precipitation", "Time: T:P Interaction") ~ "Time",
                                     term == "Full model" ~ "Full model",
-                                    term == "Interactions Time and Space" ~ "Interactions Time and Space"))
+                                    term == "Interactions Time and Space" ~ "Interactions Time and Space")) %>% 
+   mutate(Temp_or_precip = case_when(term %in% c("Space: Temperature", "Time: Temperature") ~ "Temp",
+                                     term %in% c("Space: Precipitation", "Time: Precipitation") ~ "Precip",
+                                     term %in% c("Space: T:P interaction", "Time: T:P Interaction", "Interactions Time and Space") ~ "Interactions",
+                                     term == "Full model" ~ "Full model"))
  
- ggplot(aes(x = estimate, y = term, xmin = CI_lower, xmax = CI_upper, color = Space_or_time), data = partR2_data) +
+ ggplot(aes(x = estimate, y = term, xmin = CI_lower, xmax = CI_upper, color = Space_or_time, shape = Temp_or_precip), data = partR2_data) +
    geom_pointrange() +
-   geom_vline(aes(xintercept = Full), color = "black") +
+   geom_vline(aes(xintercept = Full), color = "grey40") +
    facet_wrap(~traits, nrow = 2) +
    theme_minimal() +
-   scale_color_manual(values = Precip_palette)
+   scale_color_manual(values = c("grey40","darkolivegreen", "darkolivegreen3", "darkolivegreen4"))
  
  # Partial_R2_plot <- (SLA_partR2_plot | LDMC_partR2_plot | Lth_partR2_plot | CN_partR2_plot | N_partR2_plot) /
  #   (Height_partR2_plot | LA_partR2_plot | Mass_partR2_plot | C_partR2_plot | plot_spacer())
