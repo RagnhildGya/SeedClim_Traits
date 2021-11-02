@@ -25,7 +25,7 @@ conflict_prefer("select", winner = "dplyr")
 conflict_prefer("corrpot", winner = "corrplot")
 
 #### Color palettes ####
-Temp_palette <- c("#d8c593", "#dd7631", "#bb3b0e")
+Temp_palette <- c("#DDA131", "#dd7631", "#bb3b0e")
 Precip_palette <- c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")
 
 ## Without intraspecific plot ##
@@ -331,7 +331,7 @@ Ord_plot_temp <- fviz_pca_ind(pca_trait, repel = TRUE,
                               habillage = Ord_boot_traits$Temp_level, 
                               addEllipses = TRUE,
                               ellipse.level = 0.95,
-                              palette = c("#d8c593", "#dd7631", "#bb3b0e")) +
+                              palette = Temp_palette) +
   theme_minimal(base_size = 14) +
   #scale_color_manual(name = "Summer temperature", values = c("#8DD5E1", "#FCB971", "#B93B3B")) +
   theme(legend.text=element_text(size=14), legend.title = element_text(size = 14), plot.title = element_blank(), axis.title = element_blank()) +
@@ -351,7 +351,7 @@ Ord_plot_precip <- fviz_pca_ind(pca_trait, repel = TRUE,
                                 habillage = Ord_boot_traits$Precip_level, 
                                 addEllipses = TRUE,
                                 ellipse.level = 0.95,
-                                palette = c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")) +
+                                palette = Precip_palette) +
   theme_minimal(base_size = 15) +
   #scale_color_manual(name = "Summer temperature", values = c("#8DD5E1", "#FCB971", "#B93B3B")) +
   theme(legend.text=element_text(size=14), legend.title = element_text(size = 14), plot.title = element_blank(), axis.title = element_blank()) +
@@ -372,7 +372,7 @@ pca_fort <- augment(pca_trait, display = "Sites") %>%
 Ord_plot_time <- pca_fort %>% 
   ggplot(aes(x = .fittedPC1, y = .fittedPC2, colour = Temp_level, group = turfID)) +
   geom_path() + #use geom_path not geom_line
-  geom_point(aes(size = if_else(year == 2009, 1, NA_real_)), show.legend = FALSE) +
+  geom_point(aes(size = if_else(year == 2009, 5, NA_real_), shape = Temp_level), show.legend = FALSE) +
   #scale_color_viridis_d() +
   scale_color_manual(name = "Summer temperature", values = Temp_palette) +
   scale_size(range = 2) +
@@ -380,7 +380,8 @@ Ord_plot_time <- pca_fort %>%
   theme_minimal(base_size = 14) +
   theme(legend.text=element_text(size=14), legend.title = element_text(size = 14), plot.title = element_text(hjust = 0.1), axis.title = element_blank()) +
   labs(fill = "Yearly precipitation", color = "Yearly precipitation", shape = "Yearly precipitation") +
-  guides(color = "none") 
+  guides(color = "none") +
+  scale_shape_manual(values = c(16, 17, 15))
 
 Ord_plot_time_precip <- pca_fort %>% 
   ggplot(aes(x = .fittedPC1, y = .fittedPC2, colour = Precip_level, group = turfID)) +
@@ -670,7 +671,7 @@ plot_predictions_space_precip <-function(dat, trait, moment, model) {
     unnest(data) %>% 
     ungroup()
   
-  newdata <- expand.grid(Temp_decade = c(6.5, 8.5, 10.5), 
+  newdata <- expand.grid(Temp_decade = c(6.5, 9, 11), 
                          Precip_decade = seq(0.5,4.5, length = 200), 
                          siteID = c("Alrust", "Arhelleren", "Fauske", "Gudmedalen", "Hogsete", "Lavisdalen", "Ovstedalen", "Rambera", "Skjelingahaugen", "Ulvehaugen", "Veskre", "Vikesland"),
                          Precip_annomalies = 0,
@@ -682,7 +683,7 @@ plot_predictions_space_precip <-function(dat, trait, moment, model) {
   plot <- ggplot() +
     geom_jitter(aes (x = Precip_decade, y = value), data = dat2, color = "lightgrey") +
     geom_line(aes(x = Precip_decade, y = predicted, color = factor(Temp_decade)), data = newdata, size = 1, show.legend = TRUE) +
-    scale_color_manual(values = Temp_palette) +
+    scale_color_manual(values = c("#DDA131","#C46B00", "#bb3b0e")) +
     theme_minimal(base_size = 15) +
     theme(legend.position = "bottom") 
   
@@ -709,9 +710,8 @@ plot_predictions_time <-function(dat, trait, moment, site, model, clim) {
     unnest(data) %>% 
     ungroup()
   
-  #case_when
-  newdata <- crossing(Precip_decade = case_when(site %in% c("Skjelingahaugen", "Ovstedalen") ~ 3,
-                                                site %in% c("Ulvehaugen", "Fauske") ~ 0.6),
+  newdata <- crossing(Precip_decade = case_when(site %in% c("Skjelingahaugen", "Ovstedalen") ~ 3.5,
+                                                site %in% c("Ulvehaugen", "Fauske") ~ 1.0),
                       Temp_decade = case_when(site %in% c("Skjelingahaugen", "Ulvehaugen") ~ 6.5,
                                               site %in% c("Ovstedalen", "Fauske") ~ 11),
   siteID = site,
@@ -724,12 +724,19 @@ plot_predictions_time <-function(dat, trait, moment, site, model, clim) {
   
   newdata$predicted <- predict(object = model, newdata = newdata, re.form = NA, allow.new.levels=TRUE)
   
+  highlighted <- dat2 %>% 
+    filter(siteID == site)
   
   plot <- ggplot(aes(x = .data[[clim]], y = value), data = dat2) +
-    geom_point(color = "lightgrey") +
+    geom_point(color = "grey80") +
+    geom_point(data = highlighted, color = case_when(site %in% c("Skjelingahaugen", "Ulvehaugen") ~ "#DDA131",
+                                                     site %in% c("Ovstedalen", "Fauske") ~ "#bb3b0e")) +
     geom_line(aes(x = .data[[clim]], y = predicted), data = newdata, size = 1, show.legend = TRUE) +
     theme_minimal(base_size = 15) + 
-    xlab(ifelse({{clim}} == "Precip_annomalies", "Precipitation annomalies (m)","Temperature annomalies (C)"))
+    xlab(ifelse({{clim}} == "Precip_annomalies", "Precipitation annomalies (m)","Temperature annomalies (C)")) +
+    xlim(-2, 3) +
+    ylim(range(dat2$value)) +
+    theme(axis.title.y = element_blank(), axis.title.x = element_blank())
   
   return(plot)
 }
@@ -781,8 +788,8 @@ LDMC_FAU <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LD
   theme(plot.title = element_text(hjust = 0.5))
 
 LDMC_space/
-  (LDMC_SKJ | LDMC_ULV) /
-  (LDMC_OVS | LDMC_FAU) +
+  (LDMC_ULV | LDMC_SKJ) /
+  (LDMC_FAU | LDMC_OVS) +
   plot_layout(widths = c(1,1), heights = c(2,1,1))
   
 
