@@ -371,7 +371,7 @@ model_trait_summary <-function(dat, trait, moment) {
 
 models_trait_predictions_space <-function(model) {
 
-  newdata <- expand.grid(Precip_decade = c(0.8, 1.5, 2.3, 3.5), 
+  newdata <- expand.grid(Precip_decade = c(1.0, 1.45, 2.4, 3.5), 
                          Temp_decade = seq(5.5,12, length = 200), 
                          siteID = c("Alrust", "Arhelleren", "Fauske", "Gudmedalen", "Hogsete", "Lavisdalen", "Ovstedalen", "Rambera", "Skjelingahaugen", "Ulvehaugen", "Veskre", "Vikesland"),
                          Precip_annomalies = 0,
