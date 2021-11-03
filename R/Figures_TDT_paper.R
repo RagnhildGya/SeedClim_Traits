@@ -641,9 +641,9 @@ model_output_com_space_mixed %>%
 
 #### Making plots for predicted values and observed values
 dat <- memodel_data_fullcommunity_nottransformed
-trait <- "SLA_cm2_g_log"
+trait <- "SLA_cm2_g"
 moment <- "mean"
-newdata <- SLA_mean_pred_time
+newdata <- SLA_mean_pred_space
 
 plot_predictions_space <-function(dat, trait, moment, newdata) {
   
@@ -823,7 +823,7 @@ Height_FAU <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "
 figure_height_precip <- ggarrange(Height_SKJ, Height_ULV, Height_OVS, Height_FAU, nrow = 2, ncol = 2, legend = "bottom")
 
 
-SLA_space <- plot_predictions_space(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", SLA_mean_pred_space) +
+SLA_space <- plot_predictions_space(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g", "mean", SLA_mean_pred_space) +
   labs(y = "SLA (cm2/g log)", x = "") +
   guides(color = "none")
 
@@ -831,7 +831,7 @@ LDMC_space <- plot_predictions_space(memodel_data_fullcommunity_nottransformed, 
   labs(y = "LDMC", x = "") +
   guides(color = "none")
 
-CN_space <- plot_predictions_space(memodel_data_fullcommunity_nottransformed, "CN_ratio_log", "mean", CN_ratio_mean_pred_space) +
+CN_space <- plot_predictions_space(memodel_data_fullcommunity_nottransformed, "CN_ratio", "mean", CN_ratio_mean_pred_space) +
   labs(y = "C/N ratio (log)", x = "") +
   guides(color = "none")
 
@@ -866,7 +866,7 @@ Lth_space <- plot_predictions_space(memodel_data_fullcommunity_nottransformed, "
 
 figure <- ggarrange(SLA_space, LA_space, N_space, Height_space, CN_space, Mass_space, LDMC_space, C_space, Lth_space, nrow = 5, ncol = 2, common.legend = TRUE, legend = "bottom")
 
-ggsave(plot = figure, filename = "mean_skewness_figure_centered.pdf",  width = 25, height = 29, units = "cm")
+ggsave(plot = figure, filename = "Spatial_trait_trends.pdf",  width = 16, height = 24, units = "cm")
 
 ### Time with linear change in climate ##
 
