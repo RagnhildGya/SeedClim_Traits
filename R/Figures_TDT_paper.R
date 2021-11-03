@@ -702,8 +702,9 @@ moment <- "mean"
 site <- "Ovstedalen"
 model <- LDMC_mean_sum_yc
 clim <- "Precip_annomalies"
+precip_level <- "Wet"
 
-plot_predictions_time <-function(dat, trait, moment, site, model, clim) {
+plot_predictions_time <-function(dat, trait, moment, precip_level, model, clim) {
 
   dat2 <- dat %>%
     filter(Trait_trans == trait,
@@ -712,33 +713,45 @@ plot_predictions_time <-function(dat, trait, moment, site, model, clim) {
     unnest(data) %>% 
     ungroup()
   
-  newdata <- crossing(Precip_decade = case_when(site %in% c("Skjelingahaugen", "Ovstedalen") ~ 3.5,
-                                                site %in% c("Ulvehaugen", "Fauske") ~ 1.0),
-                      Temp_decade = case_when(site %in% c("Skjelingahaugen", "Ulvehaugen") ~ 6.5,
-                                              site %in% c("Ovstedalen", "Fauske") ~ 11),
-  siteID = site,
-  Precip_annomalies = case_when({{clim}} == "Precip_annomalies" ~ seq(-2, 3, length = 200),
-                                {{clim}} == "Temp_annomalies" & (site %in% c("Skjelingahaugen", "Ovstedalen")) ~ 6.5,
-                                {{clim}} == "Temp_annomalies" & (site %in% c("Ulvehaugen", "Fauske")) ~ 11),
-  Temp_annomalies = case_when({{clim}} == "Precip_annomalies" & (site %in% c("Skjelingahaugen", "Ovstedalen")) ~ 3,
-                              {{clim}} == "Precip_annomalies" & (site %in% c("Ulvehaugen", "Fauske")) ~ 0.6,
-                              {{clim}} == "Temp_annomalies" ~ seq(-3, 2, length = 200)))
+  newdata_cold <- crossing(Precip_decade = case_when(precip_level == "Wet" ~ 3.5,
+                                                precip_level == "Dry" ~ 1.0),
+                      Temp_decade = 6.5,
+                      siteID = case_when(precip_level == "Wet" ~ "Skjelingahaugen",
+                                         precip_level == "Dry" ~ "Ulvehaugen"),
+                      Precip_annomalies = case_when({{clim}} == "Precip_annomalies" ~ seq(-2, 3, length = 200)),
+                      Temp_annomalies = case_when({{clim}} == "Precip_annomalies" & precip_level == "Wet" ~ 0.255,
+                                                  {{clim}} == "Precip_annomalies" & precip_level == "Dry" ~ 0.443,
+                                                  {{clim}} == "Temp_annomalies" ~ seq(-3, 2, length = 200)))
   
-  newdata$predicted <- predict(object = model, newdata = newdata, re.form = NA, allow.new.levels=TRUE)
+  newdata_warm <- crossing(Precip_decade = case_when(precip_level == "Wet" ~ 3.5,
+                                                     precip_level == "Dry" ~ 1.0),
+                           Temp_decade = c(11),
+                           siteID = case_when(precip_level == "Wet" ~ "Ovstedalen",
+                                              precip_level == "Dry" ~ "Fauske"),
+                           Precip_annomalies = case_when({{clim}} == "Precip_annomalies" ~ seq(-2, 3, length = 200)),
+                           Temp_annomalies = case_when({{clim}} == "Precip_annomalies" & precip_level == "Wet" ~ 0.0272,
+                                                       {{clim}} == "Precip_annomalies" & precip_level == "Dry" ~ 0.834,
+                                                       {{clim}} == "Temp_annomalies" ~ seq(-3, 2, length = 200)))
+  
+  
+  newdata_cold$predicted <- predict(object = model, newdata = newdata_cold, re.form = NA, allow.new.levels=TRUE)
+  newdata_warm$predicted <- predict(object = model, newdata = newdata_warm, re.form = NA, allow.new.levels=TRUE)
   
   highlighted <- dat2 %>% 
-    filter(siteID == site)
+    filter(siteID == case_when(precip_level == "Wet" ~ c("Skjelingahaugen", "Ovstedalen"),
+                              precip_level == "Dry" ~ c("Ulvehaugen", "Fauske"))) 
   
   plot <- ggplot(aes(x = .data[[clim]], y = value), data = dat2) +
     geom_point(color = "grey80") +
-    geom_point(data = highlighted, color = case_when(site %in% c("Skjelingahaugen", "Ulvehaugen") ~ "#DDA131",
-                                                     site %in% c("Ovstedalen", "Fauske") ~ "#bb3b0e")) +
-    geom_line(aes(x = .data[[clim]], y = predicted), data = newdata, size = 1, show.legend = TRUE) +
+    geom_point(data = highlighted, aes(color = Temp_level)) +
+    geom_line(aes(x = .data[[clim]], y = predicted), data = newdata_warm, size = 1, show.legend = TRUE, color = "#bb3b0e") +
+    geom_line(aes(x = .data[[clim]], y = predicted), data = newdata_cold, size = 1, show.legend = TRUE, color = "#DDA131") +
     theme_minimal(base_size = 15) + 
     xlab(ifelse({{clim}} == "Precip_annomalies", "Precipitation annomalies (m)","Temperature annomalies (C)")) +
     xlim(-2, 3) +
     ylim(range(dat2$value)) +
-    theme(axis.title.y = element_blank(), axis.title.x = element_blank())
+    theme(axis.title.y = element_blank(), axis.title.x = element_blank(), legend.position = "none") +
+    scale_color_manual(values = c("#DDA131", "#bb3b0e"))
   
   return(plot)
 }
@@ -770,29 +783,20 @@ SLA_FAU <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "SLA
 figure <- ggarrange(SLA_SKJ, SLA_ULV, SLA_OVS, SLA_FAU, nrow = 2, ncol = 2, legend = "bottom")
 
 LDMC_space <- plot_predictions_space_precip(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", LDMC_mean_sum_yc) +
-  labs(y = "LDMC", title = "Mean") +
+  labs(y = "", title = "LDMC shifts in space") +
   theme(plot.title = element_text(hjust = 0.5))
 
-LDMC_SKJ <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", "Skjelingahaugen", LDMC_mean_sum_yc,"Precip_annomalies") +
-  labs(y = "LDMC",  title = "Cold & Wet") +
+LDMC_Dry <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", "Dry", LDMC_mean_sum_yc,"Precip_annomalies") +
+  labs(y = "",  title = "Dry sites") +
   theme(plot.title = element_text(hjust = 0.5))
 
-LDMC_ULV <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", "Ulvehaugen", LDMC_mean_sum_yc, "Precip_annomalies") +
-  labs(y = "LDMC",  title = "Cold & Dry") +
-  theme(plot.title = element_text(hjust = 0.5))
-
-LDMC_OVS <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", "Ovstedalen", LDMC_mean_sum_yc, "Precip_annomalies") +
-  labs(y = "LDMC",  title = "Warm & Wet") +
-  theme(plot.title = element_text(hjust = 0.5))
-
-LDMC_FAU <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", "Fauske", LDMC_mean_sum_yc, "Precip_annomalies") +
-  labs(y = "LDMC",  title = "Warm & Dry") +
+LDMC_Wet <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", "Wet", LDMC_mean_sum_yc, "Precip_annomalies") +
+  labs(y = "",  title = "Wet sites") +
   theme(plot.title = element_text(hjust = 0.5))
 
 LDMC_space/
-  (LDMC_ULV | LDMC_SKJ) /
-  (LDMC_FAU | LDMC_OVS) +
-  plot_layout(widths = c(1,1), heights = c(2,1,1))
+  (LDMC_Dry | LDMC_Wet) /
+  plot_layout(widths = c(1,1), heights = c(1,1))
   
 
 
