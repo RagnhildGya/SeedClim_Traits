@@ -337,7 +337,7 @@ Ord_plot_temp <- fviz_pca_ind(pca_trait, repel = TRUE,
   theme(legend.text=element_text(size=14), legend.title = element_text(size = 14), plot.title = element_blank(), axis.title = element_blank()) +
   labs(title = "", fill = "Summer temperature", color = "Summer temperature", shape = "Summer temperature") +
   coord_fixed() +
-  theme(plot.title = element_text(hjust = 0.1))
+  theme(plot.title = element_text(hjust = 0.1),legend.position = 'top')
 
 #ggsave("Ordination_Temp.svg", width = 18 , height = 11, units = "cm", dpi = 600)
 
@@ -357,7 +357,7 @@ Ord_plot_precip <- fviz_pca_ind(pca_trait, repel = TRUE,
   theme(legend.text=element_text(size=14), legend.title = element_text(size = 14), plot.title = element_blank(), axis.title = element_blank()) +
   labs(title = "", fill = "Yearly precipitation", color = "Yearly precipitation", shape = "Yearly precipitation") +
   coord_fixed() +
-  theme(plot.title = element_text(hjust = 0.1))
+  theme(plot.title = element_text(hjust = 0.1), legend.position = 'top')
 
 #ggsave("Ordination_Precip.svg", width = 18 , height = 11, units = "cm", dpi = 600)
 
@@ -417,19 +417,21 @@ Explained_variance_RDA <- read.table(header = TRUE, stringsAsFactors = TRUE, tex
                                1 Unexplained 0.4214
                                ")
 
-Explained_variance_RDA %>% 
+Ord_RDA <- Explained_variance_RDA %>% 
   mutate(model = factor(model, levels = c("Unexplained", "Temp*Precip*Year", "Temp*Precip",  "Temperature", "Precipitation"))) %>% 
   ggplot(aes(x = x, fill = model, y = variance)) +
   geom_bar(position = "stack", stat = "identity") +
-  scale_fill_manual(values = c("#CCCBCC", "#BAD8F7", "#89B7E1", "#2E75B6", "#213964")) +
+  scale_fill_manual(values = c("#CCCBCC", "purple", "mediumpurple1", "#dd7631", "#2E75B6")) +
   theme_minimal(base_size = 18) +
   theme(axis.title.x=element_blank(),
         axis.text.x=element_blank(),
         axis.ticks.x=element_blank(),
-        legend.title = element_blank()) +
+        legend.title = element_blank(),
+        legend.position = 'bottom') +
   ylab("Variance explained")
 
-ggsave(filename = "Variance_explained.png",  width = 20, height = 14, units = "cm")
+
+#ggsave(filename = "Ordination_RDA.jpg",  width = 20, height = 14, units = "cm")
 
 
 #ggsave(plot = c, "Ord_timemean_temp_prec_four.pdf", width = 28 , height = 20, units = "cm")
