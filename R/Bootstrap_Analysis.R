@@ -402,7 +402,6 @@ library(patchwork)
 
  partR2_func <-function(dat, trait, moment) {
   
-   
    dat2 <- dat %>% 
    filter(Trait_trans == trait,
           moments == moment,
@@ -415,14 +414,6 @@ library(patchwork)
                scale(Temp_decade)*scale(Temp_annomalies) + scale(Temp_decade)*scale(Precip_annomalies) + 
                scale(Precip_decade)*scale(Temp_annomalies) + scale(Precip_decade)*scale(Precip_annomalies) +
                + (1|siteID), data = dat2)
- 
- # R2 <- partR2(mod, data = data2, partvars = c("scale(Temp_decade)", "scale(Precip_decade)", "scale(Temp_annomalies)", "scale(Precip_annomalies)", "scale(Temp_decade):scale(Precip_decade)", "scale(Temp_annomalies):scale(Precip_annomalies)", "scale(Temp_annomalies):scale(Temp_decade)", "scale(Precip_annomalies):scale(Precip_decade)"), R2_type = "conditional", nboot = 10)
- 
- # R2_test <- partR2(mod, data = data2, partbatch = list(Space = c("scale(Temp_decade)", "scale(Precip_decade)", "scale(Temp_decade):scale(Precip_decade)"),
- #                                                       Time = c("scale(Temp_annomalies)", "scale(Precip_annomalies)", "scale(Temp_annomalies):scale(Precip_annomalies)"),
- #                                                       Time_and_space = c("scale(Temp_annomalies):scale(Temp_decade)", "scale(Precip_annomalies):scale(Precip_decade)", "scale(Temp_decade)*scale(Precip_annomalies)", "scale(Precip_decade)*scale(Temp_annomalies)")), R2_type = "conditional", nboot = 10)
- # 
- # forestplot(R2_test, type = "R2")
  
  part_space <- partR2(mod, data = dat2, partvars = c("scale(Temp_decade)", "scale(Precip_decade)", "scale(Temp_decade):scale(Precip_decade)"), R2_type = "conditional", nboot = 10)
  
@@ -446,18 +437,6 @@ library(patchwork)
    full_join(data2) %>% 
    full_join(data3) %>% 
    mutate(traits = trait)
-
- # plot1 <- forestplot(part_space, type = "R2") +
- #   ggtitle(paste0(trait, " - Space")) +
- #   theme(axis.text.y = element_blank()) +
- #   xlim(0,1)
- # 
- # plot2 <- forestplot(part_time, type = "R2") +
- #   ggtitle(paste0(trait, " - Time")) +
- #   theme(axis.text.y = element_blank()) +
- #   xlim(0,1)
- # 
- # plot <- plot1 / plot2
  
  return(data)
  }
