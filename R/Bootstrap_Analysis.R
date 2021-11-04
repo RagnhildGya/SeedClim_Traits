@@ -480,14 +480,6 @@ library(patchwork)
           Temp_or_precip = factor(Temp_or_precip, levels = c("Full model","Temp", "Precip", "Interactions"))) %>% 
    mutate(proportion = estimate/Full * 100)
  
- ggplot(aes(x = estimate, y = term, xmin = CI_lower, xmax = CI_upper, color = Space_or_time), data = partR2_data) +
-   geom_pointrange() +
-   geom_vline(aes(xintercept = Full), color = "grey40") +
-   facet_wrap(~factor(traits, levels = c("SLA_cm2_g", "Leaf N", "Leaf C/N", "LDMC", "Leaf_Thickness_Ave_mm", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Leaf C"),), nrow = 2) +
-   theme_minimal() +
-   xlim(0,1) +
-   scale_color_manual(values = c("grey40","darkorange3", "chartreuse4", "mediumpurple1"))
- 
  # Partial_R2_plot <- (SLA_partR2_plot | LDMC_partR2_plot | Lth_partR2_plot | CN_partR2_plot | N_partR2_plot) /
  #   (Height_partR2_plot | LA_partR2_plot | Mass_partR2_plot | C_partR2_plot | plot_spacer())
  # 
