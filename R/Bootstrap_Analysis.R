@@ -595,23 +595,30 @@ pca_trait_results <- get_pca_ind(pca_trait)
 RDA_temp <- rda(Ord_boot_traits[, -(1:8)]~ Temp_level, scale = TRUE, data = Ord_boot_traits)
 RDA_precip <- rda(Ord_boot_traits[, -(1:8)]~ Precip_level, scale = TRUE, data = Ord_boot_traits)
 RDA_space_additive <- rda(Ord_boot_traits[, -(1:8)]~ Temp_level+Precip_level, scale = TRUE, data = Ord_boot_traits)
+RDA_space <- rda(Ord_boot_traits[, -(1:8)]~ Temp_level*Precip_level, scale = TRUE, data = Ord_boot_traits)
+RDA_space_add_time <- rda(Ord_boot_traits[, -(1:8)]~ Temp_level*Precip_level + Temp_annomalies*Precip_annomalies, scale = TRUE, data = Ord_boot_traits)
+RDA_space_and_time <- rda(Ord_boot_traits[, -(1:8)]~ Temp_level*Precip_level * Temp_annomalies*Precip_annomalies, scale = TRUE, data = Ord_boot_traits)
+RDA_year <- rda(Ord_boot_traits[, -(1:8)]~ Temp_level*Precip_level * year, scale = TRUE, data = Ord_boot_traits)
 
-RDA_space_and_time <- rda(Ord_boot_traits[, -(1:8)]~ Temp_level*Precip_level + Temp_annomalies*Precip_annomalies, scale = TRUE, data = Ord_boot_traits)
+#Testing temp alone against temp + precip and temp * precip
+anova(RDA_temp, RDA_space_additive)
+anova(RDA_temp, RDA_space)
 
-RDA_temp_space <- rda(Ord_boot_traits[, -(1:6)]~ Temp_annomalies, scale = TRUE, data = Ord_boot_traits)
+#Testing precip alone against temp + precip and temp * precip
+anova(RDA_precip, RDA_space_additive)
+anova(RDA_precip, RDA_space)
 
-RDA_space <- rda(Ord_boot_traits[, -(1:6)]~ Temp_level*Precip_level, scale = TRUE, data = Ord_boot_traits)
-RDA_without_interaction <- rda(Ord_boot_traits[, -(1:6)]~ Temp_level*Precip_level + year, scale = TRUE, data = Ord_boot_traits)
-RDA_space_and_time <- rda(Ord_boot_traits[, -(1:6)]~ Temp_level*Precip_level * year, scale = TRUE, data = Ord_boot_traits)
-RDA_time <- rda(Ord_boot_traits[, -(1:6)]~ year, scale = TRUE, data = Ord_boot_traits)
-RDA_temp_time <- rda(Ord_boot_traits[, -(1:6)]~ Temp_level*year, scale = TRUE, data = Ord_boot_traits)
-RDA_precip_time <- rda(Ord_boot_traits[, -(1:6)]~ Precip_level*year, scale = TRUE, data = Ord_boot_traits)
+#Testing temp + precip against temp* precip
+anova(RDA_space_additive, RDA_space)
 
+#Testing space alone and space + time
+anova(RDA_space, RDA_space_add_time)
 
-anova(RDA_space, RDA_without_interaction)
+#Testing space alone and space * time
 anova(RDA_space, RDA_space_and_time)
-anova(RDA_without_interaction, RDA_space_and_time)
-anova(RDA_space, RDA_space_and_time)
+
+#Testing space alone and space * time
+anova(RDA_space, RDA_year)
 
 anova(RDA_temp, RDA_space)
 anova(RDA_precip, RDA_space)
@@ -620,6 +627,7 @@ anova(RDA_space_additive, RDA_space)
 anova(RDA_precip, RDA_precip_time)
 
 
-RsquareAdj(RDA_space_and_time)$adj.r.squared
+RsquareAdj(RDA_year)$adj.r.squared
 
+anova(RDA_space, RDA_year)
  
