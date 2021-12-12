@@ -501,57 +501,23 @@ Height_mean_pred_space <- models_trait_predictions_space(Height_mean_sum)
 CN_ratio_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "CN_ratio", "mean")
 CN_ratio_mean_pred_space <- models_trait_predictions_space(CN_ratio_mean_sum)
 
-
-# SLA_mean_spatial_climate_sum <- model_trait_summary_spatial_climate(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean")
-# SLA_mean_spatial_pred <- models_trait_predictions_siteID(SLA_mean_spatial_climate_sum)
-
-# Height_mean_temporal_sum <- model_trait_summary_temporal(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean")
-# Height_mean_temporal_pred <- models_trait_predictions_siteID(Height_mean_temporal_sum)
-
-# Height_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean")
-# Height_mean_pred <- models_trait_predictions(Height_mean_sum)
-
-
-
-
-
-
 LA_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Leaf_Area_cm2_log", "mean")
 LA_mean_pred_space <- models_trait_predictions_space(LA_mean_sum)
-
-
 
 C_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "C_percent", "mean")
 C_mean_pred_space <- models_trait_predictions_space(C_mean_sum)
 
-
 N_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "N_percent", "mean")
 N_mean_pred_space <- models_trait_predictions_space(N_mean_sum)
-
-
 
 Mass_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Dry_Mass_g_log", "mean")
 Mass_mean_pred_space <- models_trait_predictions_space(Mass_mean_sum)
 
-
 LDMC_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "LDMC", "mean")
 LDMC_mean_pred_space <- models_trait_predictions_space(LDMC_mean_sum)
 
-
 Lth_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Leaf_Thickness_Ave_mm", "mean")
 Lth_mean_pred_space <- models_trait_predictions_space(Lth_mean_sum)
-
-
-### Finding the start values for skewness in 2009 to see change in time ###
-
-skewness_2009 <- moments_clim_long_fullcommunity %>% 
-  select(siteID, Trait_trans, year, moments, value) %>% 
-  filter(moments == "skewness",
-         year == "2009") %>% 
-  group_by(Trait_trans) %>% 
-  summarise(skewness = mean(value),
-            CIlow = skewness - sd(value),
-            CIhigh = skewness + sd(value))
 
 #### Correlation ####
 
