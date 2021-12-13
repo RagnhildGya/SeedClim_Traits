@@ -344,6 +344,25 @@ tidy_TDT_com <- results_TDT_com %>%
 output_TDT_com <- output_com(tidy_TDT_com) %>% 
   mutate_if(is.numeric, round, digits = 5)
 
+#### Running models - trait without intraspecific variability ####
+
+# Running the mixed effects model
+
+results_TDT_without_intra <- memodel_data_without_intra %>%
+  filter(moments %in% c("mean")) %>% 
+  mutate(model = purrr::map(data, model_TDT))
+
+#Tidying up the model output
+
+tidy_TDT_without_intra <- results_TDT_without_intra %>%
+  mutate(model_output = purrr::map(model, tidy)) %>%
+  mutate(R_squared = purrr::map(model, rsquared))
+
+# Making a dataset with the model output and the test-statistics (R squared), summarizing across boootstraps.
+
+output_TDT_without_intra <- output(tidy_TDT_without_intra) %>% 
+  mutate_if(is.numeric, round, digits = 5)
+
 
 #### Simpler mixed effect models on specific traits to make predicted plots ####
 
