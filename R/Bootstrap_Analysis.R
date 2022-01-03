@@ -22,16 +22,16 @@ library(ggvegan)
 library(partR2)
 #library(drake)
 #library(default)
-library(conflicted)
+#library(conflicted)
 
 set.seed(47)
 
 #### Setting conflict standards ####
 
-conflict_prefer("map", winner="purrr")
-conflict_prefer("filter", winner = "dplyr")
-conflict_prefer("select", winner = "dplyr")
-conflict_prefer("lmer", winner = "lmerTest")
+# conflict_prefer("map", winner="purrr")
+# conflict_prefer("filter", winner = "dplyr")
+# conflict_prefer("select", winner = "dplyr")
+# conflict_prefer("lmer", winner = "lmerTest")
 
 #### Making data ready for traitstrap and merging ####
 
