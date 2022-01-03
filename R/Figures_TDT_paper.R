@@ -16,7 +16,7 @@ library(ggnewscale)
 library(gghighlight)
 library(merTools)
 library(patchwork)
-library(conflicted)
+#library(conflicted)
 library(broom)
 
 #### Setting conflict standards ####
@@ -32,7 +32,7 @@ Precip_palette <- c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")
 # This code is to test if the without intra bootstrapping worked
 
 plot1 <- sum_moments_climate_without_intra %>% 
-  filter(Trait_trans == "SLA_cm2_g_log") %>% 
+  filter(Trait_trans == "SLA_cm2_g") %>% 
   ggplot(aes(x = Precip_yearly, y = mean, color = Temp_level))+
   geom_point() +
   geom_smooth(method = "lm") +
@@ -40,7 +40,7 @@ plot1 <- sum_moments_climate_without_intra %>%
   ggtitle("Without intraspecific")
 
 plot2 <- sum_moments_climate_fullcommunity %>% 
-  filter(Trait_trans == "SLA_cm2_g_log") %>% 
+  filter(Trait_trans == "SLA_cm2_g") %>% 
   ggplot(aes(x = Precip_yearly, y = mean, color = Temp_level))+
   geom_point() +
   geom_smooth(method = "lm") +
