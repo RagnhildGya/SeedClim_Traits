@@ -393,6 +393,7 @@ output_TDT_without_intra <- output(tidy_TDT_without_intra) %>%
          p.value = round(p.value, digits = 3))%>% 
   filter(!Trait_trans == "Wet_Mass_g_log")
 
+#write.table(output_TDT_without_intra, row.names = TRUE, col.names = TRUE, file = "model_output_without_intra.csv")
 
 #### Simpler mixed effect models on specific traits to make predicted plots ####
 
