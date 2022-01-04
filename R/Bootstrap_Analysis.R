@@ -320,7 +320,17 @@ tidy_TDT <- results_TDT %>%
 # Making a dataset with the model output and the test-statistics (R squared), summarizing across boootstraps.
 
 output_TDT <- output(tidy_TDT) %>% 
-  mutate_if(is.numeric, round, digits = 5)
+  mutate(R2_conditional = round(R2_conditional, digits = 2),
+         R2_marginal = round(R2_marginal, digits = 2),
+         effect = round(effect, digits = 7),
+         CIlow.fit = round(CIlow.fit, digits = 7),
+         CIhigh.fit = round(CIhigh.fit, digits = 7),
+         std.error = round(std.error, digits = 7),
+         staticstic = round(staticstic, digits = 2),
+         df = round(df, digits = 5),
+         p.value = round(p.value, digits = 3)) %>% 
+  filter(!Trait_trans == "Wet_Mass_g_log")
+  #mutate_if(is.numeric, round, digits = 5)
 
 #write.table(output_TDT, row.names = TRUE, col.names = TRUE, file = "model_output_TDT.csv")
 
@@ -342,7 +352,16 @@ tidy_TDT_com <- results_TDT_com %>%
 # Making a dataset with the model output and the test-statistics (R squared)
 
 output_TDT_com <- output_com(tidy_TDT_com) %>% 
-  mutate_if(is.numeric, round, digits = 5)
+  mutate(estimate = round(estimate, digits = 7),
+         std.error = round(std.error, digits = 7),
+         statistic = round(statistic, digits = 2),
+         df = round(df, digits = 2),
+         p.value = round(p.value, digits = 3),
+         Marginal = round(Marginal, digits = 2),
+         Conditional = round(Conditional, digits = 2)) %>% 
+  filter(community_properties %in% c("species_richness", "total_vascular", "vegetation_height"))
+
+  #mutate_if(is.numeric, round, digits = 5)
 
 #### Running models - trait without intraspecific variability ####
 
@@ -361,7 +380,16 @@ tidy_TDT_without_intra <- results_TDT_without_intra %>%
 # Making a dataset with the model output and the test-statistics (R squared), summarizing across boootstraps.
 
 output_TDT_without_intra <- output(tidy_TDT_without_intra) %>% 
-  mutate_if(is.numeric, round, digits = 5)
+  mutate(R2_conditional = round(R2_conditional, digits = 2),
+         R2_marginal = round(R2_marginal, digits = 2),
+         effect = round(effect, digits = 7),
+         CIlow.fit = round(CIlow.fit, digits = 7),
+         CIhigh.fit = round(CIhigh.fit, digits = 7),
+         std.error = round(std.error, digits = 7),
+         staticstic = round(staticstic, digits = 2),
+         df = round(df, digits = 5),
+         p.value = round(p.value, digits = 3))%>% 
+  filter(!Trait_trans == "Wet_Mass_g_log")
 
 
 #### Simpler mixed effect models on specific traits to make predicted plots ####
