@@ -361,6 +361,8 @@ output_TDT_com <- output_com(tidy_TDT_com) %>%
          Conditional = round(Conditional, digits = 2)) %>% 
   filter(community_properties %in% c("species_richness", "total_vascular", "vegetation_height"))
 
+#write.table(output_TDT_com, row.names = TRUE, col.names = TRUE, file = "model_output_community.csv")
+
   #mutate_if(is.numeric, round, digits = 5)
 
 #### Running models - trait without intraspecific variability ####
