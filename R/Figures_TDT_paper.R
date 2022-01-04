@@ -21,8 +21,10 @@ library(broom)
 
 #### Setting conflict standards ####
 
-conflict_prefer("select", winner = "dplyr")
-conflict_prefer("corrpot", winner = "corrplot")
+# conflict_prefer("select", winner = "dplyr")
+# conflict_prefer("corrpot", winner = "corrplot")
+# conflict_prefer("arm", winner = "corrplot")
+# conflict_prefer("filter", winner = "dplyr")
 
 #### Color palettes ####
 Temp_palette <- c("#DDA131", "#dd7631", "#bb3b0e")
