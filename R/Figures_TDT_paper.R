@@ -52,10 +52,10 @@ plot2 <- sum_moments_climate_fullcommunity %>%
 ggarrange(plot1, plot2, ncol = 2)
 
 env_shift <- env %>% 
-  group_by(Site) %>% 
+  group_by(siteID) %>% 
   mutate(shift_temp = Temp_decade - Temp_century,
          shift_precip = Precip_decade - Precip_century) %>% 
-  select(Site, shift_temp, shift_precip) %>% 
+  select(siteID, shift_temp, shift_precip) %>% 
   unique() %>% 
   ungroup() %>% 
   mutate(mean_shift_temp = mean(shift_temp),
@@ -70,7 +70,7 @@ env %>%
   mutate(Temp_level = recode(Temp_level, "10.5" = "Boreal",
                              "8.5" = "Sub-alpine",
                              "6.5" = "Alpine")) %>% 
-  ggplot(aes(x = Year, y = Temp_yearly_spring)) +
+  ggplot(aes(x = year, y = Temp_yearly_spring)) +
   geom_point() +
   geom_smooth(method = "lm") +
   facet_grid(~Temp_level) +
@@ -88,7 +88,7 @@ env %>%
                                "1200" = "Dry",
                                "2000" = "Wet",
                                "2700" = "Wettest")) %>% 
-  ggplot(aes(x = Year, y = Precip_yearly)) +
+  ggplot(aes(x = year, y = Precip_yearly)) +
   geom_point() +
   geom_smooth(method = "lm") +
   facet_grid(~Precip_level) +
@@ -212,7 +212,7 @@ plot <- Zoomed_in_map +
   inset_element(Norway_map, left = 0.595, bottom = 0.55, right = 0.96, top = 1, align_to = "plot") +
   plot_layout(guides = 'collect', widths = 1, heights = 1) 
 
-#ggsave(plot = plot, "SeedClim_climate_grid1.pdf", width = 34, height = 22, units = "cm")
+#ggsave(plot = plot, "SeedClim_climate_grid2.pdf", width = 34, height = 22, units = "cm")
 
 
 # png("SeedClim_climate_grid.png", width = 1285, height = 861)
