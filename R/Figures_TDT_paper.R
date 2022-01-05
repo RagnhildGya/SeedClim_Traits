@@ -364,7 +364,7 @@ Ord_RDA <- Explained_variance_RDA %>%
 
 #ggsave(filename = "Ordination_RDA.jpg",  width = 20, height = 14, units = "cm")
 
-#### Making plots for predicted values and observed values
+#### Mixed effect model plots ####
 
 plot_predictions_space <-function(dat, trait, moment, newdata) {
   
@@ -525,14 +525,16 @@ figure <- ggarrange(LA_space, SLA_space, Height_space, LDMC_space, Mass_space, L
 #ggsave(plot = figure, filename = "Spatial_trait_trends.pdf",  width = 16, height = 24, units = "cm")
 
 
-### Partial R2 figure ###
+#### Partial R2 figure ####
 
 
-ggplot(aes(x = estimate, y = term, xmin = CI_lower, xmax = CI_upper, color = Space_or_time), data = partR2_data) +
+partR2_plot <- ggplot(aes(x = estimate, y = term, xmin = CI_lower, xmax = CI_upper, color = Space_or_time), data = partR2_data) +
   geom_pointrange() +
   geom_vline(aes(xintercept = Full), color = "black") +
   facet_wrap(~factor(traits, levels = c("SLA_cm2_g", "Leaf N", "Leaf C/N", "LDMC", "Leaf_Thickness_Ave_mm", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Leaf C"),), nrow = 2) +
   theme_minimal() +
   xlim(0,0.8) +
-  scale_color_manual(values = c("black","darkorange3", "chartreuse4", "mediumpurple1"))
+  scale_color_manual(values = c("black","#dd7631", "#2E75B6", "chartreuse4")) +
+  theme(legend.position = "none", text = element_text(size = 13))
 
+ggsave(plot = partR2_plot, filename = "Partial_R2.pdf",  width = 28, height = 12, units = "cm")
