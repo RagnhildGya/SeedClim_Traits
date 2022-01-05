@@ -477,10 +477,10 @@ LDMC_Wet <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LD
 
   (LDMC_Dry | LDMC_Wet)
   
-
+## Make plot for all trait trends in the spatial climate grid
 
 SLA_space <- plot_predictions_space(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g", "mean", SLA_mean_pred_space) +
-  labs(y = "SLA (cm2/g log)", x = "") +
+  labs(y = "SLA", x = "") +
   guides(color = "none")
 
 LDMC_space <- plot_predictions_space(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", LDMC_mean_pred_space) +
@@ -488,41 +488,41 @@ LDMC_space <- plot_predictions_space(memodel_data_fullcommunity_nottransformed, 
   guides(color = "none")
 
 CN_space <- plot_predictions_space(memodel_data_fullcommunity_nottransformed, "CN_ratio", "mean", CN_ratio_mean_pred_space) +
-  labs(y = "C/N ratio (log)", x = "") +
+  labs(y = "Leaf C/N", x = "") +
   guides(color = "none")
 
 
 LA_space <- plot_predictions_space(memodel_data_fullcommunity_nottransformed, "Leaf_Area_cm2_log", "mean", LA_mean_pred_space) +
-  labs(y = "Leaf area (cm2 log)", x = "") +
+  labs(y = "Leaf Area", x = "") +
   guides(color = "none")
 
 
 C_space <- plot_predictions_space(memodel_data_fullcommunity_nottransformed, "C_percent", "mean", C_mean_pred_space) +
-  labs(y = "Carbon %", x = "") +
+  labs(y = "Leaf C", x = "") +
   guides(color = "none")
 
 
 N_space <- plot_predictions_space(memodel_data_fullcommunity_nottransformed, "N_percent", "mean", N_mean_pred_space) +
-  labs(y = "Nitrogen %", x = "") +
+  labs(y = "Leaf N", x = "") +
   guides(color = "none")
 
 
 Height_space <- plot_predictions_space(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean", Height_mean_pred_space) +
-  labs(y = "Plant height", x = "")  +
+  labs(y = "Plant Height", x = "")  +
   guides(color = "none")
 
 Mass_space <- plot_predictions_space(memodel_data_fullcommunity_nottransformed, "Dry_Mass_g_log", "mean", Mass_mean_pred_space) +
-  labs(y = "Dry mass", x = "")  +
+  labs(y = "Leaf Dry Mass", x = "")  +
   guides(color = "none")
 
 
 Lth_space <- plot_predictions_space(memodel_data_fullcommunity_nottransformed, "Leaf_Thickness_Ave_mm", "mean", Lth_mean_pred_space) +
-  labs(y = "Leaf thickness", x = "")  +
+  labs(y = "Leaf Thickness", x = "")  +
   guides(color = "none")
 
-figure <- ggarrange(SLA_space, LA_space, N_space, Height_space, CN_space, Mass_space, LDMC_space, C_space, Lth_space, nrow = 5, ncol = 2, common.legend = TRUE, legend = "bottom")
+figure <- ggarrange(LA_space, SLA_space, Height_space, LDMC_space, Mass_space, Lth_space,  C_space, N_space,  CN_space,   nrow = 5, ncol = 2, common.legend = TRUE, legend = "bottom")
 
-ggsave(plot = figure, filename = "Spatial_trait_trends.pdf",  width = 16, height = 24, units = "cm")
+#ggsave(plot = figure, filename = "Spatial_trait_trends.pdf",  width = 16, height = 24, units = "cm")
 
 ### Time with linear change in climate ##
 
