@@ -213,9 +213,7 @@ Climate_corr <- Corr_traits %>%
 corr <- round(cor(Trait_climate_corr), 1) 
 corr1 <- round(cor(Climate_corr, use = "complete.obs"), 2) 
 
-
 # P-values 
-
 p.mat <- cor_pmat(Corr_traits)
 #head(p.mat_17[, 1:4])
 
@@ -224,10 +222,12 @@ p.mat <- cor_pmat(Corr_traits)
 ggcorrplot(corr, hc.order = FALSE,
            type = "lower", lab = TRUE,)
 
+#ggsave("Correlation_plot.png", width = 22 , height = 16, units = "cm")
+
 ggcorrplot(corr1, hc.order = FALSE,
            type = "lower", lab = TRUE,)
 
-#ggsave("Correlation_plot.jpg", width = 30 , height = 20, units = "cm")
+
 #ggsave("Correlation_plot_climate.jpg", width = 20 , height = 15, units = "cm")
 
 #### Ordination ####
