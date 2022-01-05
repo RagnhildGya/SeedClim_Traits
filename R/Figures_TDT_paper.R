@@ -27,7 +27,7 @@ library(broom)
 # conflict_prefer("filter", winner = "dplyr")
 
 #### Color palettes ####
-Temp_palette <- c("#DDA131", "#dd7631", "#bb3b0e")
+Temp_palette <- c("#d8c593", "#dd7631", "#bb3b0e")
 Precip_palette <- c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")
 
 #### Climate figure ####
@@ -309,7 +309,6 @@ Ord_plot_precip <- fviz_pca_ind(pca_trait, repel = TRUE,
 #ggsave("Ordination_Precip.svg", width = 18 , height = 11, units = "cm", dpi = 600)
 
 ## Ordination over time ##
-
 
 pca_fort <- augment(pca_trait, display = "Sites") %>% 
   bind_cols(Ord_boot_traits[1:6]) %>% 
