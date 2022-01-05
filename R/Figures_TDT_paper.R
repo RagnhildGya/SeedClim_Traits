@@ -222,19 +222,15 @@ p.mat <- cor_pmat(Corr_traits)
 ggcorrplot(corr, hc.order = FALSE,
            type = "lower", lab = TRUE,)
 
-#ggsave("Correlation_plot.png", width = 22 , height = 16, units = "cm")
+#ggsave("Correlation_plot.pdf", width = 22 , height = 16, units = "cm")
 
 ggcorrplot(corr1, hc.order = FALSE,
            type = "lower", lab = TRUE,)
 
+#ggsave("Correlation_plot_climate.pdf", width = 20 , height = 15, units = "cm")
 
-#ggsave("Correlation_plot_climate.jpg", width = 20 , height = 15, units = "cm")
 
 #### Ordination ####
-
-
-#Visualize the results for variables (traits) with the cos2 values (contribution to the PC)
-corrplot(var$cos2, is.corr = FALSE)
 
 contr_traits <- as.data.frame(var$cos2) %>% 
   select(Dim.1, Dim.2) %>% 
@@ -242,16 +238,9 @@ contr_traits <- as.data.frame(var$cos2) %>%
   group_by(trait) %>% 
   mutate(contribution = sum(Dim.1, Dim.2))
 
-# var_leaf <- get_pca_var(pca_leaf_economic)
-# corrplot(var_leaf$cos2, is.corr = FALSE)
-# 
-# var_size <- get_pca_var(pca_size)
-# corrplot(var_size$cos2, is.corr = FALSE)
-
 fviz_cos2(pca_trait, choice = "var")
 fviz_contrib(pca_trait, choice = "var", axes = 1)
 fviz_contrib(pca_trait, choice = "var", axes = 2)
-
 
 fviz_eig(pca_trait, addlabels = TRUE) #Visualize eigenvalues/scree plot
 
@@ -273,8 +262,8 @@ Ord_plot_traits <- fviz_pca_biplot(pca_trait, repel = TRUE,
   #scale_color_manual(name = "Summer temperature", values = c("#8DD5E1", "#FCB971", "#B93B3B")) +
   coord_fixed() +
   labs(title = "") +
-  xlab("PCA1 (43.9%)") +
-  ylab("PCA2 (19.0%)") +
+  xlab("PCA1 (43.9%)") + #Numbers added manually from the fviz_eig plot above
+  ylab("PCA2 (19.0%)") + #Numbers added manually from the fviz_eig plot above
   theme(plot.title = element_text(hjust = 0.1))
 
 #ggsave("Ordination_LES_Size.svg", width = 22 , height = 16, units = "cm", dpi = 600)
