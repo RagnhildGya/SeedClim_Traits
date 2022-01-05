@@ -70,8 +70,8 @@ env <- env %>%
 
 ## Climate data - making model for mean change in temp and precip ##
 
-temp_model <- lmer(Temp_yearly_spring ~ Year + (1|Site), data = env)
-precip_model <- lmer(Precip_yearly ~ Year + (1|Site), data = env)
+temp_model <- lmer(Temp_yearly_spring ~ year + (1|siteID), data = env)
+precip_model <- lmer(Precip_yearly ~ year + (1|siteID), data = env)
 
 # summary(temp_model)
 # rsquared(temp_model)
@@ -80,7 +80,7 @@ precip_model <- lmer(Precip_yearly ~ Year + (1|Site), data = env)
 
 env_predictions <-function(model_temp, model_precip) {
   
-  newdata <- expand.grid(Year=c(2009, 2011, 2012, 2013, 2015, 2016, 2017, 2019), Site = c("Alr", "Arh", "Fau", "Gud", "Hog", "Lav", "Ovs", "Ram", "Skj", "Ulv", "Ves", "Vik"))
+  newdata <- expand.grid(year=c(2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019), siteID = c("Alrust", "Arhelleren", "Fauske", "Gudmedalen", "Hogsete", "Lavisdalen", "Ovstedalen", "Rambera", "Skjellingahaugen", "Ulvehaugen", "Veskre", "Vikesland"))
   
   newdata$temp_modeled <- predict(object = model_temp, newdata = newdata, re.form = NULL, allow.new.levels=TRUE)
   newdata$precip_modeled <- predict(object = model_precip, newdata = newdata, re.form = NULL, allow.new.levels=TRUE)
@@ -89,11 +89,11 @@ env_predictions <-function(model_temp, model_precip) {
 }
 
 env_pred <- env_predictions(temp_model, precip_model) %>% 
-  mutate(Site = as.character(Site))
+  mutate(siteID = as.character(siteID))
 
 
 env <- env %>% 
-  left_join(env_pred, by = c("Site" = "Site", "Year" = "Year"))
+  left_join(env_pred, by = c("siteID" = "siteID", "year" = "year"))
 
 #### Bootstrapping ####
 
