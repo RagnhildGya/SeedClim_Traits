@@ -465,10 +465,7 @@ plot_predictions_time <-function(dat, trait, moment, precip_level, model, clim) 
   return(plot)
 }
 
-
-LDMC_space <- plot_predictions_space_precip(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", LDMC_mean_sum_yc) +
-  labs(y = "", title = "LDMC shifts in space") +
-  theme(plot.title = element_text(hjust = 0.5))
+## Make plot for LDMC changes in temporal climate ad different sites in the climate grid
 
 LDMC_Dry <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", "Dry", LDMC_mean_sum_yc,"Precip_annomalies") +
   labs(y = "",  title = "Dry sites") +
@@ -478,33 +475,8 @@ LDMC_Wet <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LD
   labs(y = "",  title = "Wet sites") +
   theme(plot.title = element_text(hjust = 0.5))
 
-LDMC_space/
-  (LDMC_Dry | LDMC_Wet) /
-  plot_layout(widths = c(1,1), heights = c(1,1))
+  (LDMC_Dry | LDMC_Wet)
   
-
-
-plot_predictions_space(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean", Height_mean_pred_space) +
-  labs(y = "Plant_Height_mm_log",  title = "Mean") +
-  theme(plot.title = element_text(hjust = 0.5))
-
-Height_SKJ <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean", "Skjelingahaugen", Height_mean_sum) +
-  labs(y = "Plant_Height_mm_log",  title = "Cold & Wet") +
-  theme(plot.title = element_text(hjust = 0.5))
-
-Height_ULV <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean", "Ulvehaugen", Height_mean_sum) +
-  labs(y = "Plant_Height_mm_log",  title = "Cold & Dry") +
-  theme(plot.title = element_text(hjust = 0.5))
-
-Height_OVS <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean", "Ovstedalen", Height_mean_sum) +
-  labs(y = "Plant_Height_mm_log",  title = "Warm & Wet") +
-  theme(plot.title = element_text(hjust = 0.5))
-
-Height_FAU <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean", "Fauske", Height_mean_sum) +
-  labs(y = "Plant_Height_mm_log",  title = "Warm & Dry") +
-  theme(plot.title = element_text(hjust = 0.5))
-
-figure_height_precip <- ggarrange(Height_SKJ, Height_ULV, Height_OVS, Height_FAU, nrow = 2, ncol = 2, legend = "bottom")
 
 
 SLA_space <- plot_predictions_space(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g", "mean", SLA_mean_pred_space) +
