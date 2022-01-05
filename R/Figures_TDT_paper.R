@@ -329,28 +329,13 @@ Ord_plot_time <- pca_fort %>%
   guides(color = "none") +
   scale_shape_manual(values = c(16, 17, 15))
 
-Ord_plot_time_precip <- pca_fort %>% 
-  ggplot(aes(x = .fittedPC1, y = .fittedPC2, colour = Precip_level, group = turfID)) +
-  geom_path() + #use geom_path not geom_line
-  geom_point(aes(size = if_else(year == 2009, 1, NA_real_)), show.legend = FALSE) +
-  #scale_color_viridis_d() +
-  scale_color_manual(name = "Summer temperature", values = Precip_palette) +
-  scale_size(range = 2) +
-  coord_equal() +
-  theme_minimal(base_size = 14) +
-  theme(legend.text=element_text(size=14), legend.title = element_text(size = 14), plot.title = element_text(hjust = 0.1), axis.title = element_blank()) +
-  labs(fill = "Yearly precipitation", color = "Yearly precipitation", shape = "Yearly precipitation") +
-  guides(color = "none") 
-
 
 c <- ggarrange(Ord_plot_traits, Ord_plot_time, Ord_plot_precip, Ord_plot_temp,   
                nrow = 2, ncol = 2,
-               labels = c("A","B", "C", "D"),
+               labels = c("A)","B)", "C)", "D)"),
                legend = "none")
 
-e <- ggarrange(Ord_plot_time, Ord_plot_time_precip,   
-               nrow = 1, ncol = 2,
-               legend = "none")
+#ggsave(plot = c, "Ord_timemean_temp_prec_four.pdf", width = 28 , height = 20, units = "cm")
 
 ### RDA variance explained ordination plot ###
 
@@ -379,8 +364,6 @@ Ord_RDA <- Explained_variance_RDA %>%
 
 #ggsave(filename = "Ordination_RDA.jpg",  width = 20, height = 14, units = "cm")
 
-
-#ggsave(plot = c, "Ord_timemean_temp_prec_four.pdf", width = 28 , height = 20, units = "cm")
 
 
 ### Figures with model output ###
