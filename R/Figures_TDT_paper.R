@@ -196,15 +196,6 @@ plot <- Zoomed_in_map +
 
 #ggsave(plot = plot, "SeedClim_climate_grid2.pdf", width = 34, height = 22, units = "cm")
 
-
-# png("SeedClim_climate_grid.png", width = 1285, height = 861)
-# grid.newpage()
-# vp_zoomed_in_map <- viewport(width = 1, height = 1, x = 0.5, y = 0.5)  # the zoomed in map
-# vp_norway_map <- viewport(width = 0.4, height = 0.4, x = 0.685, y = 0.8)  # the inset in upper left of scandinacia
-# print(Zoomed_in_map, vp = vp_zoomed_in_map)
-# print(Norway_map, vp = vp_norway_map)
-# dev.off()
-
 ### Community weighted skewness over time in different temp levels ###
 
 # moments_clim_long_fullcommunity %>% 
