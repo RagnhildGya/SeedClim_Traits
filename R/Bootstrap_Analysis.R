@@ -173,23 +173,23 @@ sum_moment_without_intra = bind_rows(sum_moments_without_intraA, sum_moments_wit
 
 sum_moments_climate_fullcommunity = bind_rows(
   sum_moments_fullcommunity %>% 
-    left_join(env, by = c("siteID" = "siteID", "year" = "Year")))
+    left_join(env, by = c("siteID" = "siteID", "year" = "year")))
 
 sum_moments_climate_without_intra = bind_rows(
   sum_moment_without_intra %>% 
     left_join(turf_site_dict, by = c("turfID" = "turfID")) %>% 
-    left_join(env, by = c("siteID" = "siteID", "year" = "Year")))
+    left_join(env, by = c("siteID" = "siteID", "year" = "year")))
 
 
 moments_clim_long_fullcommunity <- Imputed_traits_fullcommunity %>% 
   pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
-  left_join(env, by = c("siteID" = "siteID", "year" = "Year"))
+  left_join(env, by = c("siteID" = "siteID", "year" = "year"))
 
 
 moments_clim_long_without_intra <- Imputed_traits_without_intra %>% 
   pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
   left_join(turf_site_dict, by = c("turfID" = "turfID")) %>% 
-  left_join(env, by = c("siteID" = "siteID", "year" = "Year"))
+  left_join(env, by = c("siteID" = "siteID", "year" = "year"))
 
 
 ###### Mixed effect model testing ######
@@ -234,7 +234,7 @@ com_data <- community_for_analysis %>%
   mutate(graminoid_cover = sum(graminoid, na.rm = TRUE),
          forb_cover = sum(forb, na.rm = TRUE),
          other_cover = sum(woody, pteridophyte, `NA`, na.rm = TRUE)) %>% 
-  left_join(env, by = c("siteID" = "siteID", "year" = "Year")) %>% 
+  left_join(env, by = c("siteID" = "siteID", "year" = "year")) %>% 
   pivot_longer(cols = c("species_richness", "graminoid_cover", "forb_cover", "other_cover", "total_vascular", "vegetation_height"), names_to = "community_properties", values_to = "value") %>% 
   select(siteID, turfID, Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, year, value, community_properties) %>% 
   group_by(community_properties) %>% 
@@ -251,7 +251,7 @@ com_data_nottrans <- community_for_analysis %>%
   mutate(graminoid_cover = sum(graminoid, na.rm = TRUE),
          forb_cover = sum(forb, na.rm = TRUE),
          other_cover = sum(woody, pteridophyte, `NA`, na.rm = TRUE)) %>% 
-  left_join(env, by = c("siteID" = "siteID", "year" = "Year")) %>% 
+  left_join(env, by = c("siteID" = "siteID", "year" = "year")) %>% 
   pivot_longer(cols = c("species_richness", "graminoid_cover", "forb_cover", "other_cover", "total_vascular", "vegetation_height"), names_to = "community_properties", values_to = "value") %>% 
   select(siteID, turfID, Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies,Temp_level, Precip_level, year, value, community_properties) %>% 
   group_by(community_properties) %>% 
@@ -639,8 +639,6 @@ anova(RDA_space, RDA_year)
 anova(RDA_temp, RDA_space)
 anova(RDA_precip, RDA_space)
 anova(RDA_space_additive, RDA_space)
-
-anova(RDA_precip, RDA_precip_time)
 
 
 RsquareAdj(RDA_year)$adj.r.squared
