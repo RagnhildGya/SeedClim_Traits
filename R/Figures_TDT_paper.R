@@ -525,31 +525,6 @@ figure <- ggarrange(LA_space, SLA_space, Height_space, LDMC_space, Mass_space, L
 #ggsave(plot = figure, filename = "Spatial_trait_trends.pdf",  width = 16, height = 24, units = "cm")
 
 
-## Mean & Skewness figures ##
-
-model_output_space_mixed %>% 
-  select(Trait_trans, term, moments, effect) %>% 
-  pivot_wider(names_from = moments, values_from = effect) %>% 
-  unique() %>% 
-  left_join(skewness_2009, by = "Trait_trans", suffix = c("_change", "2009")) %>% 
-  ggplot(aes(x = mean, y = skewness_change, color = Trait_trans)) +
-  geom_point() +
-  geom_hline(yintercept = 0) +
-  geom_vline(xintercept = 0) +
-  facet_grid(~term)
-
-model_output_time_year_mixed %>% 
-  select(Trait_trans, term, moments, effect) %>% 
-  filter(!term == "(Intercept)") %>% 
-  pivot_wider(names_from = moments, values_from = effect) %>% 
-  unique() %>% 
-  left_join(skewness_2009, by = "Trait_trans", suffix = c("_change", "2009")) %>% 
-  select(-CIlow, -CIhigh) %>% 
-  ggplot(aes(x = mean, y = skewness2009, color = Trait_trans)) +
-  geom_point() +
-  geom_hline(yintercept = 0) +
-  geom_vline(xintercept = 0) 
-
 ### Partial R2 figure ###
 
 
