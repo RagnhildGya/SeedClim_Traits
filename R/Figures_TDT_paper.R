@@ -61,7 +61,7 @@ env %>%
   xlab("Year") +
   scale_x_continuous(breaks = c(2009, 2011, 2013, 2015, 2017, 2019))
 
-#ggsave("Temperature_over_time.pdf", width = 20 , height = 11, units = "cm")
+#ggsave("Temperature_over_time.png", width = 20 , height = 11, units = "cm")
 
 
 env %>% 
@@ -98,9 +98,9 @@ climate <- env %>%
   ggplot(aes(x = Precip_decade, y = Temp_decade,
              color = Precip_level, fill = Precip_level, shape = Temp_level)) +
   geom_point(aes(x = Precip_century, y = Temp_century, shape = Temp_old, size = 10)) +
-  geom_segment(aes(x = Precip_decade, y = Temp_decade, yend = Temp_century, xend = Precip_century, size = 1)) +
-  geom_pointrange(aes(ymin = Temp_decade-Temp_se, ymax = Temp_decade+Temp_se, size = 1)) +
-  geom_errorbarh(aes(xmin = Precip_decade-Precip_se, xmax = Precip_decade+Precip_se, size = 1)) +
+  geom_segment(aes(x = Precip_decade, y = Temp_decade, yend = Temp_century, xend = Precip_century, size = 0.5)) +
+  geom_pointrange(aes(ymin = Temp_decade-Temp_se, ymax = Temp_decade+Temp_se, size = 0.5)) +
+  geom_errorbarh(aes(xmin = Precip_decade-Precip_se, xmax = Precip_decade+Precip_se, size = 0.5)) +
   labs(x = "Annual precipitation in m", y = "Summer temperature in °C") +
   scale_color_manual(name = "Precipitation", values = c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")) +
   scale_fill_manual(name = "Precipitation", values = c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")) +
@@ -113,6 +113,7 @@ climate <- env %>%
 
 #### Climate grid on map figure ####
 
+#Making table with coordinates for the sites
 
 dat <- read.table(header = TRUE, text = "
 siteID           Latitude Longitude Temperature Precipitation
@@ -140,7 +141,7 @@ tempLab <- c("Alpine", "Sub-alpine", "Boreal")
 xlim <- range(dat$Longitude) + c(-1, 0.5)
 ylim <- range(dat$Latitude) + c(-0.3, 1.3)
 
-
+#Get maps
 norwaymap <- map_data("world", "Norway")
 norwaymapHires <- map_data("worldHires", "Norway")
 
