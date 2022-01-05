@@ -241,7 +241,7 @@ community <- community %>%
  env <- env %>% 
    mutate(year2 = ifelse(month > 7, year + 1, year)) %>%  #Creating a variable that allows me to divide the year from fieldseason to fieldseason rather than january-january 
    group_by(siteID, year2) %>% 
-   mutate(Precip_yearly = sum(precipitation)) %>% 
+   mutate(Precip_yearly = sum(precipitation)) %>% #Creating variable for precipitation 1 year back from the sampling date (july-july) by grouping by year2
    filter(month %in% c(5:7)) %>% 
    mutate(Temp_yearly_spring = mean(temperature),
           Precip_yearly_spring = sum(precipitation)) %>% #Creating variable for that years summer temperature (we called it spring because we chose to not include the part of the summer after data collection, so we end it 31. july)
