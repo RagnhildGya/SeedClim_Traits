@@ -524,33 +524,6 @@ figure <- ggarrange(LA_space, SLA_space, Height_space, LDMC_space, Mass_space, L
 
 #ggsave(plot = figure, filename = "Spatial_trait_trends.pdf",  width = 16, height = 24, units = "cm")
 
-### Time with linear change in climate ##
-
-plot_predictions_modeled_climate <-function(dat, trait, moment, newdata) {
-  
-  dat2 <- dat %>%
-    filter(Trait_trans == trait,
-           moments == moment,
-           n == 75) %>% 
-    unnest(data) %>% 
-    ungroup()
-  
-  plot <- ggplot(dat2, aes(x = temp_modeled, y = value)) +
-    geom_point() +
-    geom_line(aes(x = temp_modeled, y = predicted, color = factor(precip_modeled)), data=newdata, size = 1, show.legend = TRUE) +
-    scale_color_manual(values = Precip_palette) +
-    theme_minimal(base_size = 15)
-  
-  return(plot)
-}
-
-SLA_mean_plot_directional_climate <- plot_predictions_modeled_climate(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g_log", "mean", SLA_mean_directional_climate_pred) +
-  labs(y = "SLA (cm2/g log)", x = "", title = "Mean") +
-  theme(plot.title = element_text(hjust = 0.5))
-
-plot_predictions_modeled_climate(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean", Height_mean_direction_climate_pred) +
-  labs(y = "Plant height (mm log)", x = "", title = "Mean") +
-  theme(plot.title = element_text(hjust = 0.5)) 
 
 
 ### Plotting by year ####
