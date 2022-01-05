@@ -204,41 +204,55 @@ community <- community %>%
           Precip_century = annualPrecipitation_gridded,
           Temp_level = as.factor(recode(Site, Ulv = 6.5, Lav = 6.5,  Gud = 6.5, Skj = 6.5, Alr = 8.5, Hog = 8.5, Ram = 8.5, Ves = 8.5, Fau = 10.5, Vik = 10.5, Arh = 10.5, Ovs = 10.5)),
           Precip_level = as.factor(recode(Site, Ulv = 600, Alr = 600, Fau = 600, Lav = 1200, Hog = 1200, Vik = 1200, Gud = 2000, Ram = 2000, Arh = 2000, Skj = 2700, Ves = 2700, Ovs = 2700))) %>% 
-   select(Site, Temp_century, Precip_century, Temp_level, Precip_level)
+   select(Site, Temp_century, Precip_century, Temp_level, Precip_level) %>% 
+   mutate(Site = plyr::mapvalues(Site, from = dict_Site_2016$old, to = dict_Site_2016$new)) 
 
- env <- read.csv("Data/GriddedDailyClimateData2009-2019.csv", header=TRUE, sep = ",", stringsAsFactors = FALSE)
+ env <- read.csv("Data/AAGriddedDailyClimateData2009-2019.csv", header=TRUE, sep = ",", stringsAsFactors = FALSE)
+ #The file AA is the newest version of the climate data - checking what this looks like now.
+ 
+ # date, siteID, variable, value
+ 
+ env <- env %>% 
+   mutate(year = year(date),
+          month = month(date),
+          day = day(date)) %>% 
+   filter(variable %in% c("temperature", "precipitation")) %>% 
+   pivot_wider(names_from = variable, values_from = value)
+ 
+ #Creating a variable of last years summer temperature
  
  summer_prev <- env %>% 
-   group_by(Site, Year) %>% 
-   filter(Month %in% c(6:9)) %>% 
-   mutate(Temp_yearly_prev = mean(Temperature)) %>% 
-   select(Site, Year, Temp_yearly_prev) %>% 
-   mutate(Year = Year + 1) %>% 
+   group_by(siteID, year) %>% 
+   filter(month %in% c(6:9)) %>% 
+   mutate(Temp_yearly_prev = mean(temperature)) %>% 
+   select(siteID, year, Temp_yearly_prev) %>% 
+   mutate(year = year + 1) %>% 
    unique()
  
+ #Creating a variable of this years summer temperature
+ 
  summer <- env %>% 
-   group_by(Site, Year) %>% 
-   filter(Month %in% c(6:9)) %>% 
-   mutate(Temp_summer = mean(Temperature)) %>% 
-   select(Site, Year, Temp_summer) %>% 
+   group_by(siteID, year) %>% 
+   filter(month %in% c(6:9)) %>% 
+   mutate(Temp_summer = mean(temperature)) %>% 
+   select(siteID, year, Temp_summer) %>% 
    unique()
  
  env <- env %>% 
-   mutate(Date = ymd(Date)) %>% 
-   mutate(Year2 = ifelse(Month > 7, Year + 1, Year)) %>% 
-   group_by(Site, Year2) %>% 
-   mutate(Precip_yearly = sum(Precipitation)) %>% 
-   filter(Month %in% c(5:7)) %>% 
-   mutate(Temp_yearly_spring = mean(Temperature),
-          Precip_yearly_spring = sum(Precipitation)) %>% 
+   mutate(year2 = ifelse(month > 7, year + 1, year)) %>%  #Creating a variable that allows me to divide the year from fieldseason to fieldseason rather than january-january 
+   group_by(siteID, year2) %>% 
+   mutate(Precip_yearly = sum(precipitation)) %>% 
+   filter(month %in% c(5:7)) %>% 
+   mutate(Temp_yearly_spring = mean(temperature),
+          Precip_yearly_spring = sum(precipitation)) %>% #Creating variable for that years summer temperature (we called it spring because we chose to not include the part of the summer after data collection, so we end it 31. july)
    ungroup() %>% 
-   select(Site, Year, Precip_yearly, Temp_yearly_spring, Precip_yearly_spring) %>% 
+   select(siteID, year, Precip_yearly, Temp_yearly_spring, Precip_yearly_spring) %>% 
    unique() %>% 
-   left_join(y = summer_prev, by = c("Site" = "Site", "Year" = "Year")) %>% 
-   left_join(y = summer, by = c("Site" = "Site", "Year" = "Year")) %>% 
+   left_join(y = summer_prev, by = c("siteID" = "siteID", "year" = "year")) %>% 
+   left_join(y = summer, by = c("siteID" = "siteID", "year" = "year")) %>% 
    ungroup() %>% 
-   group_by(Site) %>% 
-   left_join(y = env_old, by = "Site") %>% 
+   group_by(siteID) %>% 
+   left_join(y = env_old, by = c("siteID" = "Site")) %>% 
    mutate(Temp_decade = mean(Temp_yearly_spring, na.rm = TRUE),
           Temp_se = (sd(Temp_yearly_spring, na.rm = TRUE) / sqrt(length(Temp_yearly_spring))),
           Precip_decade = mean(Precip_yearly),
@@ -247,8 +261,7 @@ community <- community %>%
           Precip_annomalies = Precip_yearly - Precip_century) %>% 
    mutate(Temp_level = fct_relevel(Temp_level, c("6.5", "8.5", "10.5"))) %>% 
    mutate(Precip_level = fct_relevel(Precip_level, c("600", "1200", "2000", "2700"))) %>% 
-   ungroup() %>% 
-   mutate(siteID = plyr::mapvalues(Site, from = dict_Site_2016$old, to = dict_Site_2016$new)) 
+   ungroup()
  
  rm(CN)
  rm(dict_CN)
