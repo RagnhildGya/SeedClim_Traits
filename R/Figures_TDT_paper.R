@@ -366,10 +366,6 @@ Ord_RDA <- Explained_variance_RDA %>%
 
 
 #### Making plots for predicted values and observed values
-dat <- memodel_data_fullcommunity_nottransformed
-trait <- "SLA_cm2_g"
-moment <- "mean"
-newdata <- SLA_mean_pred_space
 
 plot_predictions_space <-function(dat, trait, moment, newdata) {
   
