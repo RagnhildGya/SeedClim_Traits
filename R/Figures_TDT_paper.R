@@ -364,8 +364,11 @@ Ord_RDA <- Explained_variance_RDA %>%
 
 #ggsave(filename = "Ordination_RDA.jpg",  width = 20, height = 14, units = "cm")
 
-
 #### Making plots for predicted values and observed values
+dat <- memodel_data_fullcommunity_nottransformed
+trait <- "SLA_cm2_g"
+moment <- "mean"
+newdata <- SLA_mean_pred_space
 
 plot_predictions_space <-function(dat, trait, moment, newdata) {
   
@@ -414,6 +417,17 @@ plot_predictions_space_precip <-function(dat, trait, moment, model) {
   return(plot)
 }
 
+site = "Skjelingahaugen"
+model = SLA_mean_sum_yc
+clim = "Precip_annomalies"
+
+dat <- memodel_data_fullcommunity_nottransformed
+trait <- "LDMC"
+moment <- "mean"
+site <- "Ovstedalen"
+model <- LDMC_mean_sum_yc
+clim <- "Precip_annomalies"
+precip_level <- "Wet"
 
 plot_predictions_time <-function(dat, trait, moment, precip_level, model, clim) {
 
