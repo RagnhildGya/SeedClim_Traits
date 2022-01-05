@@ -335,7 +335,7 @@ c <- ggarrange(Ord_plot_traits, Ord_plot_time, Ord_plot_precip, Ord_plot_temp,
                labels = c("A)","B)", "C)", "D)"),
                legend = "none")
 
-#ggsave(plot = c, "Ord_timemean_temp_prec_four.pdf", width = 28 , height = 20, units = "cm")
+#ggsave(plot = c, "Ord_timemean_temp_prec_four.pdf", width = 26 , height = 18, units = "cm")
 
 ### RDA variance explained ordination plot ###
 
