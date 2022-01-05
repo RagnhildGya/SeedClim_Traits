@@ -30,26 +30,9 @@ library(broom)
 Temp_palette <- c("#DDA131", "#dd7631", "#bb3b0e")
 Precip_palette <- c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")
 
-## Without intraspecific plot ##
-# This code is to test if the without intra bootstrapping worked
+#### Climate figure ####
 
-plot1 <- sum_moments_climate_without_intra %>% 
-  filter(Trait_trans == "SLA_cm2_g") %>% 
-  ggplot(aes(x = Precip_yearly, y = mean, color = Temp_level))+
-  geom_point() +
-  geom_smooth(method = "lm") +
-  ylim(c(4.75, 5.75)) +
-  ggtitle("Without intraspecific")
-
-plot2 <- sum_moments_climate_fullcommunity %>% 
-  filter(Trait_trans == "SLA_cm2_g") %>% 
-  ggplot(aes(x = Precip_yearly, y = mean, color = Temp_level))+
-  geom_point() +
-  geom_smooth(method = "lm") +
-  ylim(c(4.75, 5.75)) +
-  ggtitle("With intraspecific")
-
-ggarrange(plot1, plot2, ncol = 2)
+## Make the variables for plotting the shift in climate
 
 env_shift <- env %>% 
   group_by(siteID) %>% 
@@ -63,8 +46,6 @@ env_shift <- env %>%
          mean_shift_precip = mean(shift_precip),
          sd_shift_precip = sd(shift_precip))
 
-
-## Climate figure ##
 
 env %>% 
   mutate(Temp_level = recode(Temp_level, "10.5" = "Boreal",
