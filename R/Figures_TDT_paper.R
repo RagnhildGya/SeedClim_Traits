@@ -413,64 +413,6 @@ plot_predictions_space_precip <-function(dat, trait, moment, model) {
   return(plot)
 }
 
-plot_predictions_time <-function(dat, trait, moment, precip_level, model, clim) {
-
-  dat2 <- dat %>%
-    filter(Trait_trans == trait,
-           moments == moment,
-           n == 75) %>% 
-    unnest(data) %>% 
-    ungroup()
-  
-  newdata_cold <- crossing(Precip_decade = case_when(precip_level == "Wet" ~ 3.5,
-                                                precip_level == "Dry" ~ 1.0),
-                      Temp_decade = 6.5,
-                      siteID = case_when(precip_level == "Wet" ~ "Skjelingahaugen",
-                                         precip_level == "Dry" ~ "Ulvehaugen"),
-                      Precip_annomalies = case_when({{clim}} == "Precip_annomalies" ~ seq(-2, 3, length = 200)),
-                      Temp_annomalies = case_when({{clim}} == "Precip_annomalies" & precip_level == "Wet" ~ 0.255,
-                                                  {{clim}} == "Precip_annomalies" & precip_level == "Dry" ~ 0.443,
-                                                  {{clim}} == "Temp_annomalies" ~ seq(-3, 2, length = 200)))
-  
-  newdata_warm <- crossing(Precip_decade = case_when(precip_level == "Wet" ~ 3.5,
-                                                     precip_level == "Dry" ~ 1.0),
-                           Temp_decade = c(11),
-                           siteID = case_when(precip_level == "Wet" ~ "Ovstedalen",
-                                              precip_level == "Dry" ~ "Fauske"),
-                           Precip_annomalies = case_when({{clim}} == "Precip_annomalies" ~ seq(-2, 3, length = 200)),
-                           Temp_annomalies = case_when({{clim}} == "Precip_annomalies" & precip_level == "Wet" ~ 0.0272,
-                                                       {{clim}} == "Precip_annomalies" & precip_level == "Dry" ~ 0.834,
-                                                       {{clim}} == "Temp_annomalies" ~ seq(-3, 2, length = 200)))
-  
-  
-  newdata_cold$predicted <- predict(object = model, newdata = newdata_cold, re.form = NA, allow.new.levels=TRUE)
-  newdata_warm$predicted <- predict(object = model, newdata = newdata_warm, re.form = NA, allow.new.levels=TRUE)
-  
-  highlighted <- dat2 %>% 
-    filter(siteID == case_when(precip_level == "Wet" ~ c("Skjelingahaugen", "Ovstedalen"),
-                              precip_level == "Dry" ~ c("Ulvehaugen", "Fauske"))) 
-  
-  plot <- ggplot(aes(x = .data[[clim]], y = value), data = dat2) +
-    geom_point(color = "grey80") +
-    geom_point(data = highlighted, aes(color = Temp_level)) +
-    geom_line(aes(x = .data[[clim]], y = predicted), data = newdata_warm, size = 1, show.legend = TRUE, color = "#bb3b0e") +
-    geom_line(aes(x = .data[[clim]], y = predicted), data = newdata_cold, size = 1, show.legend = TRUE, color = "#DDA131") +
-    theme_minimal(base_size = 15) + 
-    xlab(ifelse({{clim}} == "Precip_annomalies", "Precipitation annomalies (m)","Temperature annomalies (C)")) +
-    xlim(-2, 3) +
-    ylim(range(dat2$value)) +
-    theme(axis.title.y = element_blank(), axis.title.x = element_blank(), legend.position = "none") +
-    scale_color_manual(values = c("#DDA131", "#bb3b0e"))
-  
-  return(plot)
-}
-
-dat <- memodel_data_fullcommunity_nottransformed
-trait <- "LDMC"
-moment <- "mean"
-model <- LDMC_mean_sum_yc
-clim <- "Precip_annomalies"
-precip_level <- "Dry"
 
 plot_predictions_time <-function(dat, trait, moment, precip_level, model, clim) {
   
