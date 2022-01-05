@@ -525,26 +525,6 @@ figure <- ggarrange(LA_space, SLA_space, Height_space, LDMC_space, Mass_space, L
 #ggsave(plot = figure, filename = "Spatial_trait_trends.pdf",  width = 16, height = 24, units = "cm")
 
 
-### Make a heatplot of effect size and p-value for the model outputs ###
-model_output_everything <- model_output_time_year_mixed %>% 
-  select(Trait_trans, moments, term, effect, p.value) %>% 
-  mutate(model = "year") %>% 
-  bind_rows(model_output_time_mixed  %>% 
-              select(Trait_trans, moments, term, effect, p.value) %>% 
-              mutate(model = "temporal_fluctuations")) %>%  
-  bind_rows(model_output_space_mixed  %>% 
-              select(Trait_trans, moments, term, effect, p.value) %>% 
-              mutate(model = "space_for_time")) %>% 
-  mutate(unique_name = )
-pivot_wider(names_from = , values_from =)
-
-library(ztable)
-
-z <- ztable(model_output_everything) 
-print(z,caption="Table 1. Basic Table")
-
-
-
 ## Mean & Skewness figures ##
 
 model_output_space_mixed %>% 
