@@ -413,6 +413,14 @@ plot_predictions_space_precip <-function(dat, trait, moment, model) {
   return(plot)
 }
 
+#Find the average Temp anomalies for each site to use in the model predictions
+env %>%  select(siteID, Temp_annomalies) %>%
+  mutate(Temp_annomalies = abs(Temp_annomalies)) %>% 
+  group_by(siteID) %>% 
+  mutate(Temp = mean(Temp_annomalies)) %>%
+  select(-Temp_annomalies) %>%
+  unique()
+
 
 plot_predictions_time <-function(dat, trait, moment, precip_level, model, clim) {
   
@@ -423,23 +431,39 @@ plot_predictions_time <-function(dat, trait, moment, precip_level, model, clim) 
     unnest(data) %>% 
     ungroup()
   
-  newdata_cold <- crossing(Precip_decade = case_when(precip_level == "Wettest" ~ 3.5,
+  newdata_alpine <- crossing(Precip_decade = case_when(precip_level == "Wettest" ~ 3.5,
                                                      precip_level == "Wet" ~ 2.4,
                                                      precip_level == "Dry" ~ 1.45,
                                                      precip_level == "Driest" ~ 1.0),
                            Temp_decade = 6.5,
                            siteID = case_when(precip_level == "Wettest" ~ "Skjelingahaugen",
-                                              precip_level == "Wet" ~ "Lavisdalen",
-                                              precip_level == "Dry" ~ "Gudmedalen",
+                                              precip_level == "Wet" ~ "Gudmedalen",
+                                              precip_level == "Dry" ~ "Lavisdalen",
                                               precip_level == "Driest" ~ "Ulvehaugen"),
                            Precip_annomalies = case_when({{clim}} == "Precip_annomalies" ~ seq(-2, 3, length = 200)),
-                           Temp_annomalies = case_when({{clim}} == "Precip_annomalies" & precip_level == "Wettest" ~ 0.257,
-                                                       {{clim}} == "Precip_annomalies" & precip_level == "Wet" ~ 0.208,
-                                                       {{clim}} == "Precip_annomalies" & precip_level == "Dry" ~ 0.175,
-                                                       {{clim}} == "Precip_annomalies" & precip_level == "Driest" ~ 0.465,
+                           Temp_annomalies = case_when({{clim}} == "Precip_annomalies" & precip_level == "Wettest" ~ 0.911,
+                                                       {{clim}} == "Precip_annomalies" & precip_level == "Wet" ~ 1.03,
+                                                       {{clim}} == "Precip_annomalies" & precip_level == "Dry" ~ 1.03,
+                                                       {{clim}} == "Precip_annomalies" & precip_level == "Driest" ~ 0.985,
                                                        {{clim}} == "Temp_annomalies" ~ seq(-3, 2, length = 200)))
   
-  newdata_warm <- crossing(Precip_decade = case_when(precip_level == "Wettest" ~ 3.5,
+  newdata_subalpine <- crossing(Precip_decade = case_when(precip_level == "Wettest" ~ 3.5,
+                                                     precip_level == "Wet" ~ 2.4,
+                                                     precip_level == "Dry" ~ 1.45,
+                                                     precip_level == "Driest" ~ 1.0),
+                           Temp_decade = 9.0,
+                           siteID = case_when(precip_level == "Wettest" ~ "Veskre",
+                                              precip_level == "Wet" ~ "Rambera",
+                                              precip_level == "Dry" ~ "Hogsete",
+                                              precip_level == "Driest" ~ "Alrust"),
+                           Precip_annomalies = case_when({{clim}} == "Precip_annomalies" ~ seq(-2, 3, length = 200)),
+                           Temp_annomalies = case_when({{clim}} == "Precip_annomalies" & precip_level == "Wettest" ~ 0.902,
+                                                       {{clim}} == "Precip_annomalies" & precip_level == "Wet" ~ 0.855,
+                                                       {{clim}} == "Precip_annomalies" & precip_level == "Dry" ~ 0.999,
+                                                       {{clim}} == "Precip_annomalies" & precip_level == "Driest" ~ 0.887,
+                                                       {{clim}} == "Temp_annomalies" ~ seq(-3, 2, length = 200)))
+  
+  newdata_boreal <- crossing(Precip_decade = case_when(precip_level == "Wettest" ~ 3.5,
                                                      precip_level == "Wet" ~ 2.4,
                                                      precip_level == "Dry" ~ 1.45,
                                                      precip_level == "Driest" ~ 1.0),
@@ -449,33 +473,35 @@ plot_predictions_time <-function(dat, trait, moment, precip_level, model, clim) 
                                               precip_level == "Dry" ~ "Vikesland",
                                               precip_level == "Driest" ~ "Fauske"),
                            Precip_annomalies = case_when({{clim}} == "Precip_annomalies" ~ seq(-2, 3, length = 200)),
-                           Temp_annomalies = case_when({{clim}} == "Precip_annomalies" & precip_level == "Wettest" ~ 0.0162,
-                                                       {{clim}} == "Precip_annomalies" & precip_level == "Wet" ~ 0.349,
-                                                       {{clim}} == "Precip_annomalies" & precip_level == "Dry" ~ 0.0195,
-                                                       {{clim}} == "Precip_annomalies" & precip_level == "Driest" ~ 0.846,
+                           Temp_annomalies = case_when({{clim}} == "Precip_annomalies" & precip_level == "Wettest" ~ 0.892,
+                                                       {{clim}} == "Precip_annomalies" & precip_level == "Wet" ~ 0.990,
+                                                       {{clim}} == "Precip_annomalies" & precip_level == "Dry" ~ 1.01,
+                                                       {{clim}} == "Precip_annomalies" & precip_level == "Driest" ~ 1.18,
                                                        {{clim}} == "Temp_annomalies" ~ seq(-3, 2, length = 200)))
   
   
-  newdata_cold$predicted <- predict(object = model, newdata = newdata_cold, re.form = NA, allow.new.levels=TRUE)
-  newdata_warm$predicted <- predict(object = model, newdata = newdata_warm, re.form = NA, allow.new.levels=TRUE)
+  newdata_alpine$predicted <- predict(object = model, newdata = newdata_alpine, re.form = NA, allow.new.levels=TRUE)
+  newdata_subalpine$predicted <- predict(object = model, newdata = newdata_subalpine, re.form = NA, allow.new.levels=TRUE)
+  newdata_boreal$predicted <- predict(object = model, newdata = newdata_boreal, re.form = NA, allow.new.levels=TRUE)
   
   highlighted <- dat2 %>% 
-    filter(siteID == case_when(precip_level == "Wettest" ~ c("Skjelingahaugen", "Ovstedalen"),
-                               precip_level == "Wet" ~ c( "Lavisdalen", "Arhelleren"),
-                               precip_level == "Dry" ~ c("Gudmedalen", "Vikesland"),
-                               precip_level == "Driest" ~ c("Ulvehaugen", "Fauske"))) 
+    filter(siteID == case_when(precip_level == "Wettest" ~ c("Skjelingahaugen", "Veskre", "Ovstedalen"),
+                               precip_level == "Wet" ~ c( "Gudmedalen", "Rambera", "Arhelleren"),
+                               precip_level == "Dry" ~ c("Lavisdalen", "Hogsete", "Vikesland"),
+                               precip_level == "Driest" ~ c("Ulvehaugen", "Alrust", "Fauske"))) 
   
   plot <- ggplot(aes(x = .data[[clim]], y = value), data = dat2) +
-    geom_point(color = "grey80") +
+    geom_point(color = "grey95") +
     geom_point(data = highlighted, aes(color = Temp_level)) +
-    geom_line(aes(x = .data[[clim]], y = predicted), data = newdata_warm, size = 1, show.legend = TRUE, color = "#bb3b0e") +
-    geom_line(aes(x = .data[[clim]], y = predicted), data = newdata_cold, size = 1, show.legend = TRUE, color = "#DDA131") +
+    geom_line(aes(x = .data[[clim]], y = predicted), data = newdata_boreal, size = 1, show.legend = TRUE, color = "#bb3b0e") +
+    geom_line(aes(x = .data[[clim]], y = predicted), data = newdata_subalpine, size = 1, show.legend = TRUE, color = "#dd7631") +
+    geom_line(aes(x = .data[[clim]], y = predicted), data = newdata_alpine, size = 1, show.legend = TRUE, color = "#d8c593") +
     theme_minimal(base_size = 15) + 
     xlab(ifelse({{clim}} == "Precip_annomalies", "Precipitation annomalies (m)","Temperature annomalies (C)")) +
     xlim(-2, 3) +
     ylim(range(dat2$value)) +
     theme(axis.title.y = element_blank(), axis.title.x = element_blank(), legend.position = "none") +
-    scale_color_manual(values = c("#DDA131", "#bb3b0e"))
+    scale_color_manual(values = c("#d8c593", "#dd7631", "#bb3b0e"))
   
   return(plot)
 }
@@ -499,7 +525,9 @@ LDMC_Wettest <- plot_predictions_time(memodel_data_fullcommunity_nottransformed,
   labs(y = "",  title = "Wettest") +
   theme(plot.title = element_text(hjust = 0.5))
 
-  (LDMC_Driest | LDMC_Dry | LDMC_Wet | LDMC_Wettest)
+LDMC_time_plot <-   (LDMC_Driest | LDMC_Dry | LDMC_Wet | LDMC_Wettest)
+
+ggsave(plot = LDMC_time_plot, filename = "LDMC_temporal_climate.pdf",  width = 30, height = 8, units = "cm")
   
 ## Make plot for all trait trends in the spatial climate grid
 
