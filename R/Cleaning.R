@@ -242,18 +242,22 @@ community <- community %>%
    mutate(year2 = ifelse(month > 7, year + 1, year)) %>%  #Creating a variable that allows me to divide the year from fieldseason to fieldseason rather than january-january 
    group_by(siteID, year2) %>% 
    mutate(Precip_yearly = sum(precipitation)) %>% #Creating variable for precipitation 1 year back from the sampling date (july-july) by grouping by year2
+   filter(month %in% c(5:8)) %>% 
+   mutate(Temp_yearly_tetra = mean(temperature)) %>% 
    filter(month %in% c(5:7)) %>% 
    mutate(Temp_yearly_spring = mean(temperature),
           Precip_yearly_spring = sum(precipitation)) %>% #Creating variable for that years summer temperature (we called it spring because we chose to not include the part of the summer after data collection, so we end it 31. july)
    ungroup() %>% 
-   select(siteID, year, Precip_yearly, Temp_yearly_spring, Precip_yearly_spring) %>% 
+   select(siteID, year, Precip_yearly, Temp_yearly_spring, Precip_yearly_spring, Temp_yearly_tetra) %>% 
    unique() %>% 
    left_join(y = summer_prev, by = c("siteID" = "siteID", "year" = "year")) %>% 
    left_join(y = summer, by = c("siteID" = "siteID", "year" = "year")) %>% 
    ungroup() %>% 
    group_by(siteID) %>% 
    left_join(y = env_old, by = c("siteID" = "Site")) %>% 
-   mutate(Temp_decade = mean(Temp_yearly_spring, na.rm = TRUE),
+   mutate(Temp_decade_figure = mean(Temp_yearly_tetra, na.rm = TRUE),
+          Temp_se_figure = (sd(Temp_yearly_tetra, na.rm = TRUE) / sqrt(length(Temp_yearly_tetra))),
+          Temp_decade = mean(Temp_yearly_spring, na.rm = TRUE),
           Temp_se = (sd(Temp_yearly_spring, na.rm = TRUE) / sqrt(length(Temp_yearly_spring))),
           Precip_decade = mean(Precip_yearly),
           Precip_se = (sd(Precip_yearly) / sqrt(length(Precip_yearly)))) %>% 
