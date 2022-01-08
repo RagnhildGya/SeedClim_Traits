@@ -95,11 +95,11 @@ climate <- env %>%
                                "2700" = "Wettest")) %>% 
   mutate(Temp_old = factor(Temp_old, levels = c("Alpine 1960-90", "Boreal 1960-90", "Sub-alpine 1960-90"))) %>%
   mutate(Temp_level = factor(Temp_level, levels = c("Alpine 2009-19", "Boreal 2009-19", "Sub-alpine 2009-19"))) %>%
-  ggplot(aes(x = Precip_decade, y = Temp_decade,
+  ggplot(aes(x = Precip_decade, y = Temp_decade_figure,
              color = Precip_level, fill = Precip_level, shape = Temp_level)) +
   geom_point(aes(x = Precip_century, y = Temp_century, shape = Temp_old, size = 10)) +
-  geom_segment(aes(x = Precip_decade, y = Temp_decade, yend = Temp_century, xend = Precip_century, size = 0.5)) +
-  geom_pointrange(aes(ymin = Temp_decade-Temp_se, ymax = Temp_decade+Temp_se, size = 0.5)) +
+  geom_segment(aes(x = Precip_decade, y = Temp_decade_figure, yend = Temp_century, xend = Precip_century, size = 0.5)) +
+  geom_pointrange(aes(ymin = Temp_decade_figure-Temp_se_figure, ymax = Temp_decade_figure+Temp_se_figure, size = 0.5)) +
   geom_errorbarh(aes(xmin = Precip_decade-Precip_se, xmax = Precip_decade+Precip_se, size = 0.5)) +
   labs(x = "Annual precipitation in m", y = "Summer temperature in °C") +
   scale_color_manual(name = "Precipitation", values = c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")) +
@@ -527,7 +527,25 @@ LDMC_Wettest <- plot_predictions_time(memodel_data_fullcommunity_nottransformed,
 
 LDMC_time_plot <-   (LDMC_Driest | LDMC_Dry | LDMC_Wet | LDMC_Wettest)
 
-ggsave(plot = LDMC_time_plot, filename = "LDMC_temporal_climate.pdf",  width = 30, height = 8, units = "cm")
+#ggsave(plot = LDMC_time_plot, filename = "LDMC_temporal_climate.pdf",  width = 30, height = 8, units = "cm")
+
+SLA_Driest <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g", "mean", "Driest", SLA_mean_sum_yc,"Temp_annomalies") +
+  labs(y = "",  title = "Driest") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+SLA_Dry <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g", "mean", "Dry", SLA_mean_sum_yc,"Precip_annomalies") +
+  labs(y = "",  title = "Dry") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+SLA_Wet <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g", "mean", "Wet", SLA_mean_sum_yc, "Precip_annomalies") +
+  labs(y = "",  title = "Wet") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+SLA_Wettest <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g", "mean", "Wettest", SLA_mean_sum_yc, "Precip_annomalies") +
+  labs(y = "",  title = "Wettest") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+SLA_time_plot <-   (SLA_Driest | SLA_Dry | SLA_Wet | SLA_Wettest)
   
 ## Make plot for all trait trends in the spatial climate grid
 
