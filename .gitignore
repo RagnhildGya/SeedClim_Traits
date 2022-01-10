@@ -55,5 +55,9 @@ vignettes/*.pdf
 *.jpeg
 .my.cnf
 *.md
+*.svg
+
+#Temporary files
+*.TMP
 
 *.DS_Store
