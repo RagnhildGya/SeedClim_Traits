@@ -608,3 +608,90 @@ partR2_plot <- ggplot(aes(x = estimate, y = term, xmin = CI_lower, xmax = CI_upp
   theme(legend.position = "none", text = element_text(size = 13))
 
 ggsave(plot = partR2_plot, filename = "Partial_R2.pdf",  width = 28, height = 12, units = "cm")
+
+
+### Spatial vs. temporal ###
+
+output_TDT %>% 
+  mutate(term = dplyr::recode(term, "scale(Temp_decade)" = "Temp_decade",
+                        "scale(Temp_annomalies)" = "Temp_anomalies")) %>%
+  ungroup() %>% 
+  dplyr::select(Trait_trans, term, effect) %>% 
+  pivot_wider(names_from = term, values_from = effect) %>%
+  ggplot(aes(x = Temp_decade, y = Temp_anomalies, color = Trait_trans)) + 
+  geom_point() +
+  theme_minimal() +
+  xlim(-0.015,0.015) +
+  ylim(-0.015, 0.015) +
+  geom_abline(slope = 1)
+
+output_TDT %>% 
+  mutate(term = dplyr::recode(term, "scale(Precip_decade)" = "Precip_decade",
+                              "scale(Precip_annomalies)" = "Precip_anomalies")) %>%
+  ungroup() %>% 
+  dplyr::select(Trait_trans, term, effect) %>% 
+  mutate(effect = 10^effect) %>% 
+  pivot_wider(names_from = term, values_from = effect) %>%
+  ggplot(aes(x = Precip_decade, y = Precip_anomalies, color = Trait_trans)) + 
+  geom_point() +
+  theme_minimal() +
+  #xlim(0.9975,1.0025) +
+  #ylim(0.995, 1.004) +
+  #xlim(-0.00082,0.00082) +
+  #ylim(-0.00082, 0.00082) +
+  geom_abline(slope = 1)
+
+
+
+output_TDT %>% 
+  mutate(term = dplyr::recode(term, "scale(Temp_decade):scale(Precip_decade)" = "Spatial_interaction",
+                              "scale(Temp_annomalies):scale(Precip_annomalies)" = "Temporal_interaction")) %>%
+  ungroup() %>% 
+  dplyr::select(Trait_trans, term, effect) %>% 
+  pivot_wider(names_from = term, values_from = effect) %>%
+  ggplot(aes(x = Spatial_interaction, y = Temporal_interaction, color = Trait_trans)) + 
+  geom_point() +
+  theme_minimal() +
+  xlim(-0.015,0.015) +
+  ylim(-0.015, 0.015) +
+  geom_abline(slope = 1)
+
+
+output_TDT %>% 
+  ungroup() %>% 
+  filter(!Trait_trans == "SLA_cm2_g") %>% 
+  filter(term %in% c("scale(Precip_decade)", "scale(Temp_decade)", "scale(Temp_decade):scale(Precip_decade)", "scale(Temp_annomalies)", "scale(Precip_annomalies)", "scale(Temp_annomalies):scale(Precip_annomalies)")) %>% 
+  mutate(term = as.factor(recode(term, "scale(Precip_decade)" = "Precip_space",
+                                 "scale(Temp_decade)" = "Temp_space",
+                                 "scale(Temp_decade):scale(Precip_decade)" = "Spatial_interaction",
+                                 "scale(Precip_annomalies)" = "Precip_time",
+                                 "scale(Temp_annomalies)" = "Temp_time",
+                                 "scale(Temp_annomalies):scale(Precip_annomalies)" = "Temporal_interaction"))) %>% 
+  mutate(climate = case_when(term %in% c("Precip_space", "Precip_time") ~ "BPrecipitation",
+                            term %in% c("Temp_space", "Temp_time") ~ "ATemperature",
+                            term %in% c("Spatial_interaction", "Temporal_interaction") ~ "CIntercation")) %>% 
+  mutate(Time_Space = case_when(term %in% c("Precip_space", "Temp_space", "Spatial_interaction") ~ "Space",
+                             term %in% c("Precip_time", "Temp_time", "Temporal_interaction") ~ "ATime")) %>%
+  #mutate(Trait_moment = paste0(moments, "_", Trait_trans)) %>% 
+  #filter(moments %in% c("mean", "time", "Without ITV")) %>% 
+  #mutate(moments = factor(moments, levels = c("time", "Without ITV", "mean"))) %>% 
+  #mutate(term = as.factor(recode(term, "scale(Precip_decade)" = "Precip_space", "scale(Temp_decade)" = "Temp_space", "scale(Temp_decade):scale(Precip_decade)" = "Spatial_interaction"))) %>% 
+  mutate(Trait_trans = factor(Trait_trans, levels = c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "C_percent", "SLA_cm2_g", "N_percent", "CN_ratio", "LDMC", "Leaf_Thickness_Ave_mm"))) %>%
+  ggplot(aes(x = fct_rev(Trait_trans), y = effect, fill = climate, color = Time_Space)) +
+  geom_bar(aes(alpha = rev(p.value)), stat = "identity", position = position_dodge(width=0.7), width = 0.7) +
+  #geom_point(aes(size = if_else(p.value <0.05, 0.3, NA_real_)), position = position_dodge(width=0.6), show.legend = FALSE) +
+  #geom_bar_pattern(aes(pattern = 'stripe'), stat = "identity", position = "dodge") +
+  geom_errorbar(aes(ymin = effect-std.error, ymax = effect+std.error), position = position_dodge(width=0.7), width = 0.3) +
+  facet_grid(~climate) +
+  scale_fill_manual(values = c("#bb3b0e", "#2E75B6",  "#9A86A9")) +
+  # scale_fill_gradient(low = "#213964", ##2E75B6
+  #                     high = "#BAD8F7",
+  #                     guide = "colourbar") +
+  scale_color_manual(values = c("black", "black", "black")) +
+  scale_alpha_continuous(range = c(0.9, 0.1)) +
+  geom_hline(yintercept =  0) +
+  theme_bw(base_size = 18) +
+  coord_flip() +
+  #guides(fill = "none", color = "none", size = "none") +
+  theme(axis.title.y=element_blank()) 
+  #guides(color = FALSE, alpha = FALSE, fill = FALSE)
