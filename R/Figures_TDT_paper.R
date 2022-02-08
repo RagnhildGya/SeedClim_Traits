@@ -529,7 +529,7 @@ LDMC_time_plot <-   (LDMC_Driest | LDMC_Dry | LDMC_Wet | LDMC_Wettest)
 
 #ggsave(plot = LDMC_time_plot, filename = "LDMC_temporal_climate.pdf",  width = 30, height = 8, units = "cm")
 
-SLA_Driest <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g", "mean", "Driest", SLA_mean_sum_yc,"Temp_annomalies") +
+SLA_Driest <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g", "mean", "Driest", SLA_mean_sum_yc,"Precip_annomalies") +
   labs(y = "",  title = "Driest") +
   theme(plot.title = element_text(hjust = 0.5))
 
@@ -657,9 +657,19 @@ output_TDT %>%
   geom_abline(slope = 1)
 
 
-output_TDT %>% 
+time_space_figure <- output_TDT %>% 
   ungroup() %>% 
-  filter(!Trait_trans == "SLA_cm2_g") %>% 
+  #filter(!Trait_trans == "SLA_cm2_g") %>% 
+  mutate(effect = case_when(Trait_trans == "SLA_cm2_g" ~ effect/100,
+                            Trait_trans == "CN_ratio" ~ effect/10,
+                            Trait_trans == "LDMC" ~ effect*10,
+                            Trait_trans == "Leaf_Thickness_Ave_mm" ~ effect*10,
+                            Trait_trans %in% c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "C_percent", "N_percent") ~ effect)) %>% 
+  mutate(std.error = case_when(Trait_trans == "SLA_cm2_g" ~ std.error/100,
+                               Trait_trans == "CN_ratio" ~ std.error/10,
+                               Trait_trans == "LDMC" ~ std.error*10,
+                               Trait_trans == "Leaf_Thickness_Ave_mm" ~ std.error*10,
+                               Trait_trans %in% c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "C_percent", "N_percent") ~ std.error)) %>% 
   filter(term %in% c("scale(Precip_decade)", "scale(Temp_decade)", "scale(Temp_decade):scale(Precip_decade)", "scale(Temp_annomalies)", "scale(Precip_annomalies)", "scale(Temp_annomalies):scale(Precip_annomalies)")) %>% 
   mutate(term = as.factor(recode(term, "scale(Precip_decade)" = "Precip_space",
                                  "scale(Temp_decade)" = "Temp_space",
@@ -672,13 +682,17 @@ output_TDT %>%
                             term %in% c("Spatial_interaction", "Temporal_interaction") ~ "CIntercation")) %>% 
   mutate(Time_Space = case_when(term %in% c("Precip_space", "Temp_space", "Spatial_interaction") ~ "Space",
                              term %in% c("Precip_time", "Temp_time", "Temporal_interaction") ~ "ATime")) %>%
+  mutate(Significant = case_when(p.value > 0.2 ~ "A_Non_significant",
+                                 p.value < 0.2 & p.value > 0.05 ~ "B_Almost_significant",
+                                 p.value < 0.05 ~ "C_Significant")) %>%
   #mutate(Trait_moment = paste0(moments, "_", Trait_trans)) %>% 
   #filter(moments %in% c("mean", "time", "Without ITV")) %>% 
   #mutate(moments = factor(moments, levels = c("time", "Without ITV", "mean"))) %>% 
   #mutate(term = as.factor(recode(term, "scale(Precip_decade)" = "Precip_space", "scale(Temp_decade)" = "Temp_space", "scale(Temp_decade):scale(Precip_decade)" = "Spatial_interaction"))) %>% 
-  mutate(Trait_trans = factor(Trait_trans, levels = c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "C_percent", "SLA_cm2_g", "N_percent", "CN_ratio", "LDMC", "Leaf_Thickness_Ave_mm"))) %>%
+  mutate(Trait_trans= (recode(Trait_trans, "SLA_cm2_g" = "SLA_cm2_g/100", "CN_ratio" = "CN_ratio/10", "LDMC" = "LDMC*10", "Leaf_Thickness_Ave_mm" = "Leaf_Thickness_Ave_mm*10"))) %>% 
+  mutate(Trait_trans = factor(Trait_trans, levels = c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "C_percent", "N_percent", "LDMC*10", "Leaf_Thickness_Ave_mm*10", "CN_ratio/10", "SLA_cm2_g/100"))) %>%
   ggplot(aes(x = fct_rev(Trait_trans), y = effect, fill = climate, color = Time_Space)) +
-  geom_bar(aes(alpha = rev(p.value)), stat = "identity", position = position_dodge(width=0.7), width = 0.7) +
+  geom_bar(aes(alpha = Significant), stat = "identity", position = position_dodge(width=0.7), width = 0.7) +
   #geom_point(aes(size = if_else(p.value <0.05, 0.3, NA_real_)), position = position_dodge(width=0.6), show.legend = FALSE) +
   #geom_bar_pattern(aes(pattern = 'stripe'), stat = "identity", position = "dodge") +
   geom_errorbar(aes(ymin = effect-std.error, ymax = effect+std.error), position = position_dodge(width=0.7), width = 0.3) +
@@ -688,10 +702,12 @@ output_TDT %>%
   #                     high = "#BAD8F7",
   #                     guide = "colourbar") +
   scale_color_manual(values = c("black", "black", "black")) +
-  scale_alpha_continuous(range = c(0.9, 0.1)) +
+  #scale_alpha_continuous(range = c(0.9, 0.1)) +
   geom_hline(yintercept =  0) +
-  theme_bw(base_size = 18) +
-  coord_flip() +
-  #guides(fill = "none", color = "none", size = "none") +
-  theme(axis.title.y=element_blank()) 
-  #guides(color = FALSE, alpha = FALSE, fill = FALSE)
+  theme_minimal(base_size = 18) +
+  theme(axis.title.y=element_blank()) +
+  coord_flip()
+
+time_space_figure
+
+ggsave(plot = time_space_figure, filename = "Time_Space_Figure.pdf",  width = 34, height = 16, units = "cm")
