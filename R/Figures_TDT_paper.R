@@ -546,6 +546,8 @@ SLA_Wettest <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, 
   theme(plot.title = element_text(hjust = 0.5))
 
 SLA_time_plot <-   (SLA_Driest | SLA_Dry | SLA_Wet | SLA_Wettest)
+
+ggsave(plot = LDMC_time_plot, filename = "SLA_temporal_climate.pdf",  width = 30, height = 8, units = "cm")
   
 ## Make plot for all trait trends in the spatial climate grid
 
