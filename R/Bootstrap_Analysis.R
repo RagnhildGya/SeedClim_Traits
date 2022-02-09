@@ -636,12 +636,8 @@ anova(RDA_space, RDA_space_and_time)
 #Testing space alone and space * time
 anova(RDA_space, RDA_year)
 
-anova(RDA_temp, RDA_space)
-anova(RDA_precip, RDA_space)
-anova(RDA_space_additive, RDA_space)
-
-
+#Getting R2
 RsquareAdj(RDA_year)$adj.r.squared
+RsquareAdj(RDA_space)$adj.r.squared
 
-anova(RDA_space, RDA_year)
  
