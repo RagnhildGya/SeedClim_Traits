@@ -614,7 +614,8 @@ RDA_space_additive <- rda(Ord_boot_traits[, -(1:8)]~ Temp_level+Precip_level, sc
 RDA_space <- rda(Ord_boot_traits[, -(1:8)]~ Temp_level*Precip_level, scale = TRUE, data = Ord_boot_traits)
 RDA_space_add_time <- rda(Ord_boot_traits[, -(1:8)]~ Temp_level*Precip_level + Temp_annomalies*Precip_annomalies, scale = TRUE, data = Ord_boot_traits)
 RDA_space_and_time <- rda(Ord_boot_traits[, -(1:8)]~ Temp_level*Precip_level * Temp_annomalies*Precip_annomalies, scale = TRUE, data = Ord_boot_traits)
-RDA_year <- rda(Ord_boot_traits[, -(1:8)]~ Temp_level*Precip_level * year, scale = TRUE, data = Ord_boot_traits)
+RDA_add_year <- rda(Ord_boot_traits[, -(1:8)]~ Temp_level*Precip_level+year, scale = TRUE, data = Ord_boot_traits)
+RDA_year <- rda(Ord_boot_traits[, -(1:8)]~ Temp_level*Precip_level*year, scale = TRUE, data = Ord_boot_traits)
 
 #Testing temp alone against temp + precip and temp * precip
 anova(RDA_temp, RDA_space_additive)
@@ -633,11 +634,16 @@ anova(RDA_space, RDA_space_add_time)
 #Testing space alone and space * time
 anova(RDA_space, RDA_space_and_time)
 
-#Testing space alone and space * time
+#Testing space alone and space + year
+anova(RDA_space, RDA_add_year)
+
+#Testing space alone and space * year
 anova(RDA_space, RDA_year)
 
 #Getting R2
-RsquareAdj(RDA_year)$adj.r.squared
+RsquareAdj(RDA_space_additive)$adj.r.squared
 RsquareAdj(RDA_space)$adj.r.squared
-
- 
+RsquareAdj(RDA_space_add_time)$adj.r.squared
+RsquareAdj(RDA_space_and_time)$adj.r.squared
+RsquareAdj(RDA_add_year)$adj.r.squared
+RsquareAdj(RDA_year)$adj.r.squared
