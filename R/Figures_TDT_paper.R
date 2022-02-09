@@ -414,13 +414,20 @@ plot_predictions_space_precip <-function(dat, trait, moment, model) {
 }
 
 #Find the average Temp anomalies for each site to use in the model predictions
-env %>%  select(siteID, Temp_annomalies) %>%
+env %>%  dplyr::select(siteID, Temp_annomalies) %>%
   mutate(Temp_annomalies = abs(Temp_annomalies)) %>% 
   group_by(siteID) %>% 
   mutate(Temp = mean(Temp_annomalies)) %>%
-  select(-Temp_annomalies) %>%
+  dplyr::select(-Temp_annomalies) %>%
   unique()
 
+#Find the average precip anomalies for each site to use in the model predictions
+env %>%  dplyr::select(siteID, Precip_annomalies) %>%
+  mutate(Precip_annomalies = abs(Precip_annomalies)) %>% 
+  group_by(siteID) %>% 
+  mutate(Precip = mean(Precip_annomalies)) %>%
+  dplyr::select(-Precip_annomalies) %>%
+  unique()
 
 plot_predictions_time <-function(dat, trait, moment, precip_level, model, clim) {
   
@@ -507,6 +514,95 @@ plot_predictions_time <-function(dat, trait, moment, precip_level, model, clim) 
 }
 
 
+plot_predictions_time_temp <-function(dat, trait, moment, temp_level, model) {
+  
+  dat2 <- dat %>%
+    filter(Trait_trans == trait,
+           moments == moment,
+           n == 75) %>% 
+    unnest(data) %>% 
+    ungroup()
+  
+  newdata_wettest <- crossing(Temp_decade = case_when(temp_level == "Boreal" ~ 11.0,
+                                                       temp_level == "Sub_alpine" ~ 9.0,
+                                                       temp_level == "Alpine" ~ 6.5),
+                             Precip_decade = 3.5,
+                             siteID = case_when(temp_level == "Boreal" ~ "Ovstedal",
+                                                temp_level == "Sub_alpine" ~ "Veskre",
+                                                temp_level == "Alpine" ~ "Skjelingagaugen"),
+                             Temp_annomalies = seq(-0.5, 2, length = 200),
+                             Precip_annomalies = case_when(temp_level == "Boreal" ~ 1.71,
+                                                           temp_level == "Sub_alpine" ~ 0.597,
+                                                           temp_level == "Alpine" ~ 0.910))
+  
+  newdata_wet <- crossing(Temp_decade = case_when(temp_level == "Boreal" ~ 11.0,
+                                                 temp_level == "Sub_alpine" ~ 9.0,
+                                                 temp_level == "Alpine" ~ 6.5),
+                         Precip_decade = 2.4,
+                         siteID = case_when(temp_level == "Boreal" ~ "Arhelleren",
+                                            temp_level == "Sub_alpine" ~ "Rambera",
+                                            temp_level == "Alpine" ~ "Gudmedalen"),
+                         Temp_annomalies = seq(-0.5, 2, length = 200),
+                         Precip_annomalies = case_when(temp_level == "Boreal" ~ 1.35,
+                                                       temp_level == "Sub_alpine" ~ 0.320,
+                                                       temp_level == "Alpine" ~ 0.510))
+  
+  
+  newdata_dry <- crossing(Temp_decade = case_when(temp_level == "Boreal" ~ 11.0,
+                                                 temp_level == "Sub_alpine" ~ 9.0,
+                                                 temp_level == "Alpine" ~ 6.5),
+                         Precip_decade = 1.45,
+                         siteID = case_when(temp_level == "Boreal" ~ "Vikesland",
+                                            temp_level == "Sub_alpine" ~ "Hogsete",
+                                            temp_level == "Alpine" ~ "Lavisdalen"),
+                         Temp_annomalies = seq(-0.5, 2, length = 200),
+                         Precip_annomalies = case_when(temp_level == "Boreal" ~ 0.307,
+                                                       temp_level == "Sub_alpine" ~ 0.318,
+                                                       temp_level == "Alpine" ~ 0.412))
+  
+  
+  newdata_driest <- crossing(Temp_decade = case_when(temp_level == "Boreal" ~ 11.0,
+                                                  temp_level == "Sub_alpine" ~ 9.0,
+                                                  temp_level == "Alpine" ~ 6.5),
+                          Precip_decade = 1.0,
+                          siteID = case_when(temp_level == "Boreal" ~ "Fauske",
+                                             temp_level == "Sub_alpine" ~ "Alrust",
+                                             temp_level == "Alpine" ~ "Ulvehaugen"),
+                          Temp_annomalies = seq(-0.5, 2, length = 200),
+                          Precip_annomalies = case_when(temp_level == "Boreal" ~ 0.246,
+                                                        temp_level == "Sub_alpine" ~ 0.446,
+                                                        temp_level == "Alpine" ~ 0.629))
+  
+  
+  
+  newdata_wettest$predicted <- predict(object = model, newdata = newdata_wettest, re.form = NA, allow.new.levels=TRUE)
+  newdata_wet$predicted <- predict(object = model, newdata = newdata_wet, re.form = NA, allow.new.levels=TRUE)
+  newdata_dry$predicted <- predict(object = model, newdata = newdata_dry, re.form = NA, allow.new.levels=TRUE)
+  newdata_driest$predicted <- predict(object = model, newdata = newdata_driest, re.form = NA, allow.new.levels=TRUE)
+  
+  highlighted <- dat2 %>% 
+    filter(siteID %in% case_when(temp_level == "Boreal" ~ c("Ovstedalen","Arhelleren", "Vikesland", "Fauske"),
+                               temp_level == "Sub_alpine" ~ c("Rambera", "Veskre", "Alrust", "Hogsete"),
+                               temp_level == "Alpine" ~ c("Lavisdalen", "Gudmedalen", "Skjelingahaugen", "Ulvehaugen"))) 
+  
+  plot <- ggplot(aes(x = Temp_annomalies, y = value), data = dat2) +
+    geom_point(color = "grey95") +
+    geom_point(data = highlighted, aes(color = Precip_level)) +
+    geom_line(aes(x = Temp_annomalies, y = predicted), data = newdata_wettest, size = 1, show.legend = TRUE, color = "#BAD8F7") +
+    geom_line(aes(x = Temp_annomalies, y = predicted), data = newdata_wet, size = 1, show.legend = TRUE, color = "#89B7E1") +
+    geom_line(aes(x = Temp_annomalies, y = predicted), data = newdata_dry, size = 1, show.legend = TRUE, color = "#2E75B6") +
+    geom_line(aes(x = Temp_annomalies, y = predicted), data = newdata_driest, size = 1, show.legend = TRUE, color = "#d8c593") +
+    theme_minimal(base_size = 15) + 
+    xlab("Temperature annomalies (C)") +
+    xlim(-2, 3) +
+    ylim(range(dat2$value)) +
+    theme(axis.title.y = element_blank(), axis.title.x = element_blank(), legend.position = "none") +
+    scale_color_manual(values = c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964"))
+  
+  return(plot)
+}
+
+
 ## Make plot for LDMC changes in temporal climate ad different sites in the climate grid
 
 LDMC_Driest <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "LDMC", "mean", "Driest", LDMC_mean_sum_yc,"Precip_annomalies") +
@@ -528,6 +624,8 @@ LDMC_Wettest <- plot_predictions_time(memodel_data_fullcommunity_nottransformed,
 LDMC_time_plot <-   (LDMC_Driest | LDMC_Dry | LDMC_Wet | LDMC_Wettest)
 
 #ggsave(plot = LDMC_time_plot, filename = "LDMC_temporal_climate.pdf",  width = 30, height = 8, units = "cm")
+
+SLA_alpine <- plot_predictions_time_temp(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g", "mean", "Alpine", SLA_mean_sum_yc)
 
 SLA_Driest <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g", "mean", "Driest", SLA_mean_sum_yc,"Precip_annomalies") +
   labs(y = "",  title = "Driest") +
