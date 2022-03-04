@@ -38,7 +38,7 @@ env_shift <- env %>%
   group_by(siteID) %>% 
   mutate(shift_temp = Temp_decade - Temp_century,
          shift_precip = Precip_decade - Precip_century) %>% 
-  select(siteID, shift_temp, shift_precip) %>% 
+  dplyr::select(siteID, shift_temp, shift_precip) %>% 
   unique() %>% 
   ungroup() %>% 
   mutate(mean_shift_temp = mean(shift_temp),
