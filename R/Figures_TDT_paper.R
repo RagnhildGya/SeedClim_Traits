@@ -684,51 +684,6 @@ ggsave(plot = partR2_plot, filename = "Partial_R2.pdf",  width = 28, height = 12
 
 ### Spatial vs. temporal ###
 
-output_TDT %>% 
-  mutate(term = dplyr::recode(term, "scale(Temp_decade)" = "Temp_decade",
-                        "scale(Temp_annomalies)" = "Temp_anomalies")) %>%
-  ungroup() %>% 
-  dplyr::select(Trait_trans, term, effect) %>% 
-  pivot_wider(names_from = term, values_from = effect) %>%
-  ggplot(aes(x = Temp_decade, y = Temp_anomalies, color = Trait_trans)) + 
-  geom_point() +
-  theme_minimal() +
-  xlim(-0.015,0.015) +
-  ylim(-0.015, 0.015) +
-  geom_abline(slope = 1)
-
-output_TDT %>% 
-  mutate(term = dplyr::recode(term, "scale(Precip_decade)" = "Precip_decade",
-                              "scale(Precip_annomalies)" = "Precip_anomalies")) %>%
-  ungroup() %>% 
-  dplyr::select(Trait_trans, term, effect) %>% 
-  mutate(effect = 10^effect) %>% 
-  pivot_wider(names_from = term, values_from = effect) %>%
-  ggplot(aes(x = Precip_decade, y = Precip_anomalies, color = Trait_trans)) + 
-  geom_point() +
-  theme_minimal() +
-  #xlim(0.9975,1.0025) +
-  #ylim(0.995, 1.004) +
-  #xlim(-0.00082,0.00082) +
-  #ylim(-0.00082, 0.00082) +
-  geom_abline(slope = 1)
-
-
-
-output_TDT %>% 
-  mutate(term = dplyr::recode(term, "scale(Temp_decade):scale(Precip_decade)" = "Spatial_interaction",
-                              "scale(Temp_annomalies):scale(Precip_annomalies)" = "Temporal_interaction")) %>%
-  ungroup() %>% 
-  dplyr::select(Trait_trans, term, effect) %>% 
-  pivot_wider(names_from = term, values_from = effect) %>%
-  ggplot(aes(x = Spatial_interaction, y = Temporal_interaction, color = Trait_trans)) + 
-  geom_point() +
-  theme_minimal() +
-  xlim(-0.015,0.015) +
-  ylim(-0.015, 0.015) +
-  geom_abline(slope = 1)
-
-
 time_space_figure <- output_TDT %>% 
   ungroup() %>% 
   #filter(!Trait_trans == "SLA_cm2_g") %>% 
