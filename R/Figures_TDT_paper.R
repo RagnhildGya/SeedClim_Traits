@@ -343,32 +343,6 @@ c <- ggarrange(Ord_plot_traits, Ord_plot_time, Ord_plot_precip, Ord_plot_temp,
 
 #ggsave(plot = c, "Ord_timemean_temp_prec_four.pdf", width = 26 , height = 18, units = "cm")
 
-### RDA variance explained ordination plot ###
-
-Explained_variance_RDA <- read.table(header = TRUE, stringsAsFactors = TRUE, text = 
-                                       "x model variance
-                               1 Temperature 0.2288
-                               1 Precipitation 0.1523
-                               1 Temp*Precip 0.1788
-                               1 Temp*Precip*Year 0.0187
-                               1 Unexplained 0.4214
-                               ")
-
-Ord_RDA <- Explained_variance_RDA %>% 
-  mutate(model = factor(model, levels = c("Unexplained", "Temp*Precip*Year", "Temp*Precip",  "Temperature", "Precipitation"))) %>% 
-  ggplot(aes(x = x, fill = model, y = variance)) +
-  geom_bar(position = "stack", stat = "identity") +
-  scale_fill_manual(values = c("#CCCBCC", "purple", "mediumpurple1", "#dd7631", "#2E75B6")) +
-  theme_minimal(base_size = 18) +
-  theme(axis.title.x=element_blank(),
-        axis.text.x=element_blank(),
-        axis.ticks.x=element_blank(),
-        legend.title = element_blank(),
-        legend.position = 'bottom') +
-  ylab("Variance explained")
-
-
-#ggsave(filename = "Ordination_RDA.jpg",  width = 20, height = 14, units = "cm")
 
 #### Mixed effect model plots ####
 
