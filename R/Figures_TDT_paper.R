@@ -281,8 +281,10 @@ Ord_plot_temp <- fviz_pca_ind(pca_trait, repel = TRUE,
                               palette = Temp_palette) +
   theme_minimal(base_size = 14) +
   #scale_color_manual(name = "Summer temperature", values = c("#8DD5E1", "#FCB971", "#B93B3B")) +
-  theme(legend.text=element_text(size=14), legend.title = element_text(size = 14), plot.title = element_blank(), axis.title = element_blank()) +
+  theme(legend.text=element_text(size=14), legend.title = element_text(size = 14), plot.title = element_blank()) +
   labs(title = "", fill = "Summer temperature", color = "Summer temperature", shape = "Summer temperature") +
+  xlab("PCA1 (43.9%)") + #Numbers added manually from the fviz_eig plot above
+  ylab("PCA2 (19.0%)") + #Numbers added manually from the fviz_eig plot above
   coord_fixed() +
   theme(plot.title = element_text(hjust = 0.1),legend.position = 'top')
 
@@ -301,8 +303,10 @@ Ord_plot_precip <- fviz_pca_ind(pca_trait, repel = TRUE,
                                 palette = Precip_palette) +
   theme_minimal(base_size = 15) +
   #scale_color_manual(name = "Summer temperature", values = c("#8DD5E1", "#FCB971", "#B93B3B")) +
-  theme(legend.text=element_text(size=14), legend.title = element_text(size = 14), plot.title = element_blank(), axis.title = element_blank()) +
+  theme(legend.text=element_text(size=14), legend.title = element_text(size = 14), plot.title = element_blank()) +
   labs(title = "", fill = "Yearly precipitation", color = "Yearly precipitation", shape = "Yearly precipitation") +
+  xlab("PCA1 (43.9%)") + #Numbers added manually from the fviz_eig plot above
+  ylab("PCA2 (19.0%)") + #Numbers added manually from the fviz_eig plot above
   coord_fixed() +
   theme(plot.title = element_text(hjust = 0.1), legend.position = 'top')
 
@@ -324,8 +328,10 @@ Ord_plot_time <- pca_fort %>%
   scale_size(range = 2) +
   coord_equal() +
   theme_minimal(base_size = 14) +
-  theme(legend.text=element_text(size=14), legend.title = element_text(size = 14), plot.title = element_text(hjust = 0.1), axis.title = element_blank()) +
+  theme(legend.text=element_text(size=14), legend.title = element_text(size = 14), plot.title = element_text(hjust = 0.1)) +
   labs(fill = "Yearly precipitation", color = "Yearly precipitation", shape = "Yearly precipitation") +
+  xlab("PCA1 (43.9%)") + #Numbers added manually from the fviz_eig plot above
+  ylab("PCA2 (19.0%)") + #Numbers added manually from the fviz_eig plot above
   guides(color = "none") +
   scale_shape_manual(values = c(16, 17, 15))
 
