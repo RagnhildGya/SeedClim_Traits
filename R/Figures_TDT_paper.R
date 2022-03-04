@@ -510,7 +510,7 @@ plot_predictions_time_temp <-function(dat, trait, moment, temp_level, model) {
                              siteID = case_when(temp_level == "Boreal" ~ "Ovstedal",
                                                 temp_level == "Sub_alpine" ~ "Veskre",
                                                 temp_level == "Alpine" ~ "Skjelingagaugen"),
-                             Temp_annomalies = seq(-0.5, 2, length = 200),
+                             Temp_annomalies = seq(-2, 1.2, length = 200),
                              Precip_annomalies = case_when(temp_level == "Boreal" ~ 1.71,
                                                            temp_level == "Sub_alpine" ~ 0.597,
                                                            temp_level == "Alpine" ~ 0.910))
@@ -522,7 +522,7 @@ plot_predictions_time_temp <-function(dat, trait, moment, temp_level, model) {
                          siteID = case_when(temp_level == "Boreal" ~ "Arhelleren",
                                             temp_level == "Sub_alpine" ~ "Rambera",
                                             temp_level == "Alpine" ~ "Gudmedalen"),
-                         Temp_annomalies = seq(-0.5, 2, length = 200),
+                         Temp_annomalies = seq(-2, 1.2, length = 200),
                          Precip_annomalies = case_when(temp_level == "Boreal" ~ 1.35,
                                                        temp_level == "Sub_alpine" ~ 0.320,
                                                        temp_level == "Alpine" ~ 0.510))
@@ -535,7 +535,7 @@ plot_predictions_time_temp <-function(dat, trait, moment, temp_level, model) {
                          siteID = case_when(temp_level == "Boreal" ~ "Vikesland",
                                             temp_level == "Sub_alpine" ~ "Hogsete",
                                             temp_level == "Alpine" ~ "Lavisdalen"),
-                         Temp_annomalies = seq(-0.5, 2, length = 200),
+                         Temp_annomalies = seq(-2, 1.2, length = 200),
                          Precip_annomalies = case_when(temp_level == "Boreal" ~ 0.307,
                                                        temp_level == "Sub_alpine" ~ 0.318,
                                                        temp_level == "Alpine" ~ 0.412))
@@ -548,7 +548,7 @@ plot_predictions_time_temp <-function(dat, trait, moment, temp_level, model) {
                           siteID = case_when(temp_level == "Boreal" ~ "Fauske",
                                              temp_level == "Sub_alpine" ~ "Alrust",
                                              temp_level == "Alpine" ~ "Ulvehaugen"),
-                          Temp_annomalies = seq(-0.5, 2, length = 200),
+                          Temp_annomalies = seq(-2, 1.2, length = 200),
                           Precip_annomalies = case_when(temp_level == "Boreal" ~ 0.246,
                                                         temp_level == "Sub_alpine" ~ 0.446,
                                                         temp_level == "Alpine" ~ 0.629))
@@ -568,13 +568,13 @@ plot_predictions_time_temp <-function(dat, trait, moment, temp_level, model) {
   plot <- ggplot(aes(x = Temp_annomalies, y = value), data = dat2) +
     geom_point(color = "grey95") +
     geom_point(data = highlighted, aes(color = Precip_level)) +
-    geom_line(aes(x = Temp_annomalies, y = predicted), data = newdata_wettest, size = 1, show.legend = TRUE, color = "#BAD8F7") +
-    geom_line(aes(x = Temp_annomalies, y = predicted), data = newdata_wet, size = 1, show.legend = TRUE, color = "#89B7E1") +
-    geom_line(aes(x = Temp_annomalies, y = predicted), data = newdata_dry, size = 1, show.legend = TRUE, color = "#2E75B6") +
-    geom_line(aes(x = Temp_annomalies, y = predicted), data = newdata_driest, size = 1, show.legend = TRUE, color = "#d8c593") +
+    geom_line(aes(x = Temp_annomalies, y = predicted), data = newdata_wettest, size = 1, show.legend = TRUE, color = "#213964") +
+    geom_line(aes(x = Temp_annomalies, y = predicted), data = newdata_wet, size = 1, show.legend = TRUE, color = "#2E75B6") +
+    geom_line(aes(x = Temp_annomalies, y = predicted), data = newdata_dry, size = 1, show.legend = TRUE, color = "#89B7E1") +
+    geom_line(aes(x = Temp_annomalies, y = predicted), data = newdata_driest, size = 1, show.legend = TRUE, color = "#BAD8F7") +
     theme_minimal(base_size = 15) + 
     xlab("Temperature annomalies (C)") +
-    xlim(-2, 3) +
+    xlim(-2, 1.2) +
     ylim(range(dat2$value)) +
     theme(axis.title.y = element_blank(), axis.title.x = element_blank(), legend.position = "none") +
     scale_color_manual(values = c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964"))
@@ -582,6 +582,8 @@ plot_predictions_time_temp <-function(dat, trait, moment, temp_level, model) {
   return(plot)
 }
 
+
+Precip_palette <- c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")
 
 ## Make plot for LDMC changes in temporal climate ad different sites in the climate grid
 
@@ -607,25 +609,15 @@ LDMC_time_plot <-   (LDMC_Driest | LDMC_Dry | LDMC_Wet | LDMC_Wettest)
 
 SLA_alpine <- plot_predictions_time_temp(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g", "mean", "Alpine", SLA_mean_sum_yc)
 
-SLA_Driest <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g", "mean", "Driest", SLA_mean_sum_yc,"Precip_annomalies") +
-  labs(y = "",  title = "Driest") +
-  theme(plot.title = element_text(hjust = 0.5))
+SLA_sub_alpine <- plot_predictions_time_temp(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g", "mean", "Sub_alpine", SLA_mean_sum_yc)
 
-SLA_Dry <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g", "mean", "Dry", SLA_mean_sum_yc,"Precip_annomalies") +
-  labs(y = "",  title = "Dry") +
-  theme(plot.title = element_text(hjust = 0.5))
+SLA_boreal <- plot_predictions_time_temp(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g", "mean", "Boreal", SLA_mean_sum_yc)
 
-SLA_Wet <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g", "mean", "Wet", SLA_mean_sum_yc, "Precip_annomalies") +
-  labs(y = "",  title = "Wet") +
-  theme(plot.title = element_text(hjust = 0.5))
+SLA_time_plot <-   (SLA_alpine/
+                    SLA_sub_alpine/
+                      SLA_boreal)
 
-SLA_Wettest <- plot_predictions_time(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g", "mean", "Wettest", SLA_mean_sum_yc, "Precip_annomalies") +
-  labs(y = "",  title = "Wettest") +
-  theme(plot.title = element_text(hjust = 0.5))
-
-SLA_time_plot <-   (SLA_Driest | SLA_Dry | SLA_Wet | SLA_Wettest)
-
-ggsave(plot = LDMC_time_plot, filename = "SLA_temporal_climate.pdf",  width = 30, height = 8, units = "cm")
+ggsave(plot = SLA_time_plot, filename = "SLA_temporal_climate.pdf",  width = 12, height = 27, units = "cm")
   
 ## Make plot for all trait trends in the spatial climate grid
 
