@@ -717,7 +717,7 @@ time_space_figure <- output_TDT %>%
   #mutate(moments = factor(moments, levels = c("time", "Without ITV", "mean"))) %>% 
   #mutate(term = as.factor(recode(term, "scale(Precip_decade)" = "Precip_space", "scale(Temp_decade)" = "Temp_space", "scale(Temp_decade):scale(Precip_decade)" = "Spatial_interaction"))) %>% 
   mutate(Trait_trans= (recode(Trait_trans, "SLA_cm2_g" = "SLA_cm2_g/100", "CN_ratio" = "CN_ratio/10", "LDMC" = "LDMC*10", "Leaf_Thickness_Ave_mm" = "Leaf_Thickness_Ave_mm*10"))) %>% 
-  mutate(Trait_trans = factor(Trait_trans, levels = c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "C_percent", "N_percent", "LDMC*10", "Leaf_Thickness_Ave_mm*10", "CN_ratio/10", "SLA_cm2_g/100"))) %>%
+  mutate(Trait_trans = factor(Trait_trans, levels = c("Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "C_percent", "SLA_cm2_g/100", "LDMC*10", "Leaf_Thickness_Ave_mm*10", "N_percent","CN_ratio/10"))) %>%
   ggplot(aes(x = fct_rev(Trait_trans), y = effect, fill = climate, color = Time_Space)) +
   geom_bar(aes(alpha = Significant), stat = "identity", position = position_dodge(width=0.7), width = 0.7) +
   #geom_point(aes(size = if_else(p.value <0.05, 0.3, NA_real_)), position = position_dodge(width=0.6), show.legend = FALSE) +
