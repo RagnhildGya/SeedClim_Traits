@@ -673,7 +673,7 @@ figure <- ggarrange(LA_space, SLA_space, Height_space, LDMC_space, Mass_space, L
 partR2_plot <- ggplot(aes(x = estimate, y = term, xmin = CI_lower, xmax = CI_upper, color = Space_or_time), data = partR2_data) +
   geom_pointrange() +
   geom_vline(aes(xintercept = Full), color = "black") +
-  facet_wrap(~factor(traits, levels = c("SLA_cm2_g", "Leaf N", "Leaf C/N", "LDMC", "Leaf_Thickness_Ave_mm", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Leaf C"),), nrow = 2) +
+  facet_wrap(~factor(traits, levels = c("SLA_cm2_g",  "LDMC", "Leaf_Thickness_Ave_mm", "Leaf N", "Leaf C/N","Leaf_Area_cm2_log", "Plant_Height_mm_log", "Dry_Mass_g_log", "Leaf C"),), nrow = 2) +
   theme_minimal() +
   xlim(0,0.8) +
   scale_color_manual(values = c("black","#dd7631", "#2E75B6", "chartreuse4")) +
