@@ -267,6 +267,9 @@ community <- community %>%
    mutate(Precip_level = fct_relevel(Precip_level, c("600", "1200", "2000", "2700"))) %>% 
    ungroup()
  
+#### Making a table of the odl and new climate variables ###
+ Vestland_climate_grid <- env %>% select(siteID, Temp_century, Precip_century, Temp_decade_figure, Precip_decade) %>% unique() %>% rename("Temp_1960_1990" = Temp_century, "Precip_1960_1990" = Precip_century, "Temp_2009_2019" = Temp_decade_figure, "Precip_2009_2019" = Precip_decade) %>%  mutate(Temp_1960_1990 = round(Temp_1960_1990, digits = 2), Temp_2009_2019 = round(Temp_2009_2019, digits = 2), Precip_1960_1990 = round(Precip_1960_1990, digits = 0), Precip_2009_2019 = round(Precip_2009_2019, digits = 0))
+ 
  rm(CN)
  rm(dict_CN)
  rm(dict_Site)
