@@ -7,6 +7,9 @@ source("R/Cleaning.R")
 
 #### Libraries ####
 
+#Need to install the package traitstrap. This is currently on GitHub, and you can use the package remotes to download from github. https://github.com/Plant-Functional-Trait-Course/traitstrap.
+#remotes::install_github("Plant-Functional-Trait-Course/traitstrap")
+
 library(broom.mixed)
 library(lme4)
 library(lmerTest)
@@ -39,11 +42,14 @@ set.seed(47)
 
 community_for_boostrapping <- community %>% 
   filter(!year == "2010") %>% 
-  select(siteID, blockID, turfID, year, species, Full_name, Genus, Family, Order, cover)
+  select(siteID, blockID, turfID, year, species, Full_name, Genus,
+         Family, Order, cover)
 
 community_for_analysis <- community %>% 
   filter(!year == "2010") %>% 
-  select(siteID, blockID, turfID, year, species, Full_name, Genus, Family, Order, cover, total_vascular, total_bryophytes,vegetation_height, moss_height, functionalGroup)
+  select(siteID, blockID, turfID, year, species, Full_name, Genus,
+         Family, Order, cover, total_vascular, total_bryophytes,
+         vegetation_height, moss_height, functionalGroup)
 
 turf_site_dict <- community %>% 
   select(siteID, turfID) %>% 
@@ -99,15 +105,16 @@ env <- env %>%
 
 Trait_impute_per_year <- function(com_dat, trait_dat){
   
-  SeedClim_traits <- trait_np_bootstrap(trait_impute(comm = com_dat,
-                                                     traits = trait_dat, 
-                                                     scale_hierarchy = c("siteID", "blockID", "turfID"),
-                                                     global = TRUE,
-                                                     taxon_col = c("Full_name", "Genus", "Family"),
-                                                     trait_col = "Trait_trans",
-                                                     value_col = "Value",
-                                                     other_col = "year",
-                                                     abundance_col = "cover"))
+  SeedClim_traits <- trait_np_bootstrap(
+    trait_fill(comm = com_dat,
+               traits = trait_dat,
+               scale_hierarchy = c("siteID", "blockID", "turfID"),
+               global = TRUE,
+               taxon_col = c("Full_name", "Genus", "Family"),
+               trait_col = "Trait_trans",
+               value_col = "Value",
+               other_col = "year",
+               abundance_col = "cover"))
   
   return(SeedClim_traits)
 }
@@ -117,8 +124,8 @@ Imputed_traits_fullcommunity <- Trait_impute_per_year(com_dat = community_for_bo
 
 sum_moments_fullcommunity <- trait_summarise_boot_moments(Imputed_traits_fullcommunity)
 
-#traitstrap:::autoplot.imputed_trait(Imputed_traits_fullcommunity) 
-#traitstrap:::autoplot.imputed_trait(Imputed_traits_without_intra) 
+#traitstrap:::autoplot.filled_trait(Imputed_traits_fullcommunity, other_col_how = "ignore") 
+#traitstrap:::autoplot.filled_trait(Imputed_traits_without_intra, , other_col_how = "ignore") 
 
 
 Trait_impute_without_intraA <- function(com_dat, trait_dat){
@@ -129,7 +136,7 @@ Trait_impute_without_intraA <- function(com_dat, trait_dat){
   com_dat <- com_dat %>% 
     filter(siteID %in% c("Hogsete", "Ulvehaugen", "Vikesland", "Gudmedalen", "Rambera", "Arhelleren"))
   
-  SeedClim_traits <- trait_np_bootstrap(trait_impute(comm = com_dat,
+  SeedClim_traits <- trait_np_bootstrap(trait_fill(comm = com_dat,
                                                      traits = trait_dat, 
                                                      scale_hierarchy = "turfID",
                                                      taxon_col = c("Full_name", "Genus", "Family"),
@@ -149,7 +156,7 @@ Trait_impute_without_intraB <- function(com_dat, trait_dat){
   com_dat <- com_dat %>% 
     filter(siteID %in% c("Skjelingahaugen", "Veskre", "Ovstedalen", "Alrust", "Fauske", "Lavisdalen"))
   
-  SeedClim_traits <- trait_np_bootstrap(trait_impute(comm = com_dat,
+  SeedClim_traits <- trait_np_bootstrap(trait_fill(comm = com_dat,
                                                      traits = trait_dat, 
                                                      scale_hierarchy = "turfID",
                                                      taxon_col = c("Full_name", "Genus", "Family"),
