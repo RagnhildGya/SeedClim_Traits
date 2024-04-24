@@ -1,6 +1,7 @@
 #### Libraries ####
 library("tidyverse")
 library("lubridate")
+library("janitor")
 
 #### Load trait data ####
 
@@ -31,7 +32,8 @@ traits <- traits %>%
   mutate(Site = factor(Site, levels = c("Ulv", "Lav", "Gud", "Skj", "Alr", "Hog", "Ram", "Ves", "Fau", "Vik", "Arh", "Ovs"))) %>% #Ordering the sites from cold to warm and dry to wet
   mutate(Dry_mass = replace(Dry_mass, Dry_mass < 0.0005, NA)) %>% #Replacing anything that us under 0.0005 grams with NA because these values are so low and not very trustworthy (outside of the margin of error of the balance)
   mutate(Wet_mass = replace(Wet_mass, Wet_mass < 0.0005, NA)) %>% #
-  mutate(Lth_3 = replace(Lth_3, Lth_3 < 0.9, NA)) #One outlier that is very far off measurment 1 and 2, replacing with NA.
+  mutate(Lth_3 = replace(Lth_3, Lth_3 < 0.9, NA)) |> #One outlier that is very far off measurment 1 and 2, replacing with NA.
+  filter(!is.na(Site)) #Remove the empty rows
   
   
 #### Load leaf area data ####
@@ -85,11 +87,16 @@ CN<-CN %>%
   mutate(Individual = substr(Name, 7,8)) %>%
   mutate(Species = plyr::mapvalues(Species, from = dict_CN$CN_ab, to = dict_CN$Species)) %>%
   mutate(Site = plyr::mapvalues(Site, from = dict_Site$old, to = dict_Site$new)) %>%
-  mutate(ID = paste0(Site, "_", Species, "_", Individual, ".jpg")) %>%
+  mutate(ID = paste0(Site, "_", Species, "_", Individual, ".jpg")) %>% 
   filter(!(Name=="VECAR101")) %>% #Because it was a to small sample to get good data from it
  select(-Humidity.., -Name, -Weight, -Method, -N.Factor, -C.Factor, -N.Blank, -C.Blank, -Memo, -Info, -Date..Time, -N.Area, -C.Area) %>% 
   rename(C_percent=C.., N_percent = N.., CN_ratio = CN.ratio) %>% 
-  mutate(Site = factor(Site, levels = c("Ulv", "Lav", "Gud", "Skj", "Alr", "Hog", "Ram", "Ves", "Fau", "Vik", "Arh", "Ovs")))
+  mutate(Site = factor(Site, levels = c("Ulv", "Lav", "Gud", "Skj", "Alr", "Hog", "Ram", "Ves", "Fau", "Vik", "Arh", "Ovs"))) |> 
+  group_by(ID) |> #Some individuals had two values, making a mean of those values as I assume these individuals where measured twice in the lab.
+  mutate(C_percent = mean(C_percent),
+         N_percent = mean(N_percent),
+         CN_ratio = mean(CN_ratio)) |> 
+  unique()
 
 
 #### Merge the trait data and the CN data ####
