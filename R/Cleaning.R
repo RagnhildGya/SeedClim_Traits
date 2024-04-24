@@ -96,7 +96,7 @@ CN<-CN |>
   mutate(C_percent = mean(C_percent),
          N_percent = mean(N_percent),
          CN_ratio = mean(CN_ratio)) |> 
-  
+  unique()
 
 
 #### Merge the trait data and the CN data ####
