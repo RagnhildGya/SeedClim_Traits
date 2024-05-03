@@ -8,7 +8,7 @@ library("janitor")
 traits <-read.csv("Data/LeafTraits_SeedClim.csv", header=TRUE, sep = ";", stringsAsFactors = FALSE)
 
 dict_Site_2016 <- read.table(header = TRUE, stringsAsFactors = FALSE, text = 
-                               "old new
+                               "old siteID
 Arh Arhelleren
 Ovs Ovstedalen
 Ves Veskre
@@ -65,7 +65,7 @@ dict_CN <- read.csv2("Data/Dict_CN.csv", header = TRUE, sep=";", stringsAsFactor
 #Making a dictionary for the site names in the CN file
 
 dict_Site <- read.table(header = TRUE, stringsAsFactors = FALSE, text = 
-  "old new
+  "old Site
   AR Arh
   OV Ovs
   VE Ves
@@ -82,11 +82,11 @@ dict_Site <- read.table(header = TRUE, stringsAsFactors = FALSE, text =
 
 
 CN<-CN |> 
-  mutate(Site= substr(Name, 1,2)) |> 
-  mutate(Species = substr(Name, 3,6)) |> 
+  mutate(site_abr = substr(Name, 1,2)) |> 
+  mutate(species_abr = substr(Name, 3,6)) |> 
   mutate(Individual = substr(Name, 7,8)) |> 
-  mutate(Species = plyr::mapvalues(Species, from = dict_CN$CN_ab, to = dict_CN$Species)) |> 
-  mutate(Site = plyr::mapvalues(Site, from = dict_Site$old, to = dict_Site$new)) |> 
+  left_join(dict_CN, by = c("species_abr" = "CN_ab")) |> 
+  left_join(dict_Site, by = c("site_abr" = "old")) |> 
   mutate(ID = paste0(Site, "_", Species, "_", Individual, ".jpg")) |>  
   filter(!(Name=="VECAR101")) |>  #Because it was a to small sample to get good data from it
  select(-Humidity.., -Name, -Weight, -Method, -N.Factor, -C.Factor, -N.Blank, -C.Blank, -Memo, -Info, -Date..Time, -N.Area, -C.Area) |>  
@@ -167,8 +167,7 @@ traitdata_1 <- traitdata_trans |>
 traitdata_1 <- traitdata_1 |> 
   left_join(species_info, by =c("Species" = "species")) |>  
   select(-Image, -Comment, -ID, -Site_sp) |>  
-  rename(siteID = Site) |>  
-  mutate(siteID = plyr::mapvalues(siteID, from = dict_Site_2016$old, to = dict_Site_2016$new)) |>  
+  left_join(dict_Site_2016, by = c("Site" = "old")) |> 
   mutate(Temp_level = as.factor(recode(siteID, Ulvehaugen = 6.5, Lavisdalen = 6.5,  Gudmedalen = 6.5, Skjelingahaugen = 6.5, Alrust = 8.5, Hogsete = 8.5, Rambera = 8.5, Veskre = 8.5, Fauske = 10.5, Vikesland = 10.5, Arhelleren = 10.5, Ovstedalen = 10.5)),
          Precip_level = as.factor(recode(siteID, Ulvehaugen = 600, Alrust = 600, Fauske = 600, Lavisdalen = 1200, Hogsete = 1200, Vikesland = 1200, Gudmedalen = 2000, Rambera = 2000, Arhelleren = 2000, Skjelingahaugen = 2700, Veskre = 2700, Ovstedalen = 2700)))
 
@@ -212,7 +211,7 @@ community <- community |>
           Temp_level = as.factor(recode(Site, Ulv = 6.5, Lav = 6.5,  Gud = 6.5, Skj = 6.5, Alr = 8.5, Hog = 8.5, Ram = 8.5, Ves = 8.5, Fau = 10.5, Vik = 10.5, Arh = 10.5, Ovs = 10.5)),
           Precip_level = as.factor(recode(Site, Ulv = 600, Alr = 600, Fau = 600, Lav = 1200, Hog = 1200, Vik = 1200, Gud = 2000, Ram = 2000, Arh = 2000, Skj = 2700, Ves = 2700, Ovs = 2700))) |>  
    select(Site, Temp_century, Precip_century, Temp_level, Precip_level) |>  
-   mutate(Site = plyr::mapvalues(Site, from = dict_Site_2016$old, to = dict_Site_2016$new)) 
+   left_join(dict_Site_2016, by = c("Site" = "old"))
 
  env <- read.csv("Data/AAGriddedDailyClimateData2009-2019.csv", header=TRUE, sep = ",", stringsAsFactors = FALSE)
  #The file AA is the newest version of the climate data - checking what this looks like now.
