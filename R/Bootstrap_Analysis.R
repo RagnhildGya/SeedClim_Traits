@@ -7,9 +7,6 @@ source("R/Cleaning.R")
 
 #### Libraries ####
 
-#Need to install the package traitstrap. This is currently on GitHub, and you can use the package remotes to download from github. https://github.com/Plant-Functional-Trait-Course/traitstrap.
-#remotes::install_github("Plant-Functional-Trait-Course/traitstrap")
-
 library(broom.mixed)
 library(lme4)
 library(lmerTest)
@@ -25,16 +22,16 @@ library(ggvegan)
 library(partR2)
 #library(drake)
 #library(default)
-#library(conflicted)
+library(conflicted)
 
 set.seed(47)
 
 #### Setting conflict standards ####
 
-# conflict_prefer("map", winner="purrr")
-# conflict_prefer("filter", winner = "dplyr")
-# conflict_prefer("select", winner = "dplyr")
-# conflict_prefer("lmer", winner = "lmerTest")
+conflict_prefer("map", winner="purrr")
+conflict_prefer("filter", winner = "dplyr")
+conflict_prefer("select", winner = "dplyr")
+conflict_prefer("lmer", winner = "lmerTest")
 
 #### Making data ready for traitstrap and merging ####
 
@@ -106,15 +103,15 @@ env <- env %>%
 Trait_impute_per_year <- function(com_dat, trait_dat){
   
   SeedClim_traits <- trait_np_bootstrap(
-    trait_fill(comm = com_dat,
-               traits = trait_dat,
-               scale_hierarchy = c("siteID", "blockID", "turfID"),
-               global = TRUE,
-               taxon_col = c("Full_name", "Genus", "Family"),
-               trait_col = "Trait_trans",
+    trait_fill(comm = community, #com_dat,
+               traits = trait, #trait_dat,
+               scale_hierarchy = c("Site", "PlotID"), #c("siteID", "blockID", "turfID"),
+               #global = TRUE,
+               taxon_col = "Taxon", #c("Full_name", "Genus", "Family"),
+               trait_col = "Trait", #"Trait_trans",
                value_col = "Value",
-               other_col = "year",
-               abundance_col = "cover"))
+               #other_col = "year",
+               abundance_col = "Cover"))  #"cover"))
   
   return(SeedClim_traits)
 }
