@@ -121,9 +121,6 @@ Imputed_traits_fullcommunity <- Trait_impute_per_year(com_dat = community_for_bo
 
 sum_moments_fullcommunity <- trait_summarise_boot_moments(Imputed_traits_fullcommunity)
 
-#traitstrap:::autoplot.filled_trait(Imputed_traits_fullcommunity, other_col_how = "ignore") 
-#traitstrap:::autoplot.filled_trait(Imputed_traits_without_intra, , other_col_how = "ignore") 
-
 
 Trait_impute_without_intraA <- function(com_dat, trait_dat){
   
