@@ -203,29 +203,29 @@ moments_clim_long_without_intra <- Imputed_traits_without_intra %>%
 # With intraspecific variability
 memodel_data_fullcommunity <- moments_clim_long_fullcommunity %>% 
   ungroup() %>%
-  select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, value, year, n) %>% 
+  select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, value, year) %>% 
   mutate(value = scale(value)) %>% 
-  group_by(Trait_trans, moments, n) %>% 
+  group_by(Trait_trans, moments) %>% 
   nest()
 
 memodel_data_fullcommunity_nottransformed <- moments_clim_long_fullcommunity %>% 
   ungroup() %>%
-  select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, value, year, n) %>% 
-  group_by(Trait_trans, moments, n) %>% 
+  select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, value, year) %>% 
+  group_by(Trait_trans, moments) %>% 
   nest()
 
 # Without intraspecific variability
 memodel_data_without_intra <- moments_clim_long_without_intra %>% 
   ungroup() %>%
-  select(Trait_trans, moments, siteID, turfID,Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, value, year, n) %>% 
+  select(Trait_trans, moments, siteID, turfID,Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, value, year) %>% 
   mutate(value = scale(value)) %>% 
-  group_by(Trait_trans, moments, n) %>% 
+  group_by(Trait_trans, moments) %>% 
   nest()
 
 memodel_data_without_intra_nottransformed <- moments_clim_long_without_intra %>% 
   ungroup() %>%
-  select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, value, year, n) %>% 
-  group_by(Trait_trans, moments, n) %>% 
+  select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, value, year) %>% 
+  group_by(Trait_trans, moments) %>% 
   nest()
 
 
@@ -272,13 +272,17 @@ model_TDT <- function(df) {
          + (1|siteID), data = df)
 }
 
+model_year <- function(df) {
+  lmer(value ~ scale(Temp_decade) * scale(Precip_decade) * year  + (1|siteID), data = df)
+}
+
 output <-function(dat) {
   
   model_output <- dat %>% 
-    select(Trait_trans, moments, n, model_output, R_squared) %>% 
+    select(Trait_trans, moments, model_output, R_squared) %>% 
     unnest(c(model_output, R_squared)) %>% 
     filter(!term %in% c("(Intercept)", "sd__(Intercept)", "sd__Observation")) %>% 
-    select(Trait_trans, moments, term, n, estimate, std.error, statistic, df, p.value, Marginal, Conditional) %>% 
+    select(Trait_trans, moments, term, estimate, std.error, statistic, df, p.value, Marginal, Conditional) %>% 
     ungroup() %>% 
     group_by(Trait_trans, moments, term) %>% 
     summarize(effect = mean(estimate),
