@@ -214,9 +214,6 @@ community <- community |>
    left_join(dict_Site_2016, by = c("Site" = "old"))
 
  env <- read.csv("Data/AAGriddedDailyClimateData2009-2019.csv", header=TRUE, sep = ",", stringsAsFactors = FALSE)
- #The file AA is the newest version of the climate data - checking what this looks like now.
- 
- # date, siteID, variable, value
  
  env <- env |>  
    mutate(year = year(date),
@@ -248,6 +245,8 @@ community <- community |>
    mutate(year2 = ifelse(month > 7, year + 1, year)) |>   #Creating a variable that allows me to divide the year from fieldseason to fieldseason rather than january-january 
    group_by(siteID, year2) |>  
    mutate(Precip_yearly = sum(precipitation)) |>  #Creating variable for precipitation 1 year back from the sampling date (july-july) by grouping by year2
+   ungroup() |> 
+   group_by(siteID, year) |> 
    filter(month %in% c(5:8)) |>  
    mutate(Temp_yearly_tetra = mean(temperature)) |>  
    filter(month %in% c(5:7)) |>  
@@ -260,7 +259,7 @@ community <- community |>
    left_join(y = summer, by = c("siteID" = "siteID", "year" = "year")) |>  
    ungroup() |>  
    group_by(siteID) |>  
-   left_join(y = env_old, by = c("siteID" = "Site")) |>  
+   left_join(y = env_old, by = c("siteID" = "siteID")) |>  
    mutate(Temp_decade_figure = mean(Temp_yearly_tetra, na.rm = TRUE),
           Temp_se_figure = (sd(Temp_yearly_tetra, na.rm = TRUE) / sqrt(length(Temp_yearly_tetra))),
           Temp_decade = mean(Temp_yearly_spring, na.rm = TRUE),
@@ -273,8 +272,12 @@ community <- community |>
    mutate(Precip_level = fct_relevel(Precip_level, c("600", "1200", "2000", "2700"))) |>  
    ungroup()
  
-#### Making a table of the odl and new climate variables ###
- Vestland_climate_grid <- env |>  select(siteID, Temp_century, Precip_century, Temp_decade_figure, Precip_decade) |>  unique() |>  rename("Temp_1960_1990" = Temp_century, "Precip_1960_1990" = Precip_century, "Temp_2009_2019" = Temp_decade_figure, "Precip_2009_2019" = Precip_decade) |>   mutate(Temp_1960_1990 = round(Temp_1960_1990, digits = 2), Temp_2009_2019 = round(Temp_2009_2019, digits = 2), Precip_1960_1990 = round(Precip_1960_1990, digits = 0), Precip_2009_2019 = round(Precip_2009_2019, digits = 0))
+#### Making a table of the old and new climate variables ###
+ Vestland_climate_grid <- env |>  
+   select(siteID, Temp_century, Precip_century, Temp_decade_figure, Precip_decade) |>  
+   unique() |>  
+   rename("Temp_1960_1990" = Temp_century, "Precip_1960_1990" = Precip_century, "Temp_2009_2019" = Temp_decade_figure, "Precip_2009_2019" = Precip_decade) |>
+   mutate(Temp_1960_1990 = round(Temp_1960_1990, digits = 2), Temp_2009_2019 = round(Temp_2009_2019, digits = 2), Precip_1960_1990 = round(Precip_1960_1990, digits = 0), Precip_2009_2019 = round(Precip_2009_2019, digits = 0))
  
  rm(CN)
  rm(dict_CN)
