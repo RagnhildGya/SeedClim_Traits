@@ -17,7 +17,7 @@ library(ggcorrplot)
 # library(textshape)
 library(traitstrap)
 library(vegan)
-library(ggvegan)
+#library(ggvegan)
 library(partR2)
 #library(drake)
 #library(default)
@@ -272,10 +272,14 @@ com_data <- community_for_analysis  |>
 #          + (1|siteID), data = df)
 # }
 
-dat <- memodel_data_fullcommunity |> 
-  filter(Trait_trans == "SLA",
-         moments == "mean") |> 
-  unnest()
+# Testing model
+# dat <- memodel_data_fullcommunity |> 
+#   filter(Trait_trans == "SLA_cm2_g",
+#          moments == "mean") |> 
+#   unnest(cols = ) |> 
+#   mutate(value = value[,1])
+# 
+# lme(value ~ Temp_decade, data = dat)
 
 model_year <- function(df) {
   lme(value ~ Temp_decade * Precip_decade * year, random = ~siteID/turfID, data = df, correlation = corAR1)
