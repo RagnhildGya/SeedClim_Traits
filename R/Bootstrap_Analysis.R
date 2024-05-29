@@ -3,7 +3,6 @@
 #### Source ####
 
 source("R/Cleaning.R")
-#source("R/Bootstraping.R")
 
 #### Libraries ####
 
@@ -23,6 +22,7 @@ library(partR2)
 #library(drake)
 #library(default)
 library(conflicted)
+library(nlme)
 
 set.seed(47)
 
@@ -37,25 +37,25 @@ conflict_prefer("lmer", winner = "lmerTest")
 
 ## Community ##
 
-community_for_boostrapping <- community %>% 
-  filter(!year == "2010") %>% 
+community_for_boostrapping <- community  |>   
+  filter(!year == "2010")  |>   
   select(siteID, blockID, turfID, year, species, Full_name, Genus,
          Family, Order, cover)
 
-community_for_analysis <- community %>% 
-  filter(!year == "2010") %>% 
+community_for_analysis <- community  |>   
+  filter(!year == "2010")  |>   
   select(siteID, blockID, turfID, year, species, Full_name, Genus,
          Family, Order, cover, total_vascular, total_bryophytes,
          vegetation_height, moss_height, functionalGroup)
 
-turf_site_dict <- community %>% 
-  select(siteID, turfID) %>% 
+turf_site_dict <- community  |>   
+  select(siteID, turfID)  |>   
   distinct()
 
 rm(community)
 ## Trait data ##
 
-traitdata_2 <- traitdata_1 %>% 
+traitdata <- traitdata_1  |>   
   mutate(blockID = "",
          turfID = "") 
 
@@ -63,7 +63,7 @@ rm(traitdata_1)
 
 ## Climate data - transform precipitation from mm to m ##
 
-env <- env %>% 
+env <- env  |>   
   mutate(Precip_yearly = Precip_yearly/1000,
          Precip_yearly_spring = Precip_yearly_spring/1000,
          Precip_decade = Precip_decade/1000,
@@ -91,11 +91,11 @@ env_predictions <-function(model_temp, model_precip) {
   return(newdata)
 }
 
-env_pred <- env_predictions(temp_model, precip_model) %>% 
+env_pred <- env_predictions(temp_model, precip_model)  |>   
   mutate(siteID = as.character(siteID))
 
 
-env <- env %>% 
+env <- env  |>   
   left_join(env_pred, by = c("siteID" = "siteID", "year" = "year"))
 
 #### Bootstrapping ####
@@ -117,17 +117,17 @@ Trait_impute_per_year <- function(com_dat, trait_dat){
 }
 
 
-Imputed_traits_fullcommunity <- Trait_impute_per_year(com_dat = community_for_boostrapping, trait_dat = traitdata_2)
+Imputed_traits_fullcommunity <- Trait_impute_per_year(com_dat = community_for_boostrapping, trait_dat = traitdata)
 
 sum_moments_fullcommunity <- trait_summarise_boot_moments(Imputed_traits_fullcommunity)
 
 
 Trait_impute_without_intraA <- function(com_dat, trait_dat){
   
-  trait_dat <- trait_dat %>% 
+  trait_dat <- trait_dat  |>   
     mutate(turfID = "")
   
-  com_dat <- com_dat %>% 
+  com_dat <- com_dat  |>   
     filter(siteID %in% c("Hogsete", "Ulvehaugen", "Vikesland", "Gudmedalen", "Rambera", "Arhelleren"))
   
   SeedClim_traits <- trait_np_bootstrap(trait_fill(comm = com_dat,
@@ -144,10 +144,10 @@ Trait_impute_without_intraA <- function(com_dat, trait_dat){
 
 Trait_impute_without_intraB <- function(com_dat, trait_dat){
   
-  trait_dat <- trait_dat %>% 
+  trait_dat <- trait_dat  |>   
     mutate(turfID = "")
   
-  com_dat <- com_dat %>% 
+  com_dat <- com_dat  |>   
     filter(siteID %in% c("Skjelingahaugen", "Veskre", "Ovstedalen", "Alrust", "Fauske", "Lavisdalen"))
   
   SeedClim_traits <- trait_np_bootstrap(trait_fill(comm = com_dat,
@@ -162,8 +162,8 @@ Trait_impute_without_intraB <- function(com_dat, trait_dat){
   return(SeedClim_traits)
 }
 
-Imputed_traits_without_intraA <- Trait_impute_without_intraA(com_dat = community_for_boostrapping, trait_dat = traitdata_2)
-Imputed_traits_without_intraB <- Trait_impute_without_intraB(com_dat = community_for_boostrapping, trait_dat = traitdata_2)
+Imputed_traits_without_intraA <- Trait_impute_without_intraA(com_dat = community_for_boostrapping, trait_dat = traitdata)
+Imputed_traits_without_intraB <- Trait_impute_without_intraB(com_dat = community_for_boostrapping, trait_dat = traitdata)
 Imputed_traits_without_intra = bind_rows(Imputed_traits_without_intraA, Imputed_traits_without_intraB)
 
 sum_moments_without_intraA <- trait_summarise_boot_moments(Imputed_traits_without_intraA)
@@ -173,23 +173,23 @@ sum_moment_without_intra = bind_rows(sum_moments_without_intraA, sum_moments_wit
 #### Adding climate info & pivoting longer ####
 
 sum_moments_climate_fullcommunity = bind_rows(
-  sum_moments_fullcommunity %>% 
+  sum_moments_fullcommunity  |>   
     left_join(env, by = c("siteID" = "siteID", "year" = "year")))
 
 sum_moments_climate_without_intra = bind_rows(
-  sum_moment_without_intra %>% 
-    left_join(turf_site_dict, by = c("turfID" = "turfID")) %>% 
+  sum_moment_without_intra  |>   
+    left_join(turf_site_dict, by = c("turfID" = "turfID"))  |>   
     left_join(env, by = c("siteID" = "siteID", "year" = "year")))
 
 
-moments_clim_long_fullcommunity <- Imputed_traits_fullcommunity %>% 
-  pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
+moments_clim_long_fullcommunity <- Imputed_traits_fullcommunity  |>   
+  pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value")  |>   
   left_join(env, by = c("siteID" = "siteID", "year" = "year"))
 
 
-moments_clim_long_without_intra <- Imputed_traits_without_intra %>% 
-  pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value") %>% 
-  left_join(turf_site_dict, by = c("turfID" = "turfID")) %>% 
+moments_clim_long_without_intra <- Imputed_traits_without_intra  |>   
+  pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value")  |>   
+  left_join(turf_site_dict, by = c("turfID" = "turfID"))  |>   
   left_join(env, by = c("siteID" = "siteID", "year" = "year"))
 
 
@@ -198,90 +198,98 @@ moments_clim_long_without_intra <- Imputed_traits_without_intra %>%
 #### Making dataset for models ####
 
 # With intraspecific variability
-memodel_data_fullcommunity <- moments_clim_long_fullcommunity %>% 
-  ungroup() %>%
-  select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, value, year) %>% 
-  mutate(value = scale(value)) %>% 
-  group_by(Trait_trans, moments) %>% 
+memodel_data_fullcommunity <- moments_clim_long_fullcommunity  |>   
+  ungroup()  |>  
+  select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, value, year)  |>  
+  mutate(value_not_transformed = value) |> 
+  mutate(value = scale(value))  |>  
+  group_by(Trait_trans, moments)  |>   
   nest()
 
-memodel_data_fullcommunity_nottransformed <- moments_clim_long_fullcommunity %>% 
-  ungroup() %>%
-  select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, value, year) %>% 
-  group_by(Trait_trans, moments) %>% 
-  nest()
+# memodel_data_fullcommunity_nottransformed <- moments_clim_long_fullcommunity  |>   
+#   ungroup()  |>  
+#   select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, value, year)  |>   
+#   group_by(Trait_trans, moments)  |>   
+#   nest()
 
 # Without intraspecific variability
-memodel_data_without_intra <- moments_clim_long_without_intra %>% 
-  ungroup() %>%
-  select(Trait_trans, moments, siteID, turfID,Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, value, year) %>% 
-  mutate(value = scale(value)) %>% 
-  group_by(Trait_trans, moments) %>% 
+memodel_data_without_intra <- moments_clim_long_without_intra  |>   
+  ungroup()  |>  
+  select(Trait_trans, moments, siteID, turfID,Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, value, year)  |>  
+  mutate(value_not_transformed = value) |> 
+  mutate(value = scale(value))  |>   
+  group_by(Trait_trans, moments)  |>   
   nest()
 
-memodel_data_without_intra_nottransformed <- moments_clim_long_without_intra %>% 
-  ungroup() %>%
-  select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, value, year) %>% 
-  group_by(Trait_trans, moments) %>% 
-  nest()
+# memodel_data_without_intra_nottransformed <- moments_clim_long_without_intra  |>   
+#   ungroup()  |>  
+#   select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, value, year)  |>   
+#   group_by(Trait_trans, moments)  |>   
+#   nest()
 
 
-com_data <- community_for_analysis %>%
-  group_by(turfID, year) %>% 
-  mutate(species_richness = n()) %>% 
-  unique() %>% 
-  group_by(turfID, year) %>% 
-  pivot_wider(names_from = functionalGroup, values_from = cover) %>% 
+com_data <- community_for_analysis  |>  
+  group_by(turfID, year)  |>   
+  mutate(species_richness = n())  |>   
+  unique()  |>   
+  group_by(turfID, year)  |>   
+  pivot_wider(names_from = functionalGroup, values_from = cover)  |>   
   mutate(graminoid_cover = sum(graminoid, na.rm = TRUE),
          forb_cover = sum(forb, na.rm = TRUE),
-         other_cover = sum(woody, pteridophyte, `NA`, na.rm = TRUE)) %>% 
-  left_join(env, by = c("siteID" = "siteID", "year" = "year")) %>% 
-  pivot_longer(cols = c("species_richness", "graminoid_cover", "forb_cover", "other_cover", "total_vascular", "vegetation_height"), names_to = "community_properties", values_to = "value") %>% 
-  select(siteID, turfID, Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, year, value, community_properties) %>% 
-  group_by(community_properties) %>% 
-  unique() %>% 
-  mutate(value = scale(value)) %>% 
+         other_cover = sum(woody, pteridophyte, `NA`, na.rm = TRUE))  |>   
+  left_join(env, by = c("siteID" = "siteID", "year" = "year"))  |>   
+  pivot_longer(cols = c("species_richness", "graminoid_cover", "forb_cover", "other_cover", "total_vascular", "vegetation_height"), names_to = "community_properties", values_to = "value")  |>   
+  select(siteID, turfID, Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, year, value, community_properties)  |>   
+  group_by(community_properties)  |>   
+  unique()  |>
+  mutate(value_not_transformed = value) |> 
+  mutate(value = scale(value))  |>   
   nest()
-
-com_data_nottrans <- community_for_analysis %>%
-  group_by(turfID, year) %>% 
-  mutate(species_richness = n()) %>% 
-  unique() %>% 
-  group_by(turfID, year) %>% 
-  pivot_wider(names_from = functionalGroup, values_from = cover) %>% 
-  mutate(graminoid_cover = sum(graminoid, na.rm = TRUE),
-         forb_cover = sum(forb, na.rm = TRUE),
-         other_cover = sum(woody, pteridophyte, `NA`, na.rm = TRUE)) %>% 
-  left_join(env, by = c("siteID" = "siteID", "year" = "year")) %>% 
-  pivot_longer(cols = c("species_richness", "graminoid_cover", "forb_cover", "other_cover", "total_vascular", "vegetation_height"), names_to = "community_properties", values_to = "value") %>% 
-  select(siteID, turfID, Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies,Temp_level, Precip_level, year, value, community_properties) %>% 
-  group_by(community_properties) %>% 
-  unique() %>% 
-  nest()
+# 
+# com_data_nottrans <- community_for_analysis  |>  
+#   group_by(turfID, year)  |>   
+#   mutate(species_richness = n())  |>   
+#   unique()  |>   
+#   group_by(turfID, year)  |>   
+#   pivot_wider(names_from = functionalGroup, values_from = cover)  |>   
+#   mutate(graminoid_cover = sum(graminoid, na.rm = TRUE),
+#          forb_cover = sum(forb, na.rm = TRUE),
+#          other_cover = sum(woody, pteridophyte, `NA`, na.rm = TRUE))  |>   
+#   left_join(env, by = c("siteID" = "siteID", "year" = "year"))  |>   
+#   pivot_longer(cols = c("species_richness", "graminoid_cover", "forb_cover", "other_cover", "total_vascular", "vegetation_height"), names_to = "community_properties", values_to = "value")  |>   
+#   select(siteID, turfID, Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies,Temp_level, Precip_level, year, value, community_properties)  |>   
+#   group_by(community_properties)  |>   
+#   unique()  |>   
+#   nest()
 
 #### Functions for models and model outputs ####
 
-model_TDT <- function(df) {
-  lmer(value ~ scale(Temp_decade) + scale(Precip_decade) + scale(Temp_annomalies) + scale(Precip_annomalies) + 
-         scale(Temp_decade)*scale(Precip_decade) + scale(Temp_annomalies)*scale(Precip_annomalies) + 
-         scale(Temp_decade)*scale(Temp_annomalies) + scale(Temp_decade)*scale(Precip_annomalies) + 
-         scale(Precip_decade)*scale(Temp_annomalies) + scale(Precip_decade)*scale(Precip_annomalies) +
-         + (1|siteID), data = df)
-}
+# model_TDT <- function(df) {
+#   lmer(value ~ scale(Temp_decade) + scale(Precip_decade) + scale(Temp_annomalies) + scale(Precip_annomalies) + 
+#          scale(Temp_decade)*scale(Precip_decade) + scale(Temp_annomalies)*scale(Precip_annomalies) + 
+#          scale(Temp_decade)*scale(Temp_annomalies) + scale(Temp_decade)*scale(Precip_annomalies) + 
+#          scale(Precip_decade)*scale(Temp_annomalies) + scale(Precip_decade)*scale(Precip_annomalies) +
+#          + (1|siteID), data = df)
+# }
+
+dat <- memodel_data_fullcommunity |> 
+  filter(Trait_trans == "SLA",
+         moments == "mean") |> 
+  unnest()
 
 model_year <- function(df) {
-  lmer(value ~ scale(Temp_decade) * scale(Precip_decade) * year  + (1|siteID), data = df)
+  lme(value ~ Temp_decade * Precip_decade * year, random = ~siteID/turfID, data = df, correlation = corAR1)
 }
 
 output <-function(dat) {
   
-  model_output <- dat %>% 
-    select(Trait_trans, moments, model_output, R_squared) %>% 
-    unnest(c(model_output, R_squared)) %>% 
-    filter(!term %in% c("(Intercept)", "sd__(Intercept)", "sd__Observation")) %>% 
-    select(Trait_trans, moments, term, estimate, std.error, statistic, df, p.value, Marginal, Conditional) %>% 
-    ungroup() %>% 
-    group_by(Trait_trans, moments, term) %>% 
+  model_output <- dat  |>   
+    select(Trait_trans, moments, model_output, R_squared)  |>   
+    unnest(c(model_output, R_squared))  |>   
+    filter(!term %in% c("(Intercept)", "sd__(Intercept)", "sd__Observation"))  |>   
+    select(Trait_trans, moments, term, estimate, std.error, statistic, df, p.value, Marginal, Conditional)  |>   
+    ungroup()  |>   
+    group_by(Trait_trans, moments, term)  |>   
     summarize(effect = mean(estimate),
               R2_marginal = mean(Marginal),
               R2_conditional = mean(Conditional),
@@ -297,11 +305,11 @@ output <-function(dat) {
 
 output_com <-function(dat) {
   
-  model_output <- dat %>% 
-    select(community_properties, model_output, R_squared) %>% 
-    unnest(c(model_output, R_squared)) %>% 
-    filter(!term %in% c("(Intercept)", "sd__(Intercept)", "sd__Observation")) %>% 
-    select(community_properties, term, estimate, std.error, statistic, df, p.value, Marginal, Conditional) %>% 
+  model_output <- dat  |>   
+    select(community_properties, model_output, R_squared)  |>   
+    unnest(c(model_output, R_squared))  |>   
+    filter(!term %in% c("(Intercept)", "sd__(Intercept)", "sd__Observation"))  |>   
+    select(community_properties, term, estimate, std.error, statistic, df, p.value, Marginal, Conditional)  |>   
     ungroup() 
   
   return(model_output)
@@ -312,19 +320,19 @@ output_com <-function(dat) {
 
 # Running the mixed effects model
 
-results_TDT <- memodel_data_fullcommunity %>%
-  filter(moments %in% c("mean")) %>% 
-  mutate(model = purrr::map(data, model_TDT))
+results_TDT <- memodel_data_fullcommunity  |>  
+  filter(moments %in% c("mean"))  |>   
+  mutate(model = purrr::map(data, model_year))
 
 #Tidying up the model output
 
-tidy_TDT <- results_TDT %>%
-  mutate(model_output = purrr::map(model, tidy)) %>%
+tidy_TDT <- results_TDT  |>  
+  mutate(model_output = purrr::map(model, tidy))  |>  
   mutate(R_squared = purrr::map(model, rsquared))
 
 # Making a dataset with the model output and the test-statistics (R squared), summarizing across boootstraps.
 
-output_TDT <- output(tidy_TDT) %>% 
+output_TDT <- output(tidy_TDT)  |>   
   mutate(R2_conditional = round(R2_conditional, digits = 2),
          R2_marginal = round(R2_marginal, digits = 2),
          effect = round(effect, digits = 7),
@@ -333,7 +341,7 @@ output_TDT <- output(tidy_TDT) %>%
          std.error = round(std.error, digits = 7),
          staticstic = round(staticstic, digits = 2),
          df = round(df, digits = 5),
-         p.value = round(p.value, digits = 3)) %>% 
+         p.value = round(p.value, digits = 6))  |>   
   filter(!Trait_trans == "Wet_Mass_g_log")
   #mutate_if(is.numeric, round, digits = 5)
 
@@ -344,26 +352,26 @@ output_TDT <- output(tidy_TDT) %>%
 
 #Running the mixed effect model
 
-results_TDT_com <- com_data %>%
-  mutate(model = purrr::map(data, model_TDT))
+results_TDT_com <- com_data  |>  
+  mutate(model = purrr::map(data, model_year))
 
 #Tidying up the model output
 
-tidy_TDT_com <- results_TDT_com %>%
-  mutate(model_output = purrr::map(model, tidy)) %>%
+tidy_TDT_com <- results_TDT_com  |>  
+  mutate(model_output = purrr::map(model, tidy))  |>  
   mutate(R_squared = purrr::map(model, rsquared))
 
 
 # Making a dataset with the model output and the test-statistics (R squared)
 
-output_TDT_com <- output_com(tidy_TDT_com) %>% 
+output_TDT_com <- output_com(tidy_TDT_com)  |>   
   mutate(estimate = round(estimate, digits = 7),
          std.error = round(std.error, digits = 7),
          statistic = round(statistic, digits = 2),
          df = round(df, digits = 2),
          p.value = round(p.value, digits = 3),
          Marginal = round(Marginal, digits = 2),
-         Conditional = round(Conditional, digits = 2)) %>% 
+         Conditional = round(Conditional, digits = 2))  |>   
   filter(community_properties %in% c("species_richness", "total_vascular", "vegetation_height"))
 
 #write.table(output_TDT_com, row.names = TRUE, col.names = TRUE, file = "model_output_community.csv")
@@ -374,19 +382,19 @@ output_TDT_com <- output_com(tidy_TDT_com) %>%
 
 # Running the mixed effects model
 
-results_TDT_without_intra <- memodel_data_without_intra %>%
-  filter(moments %in% c("mean")) %>% 
+results_TDT_without_intra <- memodel_data_without_intra  |>  
+  filter(moments %in% c("mean"))  |>   
   mutate(model = purrr::map(data, model_TDT))
 
 #Tidying up the model output
 
-tidy_TDT_without_intra <- results_TDT_without_intra %>%
-  mutate(model_output = purrr::map(model, tidy)) %>%
+tidy_TDT_without_intra <- results_TDT_without_intra  |>  
+  mutate(model_output = purrr::map(model, tidy))  |>  
   mutate(R_squared = purrr::map(model, rsquared))
 
 # Making a dataset with the model output and the test-statistics (R squared), summarizing across boootstraps.
 
-output_TDT_without_intra <- output(tidy_TDT_without_intra) %>% 
+output_TDT_without_intra <- output(tidy_TDT_without_intra)  |>   
   mutate(R2_conditional = round(R2_conditional, digits = 2),
          R2_marginal = round(R2_marginal, digits = 2),
          effect = round(effect, digits = 7),
@@ -395,7 +403,7 @@ output_TDT_without_intra <- output(tidy_TDT_without_intra) %>%
          std.error = round(std.error, digits = 7),
          staticstic = round(staticstic, digits = 2),
          df = round(df, digits = 5),
-         p.value = round(p.value, digits = 3))%>% 
+         p.value = round(p.value, digits = 3)) |>   
   filter(!Trait_trans == "Wet_Mass_g_log")
 
 #write.table(output_TDT_without_intra, row.names = TRUE, col.names = TRUE, file = "model_output_without_intra.csv")
@@ -407,11 +415,11 @@ model_trait_summary <-function(dat, trait, moment) {
   
   
   # Filter data for model
-  dat2 <- dat %>%
+  dat2 <- dat  |>  
     filter(Trait_trans == trait,
            moments == moment,
-           n == 75) %>% 
-    unnest(data) %>% 
+           n == 75)  |>   
+    unnest(data)  |>   
     ungroup() 
   
   # Run model
@@ -457,11 +465,11 @@ library(patchwork)
 
  partR2_func <-function(dat, trait, moment) {
   
-   dat2 <- dat %>% 
+   dat2 <- dat  |>   
    filter(Trait_trans == trait,
           moments == moment,
-          n == 75) %>% 
-   unnest(data) %>% 
+          n == 75)  |>   
+   unnest(data)  |>   
    ungroup() 
  
  mod <- lmer(value ~ scale(Temp_decade) + scale(Precip_decade) + scale(Temp_annomalies) + scale(Precip_annomalies) + 
@@ -476,21 +484,21 @@ library(patchwork)
  
  part_space_and_time <- partR2(mod, data = dat2, partbatch = list(Space_and_Time = c("scale(Temp_annomalies):scale(Temp_decade)", "scale(Precip_annomalies):scale(Precip_decade)", "scale(Temp_decade)*scale(Precip_annomalies)", "scale(Precip_decade)*scale(Temp_annomalies)")), R2_type = "conditional", nboot = 10)
  
- data <- part_space$R2 %>% 
-   filter(term %in% c("Full", "scale(Temp_decade)", "scale(Precip_decade)", "scale(Temp_decade):scale(Precip_decade)")) %>% 
+ data <- part_space$R2  |>   
+   filter(term %in% c("Full", "scale(Temp_decade)", "scale(Precip_decade)", "scale(Temp_decade):scale(Precip_decade)"))  |>   
    mutate(model = "space")
  
- data2 <- part_time$R2 %>% 
-   filter(term %in% c("scale(Temp_annomalies)", "scale(Precip_annomalies)", "scale(Temp_annomalies):scale(Precip_annomalies)")) %>% 
+ data2 <- part_time$R2  |>   
+   filter(term %in% c("scale(Temp_annomalies)", "scale(Precip_annomalies)", "scale(Temp_annomalies):scale(Precip_annomalies)"))  |>   
    mutate(model = "time")
  
- data3 <- part_space_and_time$R2 %>% 
-   filter(term == "Space_and_Time") %>% 
+ data3 <- part_space_and_time$R2  |>   
+   filter(term == "Space_and_Time")  |>   
    mutate(model = "space_and_time")
  
- data <- data %>% 
-   full_join(data2) %>% 
-   full_join(data3) %>% 
+ data <- data  |>   
+   full_join(data2)  |>   
+   full_join(data3)  |>   
    mutate(traits = trait)
  
  return(data)
@@ -506,33 +514,33 @@ library(patchwork)
  C_partR2 <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "C_percent")
  Mass_partR2 <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "Dry_Mass_g_log")
  
- partR2_data <- LDMC_partR2 %>% 
-   full_join(SLA_partR2) %>% 
-   full_join(Height_partR2) %>% 
-   full_join(CN_partR2) %>% 
-   full_join(LA_partR2) %>% 
-   full_join(Lth_partR2) %>% 
-   full_join(N_partR2) %>% 
-   full_join(C_partR2) %>% 
+ partR2_data <- LDMC_partR2  |>   
+   full_join(SLA_partR2)  |>   
+   full_join(Height_partR2)  |>   
+   full_join(CN_partR2)  |>   
+   full_join(LA_partR2)  |>   
+   full_join(Lth_partR2)  |>   
+   full_join(N_partR2)  |>   
+   full_join(C_partR2)  |>   
    full_join(Mass_partR2)
  
- partR2_data <- partR2_data %>% 
-   group_by(traits) %>% 
-   mutate(Full = first(estimate)) %>%
-   ungroup() %>% 
-   mutate(term = as.character(recode(term, "scale(Temp_decade)" = "Space: Temperature", "scale(Precip_decade)" = "Space: Precipitation", "scale(Temp_decade):scale(Precip_decade)" = "Space: T:P interaction", "scale(Temp_annomalies)" = "Time: Temperature", "scale(Precip_annomalies)" = "Time: Precipitation", "scale(Temp_annomalies):scale(Precip_annomalies)" = "Time: T:P Interaction", "Space_and_Time" = "Interactions Time and Space", "Full" = "Full model"))) %>% 
-   mutate(term = factor(term, levels = c("Interactions Time and Space", "Time: T:P Interaction", "Time: Precipitation",  "Time: Temperature","Space: T:P interaction", "Space: Precipitation",  "Space: Temperature", "Full model"))) %>% 
-   mutate(traits = as.character(recode(traits, "CN_ratio" = "Leaf C/N", "N_percent" = "Leaf N", "C_percent" = "Leaf C"))) %>% 
+ partR2_data <- partR2_data  |>   
+   group_by(traits)  |>   
+   mutate(Full = first(estimate))  |>  
+   ungroup()  |>   
+   mutate(term = as.character(recode(term, "scale(Temp_decade)" = "Space: Temperature", "scale(Precip_decade)" = "Space: Precipitation", "scale(Temp_decade):scale(Precip_decade)" = "Space: T:P interaction", "scale(Temp_annomalies)" = "Time: Temperature", "scale(Precip_annomalies)" = "Time: Precipitation", "scale(Temp_annomalies):scale(Precip_annomalies)" = "Time: T:P Interaction", "Space_and_Time" = "Interactions Time and Space", "Full" = "Full model")))  |>   
+   mutate(term = factor(term, levels = c("Interactions Time and Space", "Time: T:P Interaction", "Time: Precipitation",  "Time: Temperature","Space: T:P interaction", "Space: Precipitation",  "Space: Temperature", "Full model")))  |>   
+   mutate(traits = as.character(recode(traits, "CN_ratio" = "Leaf C/N", "N_percent" = "Leaf N", "C_percent" = "Leaf C")))  |>   
    mutate(Space_or_time = case_when(term %in% c("Space: Temperature", "Space: Precipitation", "Space: T:P interaction") ~ "Space",
                                     term %in% c("Time: Temperature", "Time: Precipitation", "Time: T:P Interaction") ~ "Time",
                                     term == "Full model" ~ "Full model",
-                                    term == "Interactions Time and Space" ~ "Interactions Time and Space")) %>% 
+                                    term == "Interactions Time and Space" ~ "Interactions Time and Space"))  |>   
    mutate(Temp_or_precip = case_when(term %in% c("Space: Temperature", "Time: Temperature") ~ "Temp",
                                      term %in% c("Space: Precipitation", "Time: Precipitation") ~ "Precip",
                                      term %in% c("Space: T:P interaction", "Time: T:P Interaction", "Interactions Time and Space") ~ "Interactions",
-                                     term == "Full model" ~ "Full model")) %>% 
+                                     term == "Full model" ~ "Full model"))  |>   
    mutate(Space_or_time = factor(Space_or_time, levels = c("Full model","Space", "Time", "Interactions Time and Space")),
-          Temp_or_precip = factor(Temp_or_precip, levels = c("Full model","Temp", "Precip", "Interactions"))) %>% 
+          Temp_or_precip = factor(Temp_or_precip, levels = c("Full model","Temp", "Precip", "Interactions")))  |>   
    mutate(proportion = estimate/Full * 100)
  
  # Partial_R2_plot <- (SLA_partR2_plot | LDMC_partR2_plot | Lth_partR2_plot | CN_partR2_plot | N_partR2_plot) /
@@ -578,29 +586,29 @@ Lth_mean_pred_space <- models_trait_predictions_space(Lth_mean_sum)
 
 # Making data ready for correlation tests
 
-Corr_traits <- sum_moments_climate_fullcommunity %>% 
-  ungroup() %>% 
-  select(Site, turfID, Trait_trans, mean, Precip_yearly, Temp_yearly_spring, Temp_yearly_prev,  Temp_summer, Precip_yearly_spring) %>% 
-  spread(key = Trait_trans, value = mean) %>% 
+Corr_traits <- sum_moments_climate_fullcommunity  |>   
+  ungroup()  |>   
+  select(Site, turfID, Trait_trans, mean, Precip_yearly, Temp_yearly_spring, Temp_yearly_prev,  Temp_summer, Precip_yearly_spring)  |>   
+  spread(key = Trait_trans, value = mean)  |>   
   select(-Site, -turfID) 
 
 #### Ordination ####
 
 ### Make data ready for ordination 
 
-Ord_boot_traits <- sum_moments_climate_fullcommunity %>% 
-  ungroup() %>% 
+Ord_boot_traits <- sum_moments_climate_fullcommunity  |>   
+  ungroup()  |>   
   mutate(uniqueID = paste0(turfID,"_", year, "_", siteID),
-         templevel_year = paste0(Temp_level, "_", year)) %>% 
-  group_by(uniqueID, Trait_trans) %>% 
-  mutate(mean_mean = mean(mean)) %>% 
-  filter(!Trait_trans == "Wet_Mass_g_log") %>% 
-  select(uniqueID, siteID, year, templevel_year, turfID, Trait_trans, Temp_level, Precip_level, mean_mean, Temp_annomalies, Precip_annomalies) %>%
-  unique() %>% 
-  #gather(Moment, Value, -(turfID:P_cat)) %>% 
-  #unite(temp, Trait, Moment) %>% 
-  pivot_wider(names_from = Trait_trans, values_from = mean_mean) %>% 
-  column_to_rownames("uniqueID") %>% 
+         templevel_year = paste0(Temp_level, "_", year))  |>   
+  group_by(uniqueID, Trait_trans)  |>   
+  mutate(mean_mean = mean(mean))  |>   
+  filter(!Trait_trans == "Wet_Mass_g_log")  |>   
+  select(uniqueID, siteID, year, templevel_year, turfID, Trait_trans, Temp_level, Precip_level, mean_mean, Temp_annomalies, Precip_annomalies)  |>  
+  unique()  |>   
+  #gather(Moment, Value, -(turfID:P_cat))  |>   
+  #unite(temp, Trait, Moment)  |>   
+  pivot_wider(names_from = Trait_trans, values_from = mean_mean)  |>   
+  column_to_rownames("uniqueID")  |>   
   rename("Leaf C "= "C_percent", "Leaf C/N" = "CN_ratio", "Dry mass" = "Dry_Mass_g_log", "Leaf area" = "Leaf_Area_cm2_log", "Leaf thickness" = "Leaf_Thickness_Ave_mm", "Leaf N" = "N_percent", "Plant height" = "Plant_Height_mm_log", "SLA" = "SLA_cm2_g")
 
 ### Do ordination
