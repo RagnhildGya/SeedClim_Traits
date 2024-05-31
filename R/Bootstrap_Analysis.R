@@ -192,6 +192,13 @@ moments_clim_long_without_intra <- Imputed_traits_without_intra  |>
   left_join(turf_site_dict, by = c("turfID" = "turfID"))  |>   
   left_join(env, by = c("siteID" = "siteID", "year" = "year"))
 
+rm(Imputed_traits_fullcommunity)
+rm(Imputed_traits_without_intraA)
+rm(Imputed_traits_without_intraB)
+rm(Imputed_traits_without_intra)
+rm(sum_moments_without_intraA)
+rm(sum_moments_without_intraB)
+rm(sum_moments_fullcommunity)
 
 ###### Mixed effect model testing ######
 
@@ -205,6 +212,8 @@ memodel_data_fullcommunity <- moments_clim_long_fullcommunity  |>
   mutate(value = scale(value))  |>  
   group_by(Trait_trans, moments)  |>   
   nest()
+
+rm(moments_clim_long_fullcommunity)
 
 # memodel_data_fullcommunity_nottransformed <- moments_clim_long_fullcommunity  |>   
 #   ungroup()  |>  
@@ -220,6 +229,8 @@ memodel_data_without_intra <- moments_clim_long_without_intra  |>
   mutate(value = scale(value))  |>   
   group_by(Trait_trans, moments)  |>   
   nest()
+
+rm(moments_clim_long_without_intra)
 
 # memodel_data_without_intra_nottransformed <- moments_clim_long_without_intra  |>   
 #   ungroup()  |>  
