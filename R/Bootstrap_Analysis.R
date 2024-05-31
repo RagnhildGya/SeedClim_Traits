@@ -273,19 +273,46 @@ com_data <- community_for_analysis  |>
 # }
 
 # Testing model
- dat <- memodel_data_fullcommunity |> 
+SLA_dat <- memodel_data_fullcommunity |> 
    filter(Trait_trans == "SLA_cm2_g",
           moments == "mean") |> 
-   unnest(cols = data) |> 
-   mutate(value = value[,1])
+  unnest(cols = data) |> 
+  mutate(value = value[,1])
 
 LDMC_dat <- memodel_data_fullcommunity |> 
   filter(Trait_trans == "LDMC",
          moments == "mean") |> 
   unnest(cols = data) |> 
   mutate(value = value[,1])
+
+dat <- memodel_data_fullcommunity |> 
+  filter(Trait_trans %in% c("SLA_cm2_g", "LDMC"),
+         moments == "mean") 
+
+df <- memodel_data_fullcommunity
+trait_name <- "LDMC"
+
+
+model_year <- function(df, trait_name) {
+  
+  df1 <- df |> 
+    filter(Trait_trans == trait_name,
+           moments == "mean") |> 
+    unnest(cols = data) |> 
+    mutate(value = value[,1])
+  
+  lme(value ~ Temp_decade * Precip_decade * year, data = df1, random = ~siteID/turfID)
+}
+
+model_year(memodel_data_full_community, "SLA_cm2_g")
+
+testing_model <- dat  |>  
+  filter(Trait_trans %in% c("SLA_cm2_g", "LDMC"),
+         moments == "mean")  |> 
+  mutate(model = purrr::map(data[[1]], model_year))
+
  
-SLA_fm <-  lme(value ~ Temp_decade * Precip_decade * year, data = dat, random = ~ 1|siteID/turfID, correlation = corAR1())
+SLA_fm <-  lme(value ~ Temp_decade * Precip_decade * year, data = SLA_dat, random = ~ 1|siteID/turfID, correlation = corAR1())
 summary(SLA_fm)
 
 LDMC_fm <-  lme(value ~ Temp_decade * Precip_decade * year, data = LDMC_dat, random = ~ 1|siteID/turfID)
