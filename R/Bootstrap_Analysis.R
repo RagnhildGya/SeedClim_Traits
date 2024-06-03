@@ -296,13 +296,6 @@ LDMC_dat <- memodel_data_fullcommunity |>
   unnest(cols = data) |> 
   mutate(value = value[,1])
 
-dat <- memodel_data_fullcommunity |> 
-  filter(Trait_trans %in% c("SLA_cm2_g", "LDMC"),
-         moments == "mean") 
-
-df <- memodel_data_fullcommunity
-trait_name <- "LDMC"
-
 
 model_year <- function(df, trait_name) {
   
@@ -312,25 +305,29 @@ model_year <- function(df, trait_name) {
     unnest(cols = data) |> 
     mutate(value = value[,1])
   
-  lme(value ~ Temp_decade * Precip_decade * year, data = df1, random = ~siteID/turfID)
+  model <- lme(value ~ Temp_decade * Precip_decade * year, data = df1, random = ~ 1|siteID/turfID, correlation = corAR1())
+  
+  sum_model <- summary(model)
+  
+  return(sum_model)
 }
 
-model_year(memodel_data_full_community, "SLA_cm2_g")
+model_year(df = memodel_data_fullcommunity, trait_name = "LDMC")
+model_year(df = memodel_data_fullcommunity, trait_name = "LDMC")
 
-testing_model <- dat  |>  
+model_year1 <- function(df) {
+  lme(value ~ Temp_decade * Precip_decade * year, data = df, random = ~ 1|siteID/turfID)
+}
+
+
+testing_model <- memodel_data_fullcommunity |>  
   filter(Trait_trans %in% c("SLA_cm2_g", "LDMC"),
          moments == "mean")  |> 
-  mutate(model = purrr::map(data[[1]], model_year))
+  mutate(model = purrr::map(data, model_year1))
 
- 
-SLA_fm <-  lme(value ~ Temp_decade * Precip_decade * year, data = SLA_dat, random = ~ 1|siteID/turfID, correlation = corAR1())
-summary(SLA_fm)
-
-LDMC_fm <-  lme(value ~ Temp_decade * Precip_decade * year, data = LDMC_dat, random = ~ 1|siteID/turfID)
-summary(LDMC_fm)
 
 model_year <- function(df) {
-  lme(value ~ Temp_decade * Precip_decade * year, data = df, random = ~siteID/turfID)
+  lme(value ~ Temp_decade * Precip_decade * year, data = df, random = ~ 1|siteID/turfID)
 }
 
 output <-function(dat) {
