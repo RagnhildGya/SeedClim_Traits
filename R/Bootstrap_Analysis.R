@@ -53,6 +53,7 @@ turf_site_dict <- community  |>
   distinct()
 
 rm(community)
+
 ## Trait data ##
 
 traitdata <- traitdata_1  |>   
@@ -205,15 +206,15 @@ rm(sum_moments_fullcommunity)
 #### Making dataset for models ####
 
 # With intraspecific variability
-memodel_data_fullcommunity <- moments_clim_long_fullcommunity  |>   
-  ungroup()  |>  
-  select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, value, year)  |>  
-  mutate(value_not_transformed = value) |> 
-  mutate(value = scale(value))  |>  
-  group_by(Trait_trans, moments)  |>   
-  nest()
-
-rm(moments_clim_long_fullcommunity)
+# memodel_data_fullcommunity <- moments_clim_long_fullcommunity  |>   
+#   ungroup()  |>  
+#   select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, value, year)  |>  
+#   mutate(value_not_transformed = value) |> 
+#   mutate(value = scale(value))  |>  
+#   group_by(Trait_trans, moments)  |>   
+#   nest()
+# 
+# rm(moments_clim_long_fullcommunity)
 
 #Making this for the summarized dataset
 model_data <- sum_moments_climate_fullcommunity  |>   
@@ -231,29 +232,18 @@ model_data <- sum_moments_climate_fullcommunity  |>
   group_by(Trait_trans)  |>   
   nest()
 
-# memodel_data_fullcommunity_nottransformed <- moments_clim_long_fullcommunity  |>   
-#   ungroup()  |>  
-#   select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, value, year)  |>   
-#   group_by(Trait_trans, moments)  |>   
-#   nest()
-
 # Without intraspecific variability
-memodel_data_without_intra <- moments_clim_long_without_intra  |>   
-  ungroup()  |>  
-  select(Trait_trans, moments, siteID, turfID,Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, value, year)  |>  
-  mutate(value_not_transformed = value) |> 
-  mutate(value = scale(value))  |>   
-  group_by(Trait_trans, moments)  |>   
-  nest()
-
-rm(moments_clim_long_without_intra)
-
-# memodel_data_without_intra_nottransformed <- moments_clim_long_without_intra  |>   
+# memodel_data_without_intra <- moments_clim_long_without_intra  |>   
 #   ungroup()  |>  
-#   select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, value, year)  |>   
+#   select(Trait_trans, moments, siteID, turfID,Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, value, year)  |>  
+#   mutate(value_not_transformed = value) |> 
+#   mutate(value = scale(value))  |>   
 #   group_by(Trait_trans, moments)  |>   
 #   nest()
+# 
+# rm(moments_clim_long_without_intra)
 
+# community data
 
 com_data <- community_for_analysis  |>  
   group_by(turfID, year)  |>   
@@ -265,29 +255,12 @@ com_data <- community_for_analysis  |>
          forb_cover = sum(forb, na.rm = TRUE),
          other_cover = sum(woody, pteridophyte, `NA`, na.rm = TRUE))  |>   
   left_join(env, by = c("siteID" = "siteID", "year" = "year"))  |>   
-  pivot_longer(cols = c("species_richness", "graminoid_cover", "forb_cover", "other_cover", "total_vascular", "vegetation_height"), names_to = "community_properties", values_to = "value")  |>   
+  pivot_longer(cols = c("species_richness", "graminoid_cover", "forb_cover", "other_cover", "total_vascular", "total_bryophytes", "vegetation_height", "moss_height"), names_to = "community_properties", values_to = "value")  |>   
   select(siteID, turfID, Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, year, value, community_properties)  |>   
   group_by(community_properties)  |>   
   unique()  |>
-  mutate(value_not_transformed = value) |> 
-  mutate(value = scale(value))  |>   
+  mutate(value_transformed = scale(value))  |>   
   nest()
-# 
-# com_data_nottrans <- community_for_analysis  |>  
-#   group_by(turfID, year)  |>   
-#   mutate(species_richness = n())  |>   
-#   unique()  |>   
-#   group_by(turfID, year)  |>   
-#   pivot_wider(names_from = functionalGroup, values_from = cover)  |>   
-#   mutate(graminoid_cover = sum(graminoid, na.rm = TRUE),
-#          forb_cover = sum(forb, na.rm = TRUE),
-#          other_cover = sum(woody, pteridophyte, `NA`, na.rm = TRUE))  |>   
-#   left_join(env, by = c("siteID" = "siteID", "year" = "year"))  |>   
-#   pivot_longer(cols = c("species_richness", "graminoid_cover", "forb_cover", "other_cover", "total_vascular", "vegetation_height"), names_to = "community_properties", values_to = "value")  |>   
-#   select(siteID, turfID, Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies,Temp_level, Precip_level, year, value, community_properties)  |>   
-#   group_by(community_properties)  |>   
-#   unique()  |>   
-#   nest()
 
 #### Functions for models and model outputs ####
 
@@ -315,10 +288,11 @@ extract_phi <- function(model) {
 
 outputYear <-function(dat) {
   
-  model_output <- dat  |>  
-    select(Trait_trans, model_outputYear)  |>   
+  model_output <- dat  |> 
+    unnest(phi) |> 
+    select(Trait_trans, model_outputYear, phi)  |>   
     unnest(model_outputYear)  |>  
-    select(Trait_trans, term, estimate, std.error, statistic, df, p.value)  |>   
+    select(Trait_trans, term, estimate, std.error, statistic, df, p.value, phi)  |>   
     ungroup() |> 
     mutate(model = "year")
   
@@ -340,7 +314,7 @@ outputClimate <-function(dat) {
 output <-function(dat) {
   
   dat1 <- outputYear(dat)
-  dat2<- outputClimate(dat)
+  dat2 <- outputClimate(dat)
   
   dat3 <- dat1 |> 
     bind_rows(dat2)
