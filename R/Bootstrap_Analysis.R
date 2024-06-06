@@ -291,31 +291,6 @@ com_data <- community_for_analysis  |>
 
 #### Functions for models and model outputs ####
 
-# model_TDT <- function(df) {
-#   lmer(value ~ scale(Temp_decade) + scale(Precip_decade) + scale(Temp_annomalies) + scale(Precip_annomalies) + 
-#          scale(Temp_decade)*scale(Precip_decade) + scale(Temp_annomalies)*scale(Precip_annomalies) + 
-#          scale(Temp_decade)*scale(Temp_annomalies) + scale(Temp_decade)*scale(Precip_annomalies) + 
-#          scale(Precip_decade)*scale(Temp_annomalies) + scale(Precip_decade)*scale(Precip_annomalies) +
-#          + (1|siteID), data = df)
-# }
-
-# # Model
-# model_year <- function(df, trait_name) {
-#   
-#   df1 <- df |> 
-#     filter(Trait_trans == trait_name) |> 
-#     unnest(cols = data) 
-#   
-#   model <- lme(mean~ Temp_decade * Precip_decade * year,
-#                random = ~ 1|siteID/turfID, 
-#                correlation = corAR1(form = ~ year | siteID/turfID),
-#                data = df1)
-#   
-#   #sum_model <- summary(model)
-#   
-#   return(model)
-# }
-
 model_year <- function(df) {
   lme(mean~ Temp_decade * Precip_decade * year,
       random = ~ 1|siteID/turfID, 
@@ -334,17 +309,9 @@ model_climate <- function(df) {
       data = df)
 }
 
-
 extract_phi <- function(model) {
   coef(model$modelStruct$corStruct, unconstrained = FALSE)
 }
-
-testing_model <- model_data |>  
-  mutate(modelYear = purrr::map(data, model_year)) |>
-  mutate(modelClimate = purrr::map(data, model_climate)) |> 
-  mutate(model_outputYear = purrr::map(modelYear, tidy)) |> 
-  mutate(phi = purrr::map(modelYear, extract_phi)) |> 
-  mutate(model_outputClimate = purrr::map(modelClimate, tidy))
 
 outputYear <-function(dat) {
   
@@ -380,11 +347,7 @@ output <-function(dat) {
   
   return(dat3)
 }
-
-testing_model_more <- output(testing_model)
   
-
-
 output_com <-function(dat) {
   
   model_output <- dat  |>   
@@ -400,32 +363,19 @@ output_com <-function(dat) {
 
 #### Running models - traits ####
 
-# Running the mixed effects model
+# Running the model, tidying the model output
 
-results_TDT <- memodel_data_fullcommunity  |>  
-  filter(moments %in% c("mean"))  |>   
-  mutate(model = purrr::map(data, model_year))
-
-#Tidying up the model output
-
-tidy_TDT <- results_TDT  |>  
-  mutate(model_output = purrr::map(model, tidy))  |>  
-  mutate(R_squared = purrr::map(model, rsquared))
+testing_model <- model_data |>  
+  mutate(modelYear = purrr::map(data, model_year)) |>
+  mutate(modelClimate = purrr::map(data, model_climate)) |> 
+  mutate(model_outputYear = purrr::map(modelYear, tidy)) |> 
+  mutate(phi = purrr::map(modelYear, extract_phi)) |> 
+  mutate(model_outputClimate = purrr::map(modelClimate, tidy))
 
 # Making a dataset with the model output and the test-statistics (R squared), summarizing across boootstraps.
 
-output_TDT <- output(tidy_TDT)  |>   
-  mutate(R2_conditional = round(R2_conditional, digits = 2),
-         R2_marginal = round(R2_marginal, digits = 2),
-         effect = round(effect, digits = 7),
-         CIlow.fit = round(CIlow.fit, digits = 7),
-         CIhigh.fit = round(CIhigh.fit, digits = 7),
-         std.error = round(std.error, digits = 7),
-         staticstic = round(staticstic, digits = 2),
-         df = round(df, digits = 5),
-         p.value = round(p.value, digits = 6))  |>   
-  filter(!Trait_trans == "Wet_Mass_g_log")
-  #mutate_if(is.numeric, round, digits = 5)
+testing_model_more <- output(testing_model)
+
 
 #write.table(output_TDT, row.names = TRUE, col.names = TRUE, file = "model_output_TDT.csv")
 
