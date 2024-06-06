@@ -348,17 +348,17 @@ output <-function(dat) {
   return(dat3)
 }
   
-output_com <-function(dat) {
-  
-  model_output <- dat  |>   
-    select(community_properties, model_output, R_squared)  |>   
-    unnest(c(model_output, R_squared))  |>   
-    filter(!term %in% c("(Intercept)", "sd__(Intercept)", "sd__Observation"))  |>   
-    select(community_properties, term, estimate, std.error, statistic, df, p.value, Marginal, Conditional)  |>   
-    ungroup() 
-  
-  return(model_output)
-}
+# output_com <-function(dat) {
+#   
+#   model_output <- dat  |>   
+#     select(community_properties, model_output, R_squared)  |>   
+#     unnest(c(model_output, R_squared))  |>   
+#     filter(!term %in% c("(Intercept)", "sd__(Intercept)", "sd__Observation"))  |>   
+#     select(community_properties, term, estimate, std.error, statistic, df, p.value, Marginal, Conditional)  |>   
+#     ungroup() 
+#   
+#   return(model_output)
+# }
 
 
 #### Running models - traits ####
