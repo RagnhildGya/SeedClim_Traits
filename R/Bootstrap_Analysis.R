@@ -346,27 +346,44 @@ testing_model <- model_data |>
   mutate(phi = purrr::map(modelYear, extract_phi)) |> 
   mutate(model_outputClimate = purrr::map(modelClimate, tidy))
 
-output <-function(dat) {
+outputYear <-function(dat) {
   
-  model_output <- dat  |>   
-    select(Trait_trans, moments, model_output, R_squared)  |>   
-    unnest(c(model_output, R_squared))  |>   
-    filter(!term %in% c("(Intercept)", "sd__(Intercept)", "sd__Observation"))  |>   
-    select(Trait_trans, moments, term, estimate, std.error, statistic, df, p.value, Marginal, Conditional)  |>   
-    ungroup()  |>   
-    group_by(Trait_trans, moments, term)  |>   
-    summarize(effect = mean(estimate),
-              R2_marginal = mean(Marginal),
-              R2_conditional = mean(Conditional),
-              CIlow.fit = effect - sd(estimate),
-              CIhigh.fit = effect + sd(estimate),
-              std.error = mean(std.error),
-              staticstic = mean(statistic),
-              df = mean(df),
-              p.value = mean(p.value))
+  model_output <- dat  |>  
+    select(Trait_trans, model_outputYear)  |>   
+    unnest(model_outputYear)  |>  
+    select(Trait_trans, term, estimate, std.error, statistic, df, p.value)  |>   
+    ungroup() |> 
+    mutate(model = "year")
   
   return(model_output)
 }
+
+outputClimate <-function(dat) {
+  
+  model_output <- dat  |> 
+    select(Trait_trans, model_outputClimate)  |>   
+    unnest(model_outputClimate)  |>  
+    select(Trait_trans, term, estimate, std.error, statistic, df, p.value)  |>   
+    ungroup() |> 
+    mutate(model = "climate")
+  
+  return(model_output)
+}
+
+output <-function(dat) {
+  
+  dat1 <- outputYear(dat)
+  dat2<- outputClimate(dat)
+  
+  dat3 <- dat1 |> 
+    bind_rows(dat2)
+  
+  return(dat3)
+}
+
+testing_model_more <- output(testing_model)
+  
+
 
 output_com <-function(dat) {
   
