@@ -215,6 +215,22 @@ memodel_data_fullcommunity <- moments_clim_long_fullcommunity  |>
 
 rm(moments_clim_long_fullcommunity)
 
+#Making this for the summarized dataset
+model_data <- sum_moments_climate_fullcommunity  |>   
+  ungroup()  |>  
+  select(Trait_trans, year, siteID, blockID, turfID, 
+         mean,
+         Temp_yearly_spring, Precip_yearly, 
+         Temp_decade, Precip_decade, 
+         Temp_annomalies, Precip_annomalies, 
+         Temp_level, Precip_level)  |> 
+  mutate(mean_transformed = scale(mean))  |> 
+  group_by(Trait_trans, siteID, turfID) |> 
+  mutate(mean_decade = mean(mean)) |> 
+  ungroup() |> 
+  group_by(Trait_trans)  |>   
+  nest()
+
 # memodel_data_fullcommunity_nottransformed <- moments_clim_long_fullcommunity  |>   
 #   ungroup()  |>  
 #   select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, value, year)  |>   
@@ -283,58 +299,52 @@ com_data <- community_for_analysis  |>
 #          + (1|siteID), data = df)
 # }
 
-# Testing model
-SLA_dat <- memodel_data_fullcommunity |> 
-   filter(Trait_trans == "SLA_cm2_g",
-          moments == "mean") |> 
-  unnest(cols = data) |> 
-  mutate(value = value[,1])
+# # Model
+# model_year <- function(df, trait_name) {
+#   
+#   df1 <- df |> 
+#     filter(Trait_trans == trait_name) |> 
+#     unnest(cols = data) 
+#   
+#   model <- lme(mean~ Temp_decade * Precip_decade * year,
+#                random = ~ 1|siteID/turfID, 
+#                correlation = corAR1(form = ~ year | siteID/turfID),
+#                data = df1)
+#   
+#   #sum_model <- summary(model)
+#   
+#   return(model)
+# }
 
-LDMC_dat <- memodel_data_fullcommunity |> 
-  filter(Trait_trans == "LDMC",
-         moments == "mean") |> 
-  unnest(cols = data) |> 
-  mutate(value = value[,1])
-
-
-model_year <- function(df, trait_name) {
-  
-  df1 <- df |> 
-    filter(Trait_trans == trait_name,
-           moments == "mean") |> 
-    unnest(cols = data) |> 
-    mutate(value = value[,1])
-  
-  model <- lme(value ~ Temp_decade * Precip_decade * year,
-               random = ~ 1|siteID/turfID, 
-               correlation = corAR1(form = ~ year | siteID/turfID),
-               data = df1)
-  
-  sum_model <- summary(model)
-  
-  return(sum_model)
+model_year <- function(df) {
+  lme(mean~ Temp_decade * Precip_decade * year,
+      random = ~ 1|siteID/turfID, 
+      correlation = corAR1(form = ~ year | siteID/turfID),
+      data = df)
 }
 
-testing <- model_year(df = memodel_data_fullcommunity, trait_name = "LDMC")
-
-
-model_year(df = memodel_data_fullcommunity, trait_name = "LDMC")
-
-model_year1 <- function(df) {
-  lme(value ~ Temp_decade * Precip_decade * year, data = df, random = ~ 1|siteID/turfID, correlation = corAR1())
+model_climate <- function(df) {
+  
+  df <- df |> 
+    select(siteID, turfID, Temp_decade, Precip_decade, mean_decade) |> 
+    unique()
+  
+  lme(mean_decade ~ Temp_decade * Precip_decade,
+      random = ~ 1|siteID/turfID,
+      data = df)
 }
 
 
-testing_model <- memodel_data_fullcommunity |>  
-  filter(Trait_trans %in% c("SLA_cm2_g", "LDMC"),
-         moments == "mean")  |> 
-  mutate(model = purrr::map(data, model_year1)) |>
-  mutate(model_output = purrr::map(model, tidy))
+extract_phi <- function(model) {
+  coef(model$modelStruct$corStruct, unconstrained = FALSE)
+}
 
-testing_model_more <- testing_model |> 
-  mutate(model_output = purrr::map(model, tidy))
-
-
+testing_model <- model_data |>  
+  mutate(modelYear = purrr::map(data, model_year)) |>
+  mutate(modelClimate = purrr::map(data, model_climate)) |> 
+  mutate(model_outputYear = purrr::map(modelYear, tidy)) |> 
+  mutate(phi = purrr::map(modelYear, extract_phi)) |> 
+  mutate(model_outputClimate = purrr::map(modelClimate, tidy))
 
 output <-function(dat) {
   
