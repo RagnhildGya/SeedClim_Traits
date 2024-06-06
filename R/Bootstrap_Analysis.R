@@ -305,30 +305,36 @@ model_year <- function(df, trait_name) {
     unnest(cols = data) |> 
     mutate(value = value[,1])
   
-  model <- lme(value ~ Temp_decade * Precip_decade * year, data = df1, random = ~ 1|siteID/turfID, correlation = corAR1())
+  model <- lme(value ~ Temp_decade * Precip_decade * year,
+               random = ~ 1|siteID/turfID, 
+               correlation = corAR1(form = ~ year | siteID/turfID),
+               data = df1)
   
   sum_model <- summary(model)
   
   return(sum_model)
 }
 
-model_year(df = memodel_data_fullcommunity, trait_name = "LDMC")
+testing <- model_year(df = memodel_data_fullcommunity, trait_name = "LDMC")
+
+
 model_year(df = memodel_data_fullcommunity, trait_name = "LDMC")
 
 model_year1 <- function(df) {
-  lme(value ~ Temp_decade * Precip_decade * year, data = df, random = ~ 1|siteID/turfID)
+  lme(value ~ Temp_decade * Precip_decade * year, data = df, random = ~ 1|siteID/turfID, correlation = corAR1())
 }
 
 
 testing_model <- memodel_data_fullcommunity |>  
   filter(Trait_trans %in% c("SLA_cm2_g", "LDMC"),
          moments == "mean")  |> 
-  mutate(model = purrr::map(data, model_year1))
+  mutate(model = purrr::map(data, model_year1)) |>
+  mutate(model_output = purrr::map(model, tidy))
+
+testing_model_more <- testing_model |> 
+  mutate(model_output = purrr::map(model, tidy))
 
 
-model_year <- function(df) {
-  lme(value ~ Temp_decade * Precip_decade * year, data = df, random = ~ 1|siteID/turfID)
-}
 
 output <-function(dat) {
   
