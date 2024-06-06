@@ -228,6 +228,7 @@ model_data <- sum_moments_climate_fullcommunity  |>
   mutate(mean_transformed = scale(mean))  |> 
   group_by(Trait_trans, siteID, turfID) |> 
   mutate(mean_decade = mean(mean)) |> 
+  mutate(value = mean) |>  #To have the same name for what goes in the model for both trait and community data
   ungroup() |> 
   group_by(Trait_trans)  |>   
   nest()
@@ -265,10 +266,11 @@ com_data <- community_for_analysis  |>
 #### Functions for models and model outputs ####
 
 model_year <- function(df) {
-  lme(mean~ Temp_decade * Precip_decade * year,
+  lme(value ~ Temp_decade * Precip_decade * year,
       random = ~ 1|siteID/turfID, 
       correlation = corAR1(form = ~ year | siteID/turfID),
-      data = df)
+      data = df,
+      na.action = na.omit)
 }
 
 model_climate <- function(df) {
@@ -295,6 +297,18 @@ outputYear <-function(dat) {
     select(Trait_trans, term, estimate, std.error, statistic, df, p.value, phi)  |>   
     ungroup() |> 
     mutate(model = "year")
+  
+  return(model_output)
+}
+
+outputYear_com <-function(dat) {
+  
+  model_output <- dat  |> 
+    unnest(phi) |> 
+    select(community_properties, model_outputYear, phi)  |>   
+    unnest(model_outputYear)  |>  
+    select(community_properties, term, estimate, std.error, statistic, df, p.value, phi)  |>   
+    ungroup() 
   
   return(model_output)
 }
@@ -339,16 +353,14 @@ output <-function(dat) {
 
 # Running the model, tidying the model output
 
-testing_model <- model_data |>  
+models <- model_data |>  
   mutate(modelYear = purrr::map(data, model_year)) |>
   mutate(modelClimate = purrr::map(data, model_climate)) |> 
   mutate(model_outputYear = purrr::map(modelYear, tidy)) |> 
   mutate(phi = purrr::map(modelYear, extract_phi)) |> 
   mutate(model_outputClimate = purrr::map(modelClimate, tidy))
 
-# Making a dataset with the model output and the test-statistics (R squared), summarizing across boootstraps.
-
-testing_model_more <- output(testing_model)
+models_output <- output(models)
 
 
 #write.table(output_TDT, row.names = TRUE, col.names = TRUE, file = "model_output_TDT.csv")
@@ -358,14 +370,12 @@ testing_model_more <- output(testing_model)
 
 #Running the mixed effect model
 
-results_TDT_com <- com_data  |>  
-  mutate(model = purrr::map(data, model_year))
+results_com <- com_data |>  
+  mutate(modelYear = purrr::map(data, model_year)) |> 
+  mutate(model_outputYear = purrr::map(modelYear, tidy)) |> 
+  mutate(phi = purrr::map(modelYear, extract_phi))
 
-#Tidying up the model output
-
-tidy_TDT_com <- results_TDT_com  |>  
-  mutate(model_output = purrr::map(model, tidy))  |>  
-  mutate(R_squared = purrr::map(model, rsquared))
+output_com <- outputYear_com(results_com)
 
 
 # Making a dataset with the model output and the test-statistics (R squared)
