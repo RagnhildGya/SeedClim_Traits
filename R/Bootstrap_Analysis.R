@@ -363,7 +363,7 @@ models <- model_data |>
 models_output <- output(models)
 
 
-#write.table(output_TDT, row.names = TRUE, col.names = TRUE, file = "model_output_TDT.csv")
+#write.table(models_output, row.names = TRUE, col.names = TRUE, file = "model_output_traits.csv")
 
 
 #### Running models - community ####
@@ -377,20 +377,7 @@ results_com <- com_data |>
 
 output_com <- outputYear_com(results_com)
 
-
-# Making a dataset with the model output and the test-statistics (R squared)
-
-output_TDT_com <- output_com(tidy_TDT_com)  |>   
-  mutate(estimate = round(estimate, digits = 7),
-         std.error = round(std.error, digits = 7),
-         statistic = round(statistic, digits = 2),
-         df = round(df, digits = 2),
-         p.value = round(p.value, digits = 3),
-         Marginal = round(Marginal, digits = 2),
-         Conditional = round(Conditional, digits = 2))  |>   
-  filter(community_properties %in% c("species_richness", "total_vascular", "vegetation_height"))
-
-#write.table(output_TDT_com, row.names = TRUE, col.names = TRUE, file = "model_output_community.csv")
+#write.table(output_com, row.names = TRUE, col.names = TRUE, file = "model_output_community.csv")
 
   #mutate_if(is.numeric, round, digits = 5)
 
