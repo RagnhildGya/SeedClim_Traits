@@ -351,7 +351,12 @@ output <-function(dat) {
   dat2 <- outputClimate(dat)
   
   dat3 <- dat1 |> 
-    bind_rows(dat2) 
+    bind_rows(dat2) |> 
+    mutate(estimate = round(estimate, digits = 2)) |> 
+    mutate(std.error = round(std.error, digits = 2)) |> 
+    mutate(statistic = round(statistic, digits = 2)) |> 
+    mutate(p.value = round(p.value, digits = 5)) |> 
+    mutate(phi = round(phi, digits = 3))
   
   return(dat3)
 }
