@@ -377,6 +377,24 @@ output <-function(dat) {
 #### Running models - traits ####
 
 # Running the model, tidying the model output
+turfIDs <- unique(community_for_analysis$turfID)
+
+predict_data_year <-function() {
+  
+  pred <- expand.grid(Precip_decade = c(1.0, 1.45, 2.4, 3.5), 
+                                     Temp_decade = seq(5.5,12, length = 50), 
+                                     siteID = c("Alrust", "Arhelleren", "Fauske", "Gudmedalen", "Hogsete", "Lavisdalen", "Ovstedalen", "Rambera", "Skjelingahaugen", "Ulvehaugen", "Veskre", "Vikesland"),
+                                     turfID = turfIDs)
+  
+  return(pred)
+}
+
+pred <- expand.grid(Precip_decade = c(1.0, 1.45, 2.4, 3.5), 
+                    Temp_decade = seq(5.5,12, length = 50), 
+                    siteID = c("Alrust", "Arhelleren", "Fauske", "Gudmedalen", "Hogsete", "Lavisdalen", "Ovstedalen", "Rambera", "Skjelingahaugen", "Ulvehaugen", "Veskre", "Vikesland"),
+                    turfID = turfIDs)
+
+
 
 models <- model_data |>  
   mutate(modelYear = purrr::map(data, model_year)) |>
@@ -384,8 +402,25 @@ models <- model_data |>
   mutate(model_outputYear = purrr::map(modelYear, tidy)) |> 
   mutate(phi = purrr::map(modelYear, extract_phi)) |> 
   mutate(model_outputClimate = purrr::map(modelClimate, tidy)) |> 
-  mutate(data = map2(data, modelYear, ~ .x |> 
-                       mutate(predicted_year = predict(.y, newdata = .x, level = 1))))
+  mutate(predicted_newdata = map2(Trait_trans, ~pred)) ##Trying to add the new data to the nested datasets so I can predict into it.
+  
+  
+  # mutate(data = map2(data, modelYear, ~ {
+  #   preds <- predict(.y, newdata = .x, level = 1, se.fit = TRUE)
+  #   .x |> 
+  #     mutate(predicted_year = preds$fit,
+  #            se_predicted_year = preds$se.fit)
+  # }))
+  # 
+  # mutate(predictions = map2(data, modelYear, predict(modelYear, newdata = data, level = 1, se.fit =TRUE)))
+
+#This code does predict, but not making great lines.
+   mutate(data = map2(data, modelYear, ~ .x |> 
+                       mutate(predicted_year = predict(.y, newdata = .x, level = 1, se.fit = TRUE)))) |> 
+  mutate(data = map2(data, modelClimate, ~ .x |> 
+                       mutate(predicted_climate = predict(.y, newdata = .x, level = 1, se.fit = TRUE))))
+  
+
 
 models_output <- output(models)
 
