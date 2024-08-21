@@ -383,7 +383,9 @@ models <- model_data |>
   mutate(modelClimate = purrr::map(data, model_climate)) |> 
   mutate(model_outputYear = purrr::map(modelYear, tidy)) |> 
   mutate(phi = purrr::map(modelYear, extract_phi)) |> 
-  mutate(model_outputClimate = purrr::map(modelClimate, tidy))
+  mutate(model_outputClimate = purrr::map(modelClimate, tidy)) |> 
+  mutate(data = map2(data, modelYear, ~ .x |> 
+                       mutate(predicted_year = predict(.y, newdata = .x, level = 1))))
 
 models_output <- output(models)
 
@@ -405,6 +407,15 @@ output_com <- outputYear_com(results_com)
 #write.table(output_com, row.names = TRUE, col.names = TRUE, file = "model_output_community.csv")
 
   #mutate_if(is.numeric, round, digits = 5)
+
+
+
+
+
+
+############# Below this is old code ###################
+
+
 
 #### Running models - trait without intraspecific variability ####
 
