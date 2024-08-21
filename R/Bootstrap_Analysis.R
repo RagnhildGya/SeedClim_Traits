@@ -265,6 +265,8 @@ com_data <- community_for_analysis  |>
 
 #### Functions for models and model outputs ####
 
+
+#Full model testing how traits and community properties varies with years and if that is dependent on climate
 model_year <- function(df) {
   lme(value ~ Temp_decade * Precip_decade * year,
       random = ~ 1|siteID/turfID, 
@@ -273,6 +275,8 @@ model_year <- function(df) {
       na.action = na.omit)
 }
 
+
+#Model testing traits and how they vary with spacial climate
 model_climate <- function(df) {
   
   df <- df |> 
@@ -288,6 +292,12 @@ extract_phi <- function(model) {
   coef(model$modelStruct$corStruct, unconstrained = FALSE)
 }
 
+# extract_random_effect <- function(model) {
+#   coef(model$modelStruct$reStruct)
+# }
+#VarCorr(models[[3]][[1]])
+#Not sure what to use here. What is normal to report on nested random effects?
+
 outputYear <-function(dat) {
   
   model_output <- dat  |> 
@@ -296,7 +306,12 @@ outputYear <-function(dat) {
     unnest(model_outputYear)  |>  
     select(Trait_trans, term, estimate, std.error, statistic, df, p.value, phi)  |>   
     ungroup() |> 
-    mutate(model = "year")
+    mutate(model = "year") |> 
+    mutate(estimate = round(estimate, digits = 2)) |> 
+    mutate(std.error = round(std.error, digits = 2)) |> 
+    mutate(statistic = round(statistic, digits = 2)) |> 
+    mutate(p.value = round(p.value, digits = 5)) |> 
+    mutate(phi = round(phi, digits = 3))
   
   return(model_output)
 }
@@ -308,7 +323,12 @@ outputYear_com <-function(dat) {
     select(community_properties, model_outputYear, phi)  |>   
     unnest(model_outputYear)  |>  
     select(community_properties, term, estimate, std.error, statistic, df, p.value, phi)  |>   
-    ungroup() 
+    ungroup() |> 
+    mutate(estimate = round(estimate, digits = 2)) |> 
+    mutate(std.error = round(std.error, digits = 2)) |> 
+    mutate(statistic = round(statistic, digits = 2)) |> 
+    mutate(p.value = round(p.value, digits = 5)) |> 
+    mutate(phi = round(phi, digits = 3))
   
   return(model_output)
 }
@@ -331,7 +351,7 @@ output <-function(dat) {
   dat2 <- outputClimate(dat)
   
   dat3 <- dat1 |> 
-    bind_rows(dat2)
+    bind_rows(dat2) 
   
   return(dat3)
 }
