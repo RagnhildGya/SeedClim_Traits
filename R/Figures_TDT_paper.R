@@ -104,7 +104,7 @@ climate <- env %>%
   labs(x = "Annual precipitation in m", y = "Summer temperature in °C") +
   scale_color_manual(name = "Precipitation", values = c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")) +
   scale_fill_manual(name = "Precipitation", values = c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")) +
-  scale_shape_manual(name = "Temperature", values = c(2, 24, 6, 25, 1, 21)) + 
+  scale_shape_manual(name = "Temperature", values = c(2, 6, 1, 24, 25, 21)) + 
   guides(fill = "none", size = "none", shape = "none", color = "none") +
   theme_bw(base_size = 18)
 
@@ -201,33 +201,33 @@ plot <- Zoomed_in_map +
 
 # Correlations 
 
-Trait_climate_corr <- Corr_traits %>% 
-  select(-Temp_yearly_prev, -Temp_summer, -Precip_yearly_spring) %>% 
-  rename(Temp_summer = Temp_yearly_spring)
-
-Climate_corr <- Corr_traits %>% 
-  select(Temp_yearly_prev, Temp_summer, Precip_yearly_spring, Precip_yearly, Temp_yearly_spring) %>% 
-  rename(Temp_summer_MaySeptember = Temp_summer,
-         Temp_summer_MayJuly = Temp_yearly_spring)
-
-corr <- round(cor(Trait_climate_corr), 1) 
-corr1 <- round(cor(Climate_corr, use = "complete.obs"), 2) 
-
-# P-values 
-p.mat <- cor_pmat(Corr_traits)
-#head(p.mat_17[, 1:4])
-
-# Correlation plot
-
-ggcorrplot(corr, hc.order = FALSE,
-           type = "lower", lab = TRUE,)
-
-#ggsave("Correlation_plot.pdf", width = 22 , height = 16, units = "cm")
-
-ggcorrplot(corr1, hc.order = FALSE,
-           type = "lower", lab = TRUE,)
-
-#ggsave("Correlation_plot_climate.pdf", width = 20 , height = 15, units = "cm")
+# Trait_climate_corr <- Corr_traits %>% 
+#   select(-Temp_yearly_prev, -Temp_summer, -Precip_yearly_spring) %>% 
+#   rename(Temp_summer = Temp_yearly_spring)
+# 
+# Climate_corr <- Corr_traits %>% 
+#   select(Temp_yearly_prev, Temp_summer, Precip_yearly_spring, Precip_yearly, Temp_yearly_spring) %>% 
+#   rename(Temp_summer_MaySeptember = Temp_summer,
+#          Temp_summer_MayJuly = Temp_yearly_spring)
+# 
+# corr <- round(cor(Trait_climate_corr), 1) 
+# corr1 <- round(cor(Climate_corr, use = "complete.obs"), 2) 
+# 
+# # P-values 
+# p.mat <- cor_pmat(Corr_traits)
+# #head(p.mat_17[, 1:4])
+# 
+# # Correlation plot
+# 
+# ggcorrplot(corr, hc.order = FALSE,
+#            type = "lower", lab = TRUE,)
+# 
+# #ggsave("Correlation_plot.pdf", width = 22 , height = 16, units = "cm")
+# 
+# ggcorrplot(corr1, hc.order = FALSE,
+#            type = "lower", lab = TRUE,)
+# 
+# #ggsave("Correlation_plot_climate.pdf", width = 20 , height = 15, units = "cm")
 
 
 #### Ordination ####
@@ -346,6 +346,63 @@ c <- ggarrange(Ord_plot_traits, Ord_plot_time, Ord_plot_precip, Ord_plot_temp,
 
 #### Mixed effect model plots ####
 
+##NEW
+
+models |> 
+  ungroup() |> 
+  filter(Trait_trans == "SLA_cm2_g") |> 
+  select(data) |> 
+  unnest(cols = c(data))
+
+
+plot_space_and_time <-function(dat, trait) {
+  
+  dat2 <- dat |> 
+    filter(Trait_trans == trait) |> 
+    unnest(data) |> 
+    ungroup()
+  
+  plot <- ggplot(dat2, aes(x = year, y = value)) +
+    geom_point(color = "lightgrey") +
+    geom_line(aes(x = year, y = predicted_year, color = Precip_level), linewidth = 1) +
+    facet_wrap(~ Temp_level) +
+    labs(x = "Year", y = trait, color = "Precipitation Level") +
+    scale_color_manual(values = Precip_palette) +
+    theme_minimal(base_size = 15) 
+    
+    return(plot)
+}
+
+#Only plotting Plant_Height_mm_log now as it is the only significant one with time.
+#Other traits are called: "CN_ratio", "C_percent", "Dry_Mass_g_log", "LDMC", 
+# "Leaf_Area_cm2_log", "Leaf_Thickness_Ave_mm", "N_percent", "Plant_Height_mm_log", "SLA_cm2_g", "Wet_Mass_g_log"   
+plot_space_and_time(models, "Plant_Height_mm_log")
+
+
+#### Without year
+
+plot_space <-function(dat, trait) {
+  
+  dat2 <- dat |> 
+    filter(Trait_trans == trait) |> 
+    unnest(data) |> 
+    ungroup()
+  
+  plot <- ggplot(dat2, aes(x = Temp_decade, y = value)) +
+    geom_point(color = "lightgrey") +
+    geom_point(aes(x = Temp_decade, y = predicted_climate, color = Precip_level)) +
+    #geom_line(aes(x = Temp_decade, y = predicted_climate, color = Precip_level), linewidth = 1) +
+    labs(x = "Summer temperature", y = trait, color = "Precipitation Level") +
+    scale_color_manual(values = Precip_palette) +
+    theme_minimal(base_size = 15) 
+  
+  return(plot)
+}
+  
+plot_space(models, "SLA_cm2_g")
+
+
+##OLD
 plot_predictions_space <-function(dat, trait, moment, newdata) {
   
   dat2 <- dat %>%
