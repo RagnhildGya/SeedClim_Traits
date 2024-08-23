@@ -276,7 +276,7 @@ model_year <- function(df) {
 }
 
 
-#Model testing traits and how they vary with spacial climate
+#Model testing traits and how they vary with spatial climate
 model_climate <- function(df) {
   
   df <- df |> 
@@ -377,22 +377,18 @@ output <-function(dat) {
 #### Running models - traits ####
 
 # Running the model, tidying the model output
-turfIDs <- unique(community_for_analysis$turfID)
+#turfIDs <- unique(community_for_analysis$turfID) #Not needed anymore
+site_turf <- community_for_analysis |> select(siteID, turfID) |> unique()
+Temp_decade_vec <- seq(5.5, 12, length.out = 50)
+Precip_decade_vec <- c(1.0, 1.45, 2.4, 3.5)
 
-predict_data_year <-function() {
+pred <- expand.grid(Temp_decade = Temp_decade_vec, 
+                               Precip_decade = Precip_decade_vec, 
+                               siteID = unique(site_turf$siteID), 
+                               turfID = unique(site_turf$turfID))
   
-  pred <- expand.grid(Precip_decade = c(1.0, 1.45, 2.4, 3.5), 
-                                     Temp_decade = seq(5.5,12, length = 50), 
-                                     siteID = c("Alrust", "Arhelleren", "Fauske", "Gudmedalen", "Hogsete", "Lavisdalen", "Ovstedalen", "Rambera", "Skjelingahaugen", "Ulvehaugen", "Veskre", "Vikesland"),
-                                     turfID = turfIDs)
+pred <- merge(pred, site_turf, by = c("siteID", "turfID"))
   
-  return(pred)
-}
-
-pred <- expand.grid(Precip_decade = c(1.0, 1.45, 2.4, 3.5), 
-                    Temp_decade = seq(5.5,12, length = 50), 
-                    siteID = c("Alrust", "Arhelleren", "Fauske", "Gudmedalen", "Hogsete", "Lavisdalen", "Ovstedalen", "Rambera", "Skjelingahaugen", "Ulvehaugen", "Veskre", "Vikesland"),
-                    turfID = turfIDs)
 
 
 
