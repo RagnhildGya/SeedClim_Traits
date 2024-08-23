@@ -424,7 +424,7 @@ figure <- ggarrange(plot_space_LeafArea, plot_space_SLA,
                     nrow = 5, ncol = 2, common.legend = TRUE, legend = "bottom")
 
 
-ggsave(plot = figure, filename = "Traits_in_space.pdf",  width = 8, height = 30, units = "cm")
+ggsave(plot = figure, filename = "Traits_in_space.pdf",  width = 12, height = 30, units = "cm")
 
 
 ##OLD
