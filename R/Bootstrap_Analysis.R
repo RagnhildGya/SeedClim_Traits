@@ -402,7 +402,11 @@ models <- model_data |>
   mutate(model_outputYear = purrr::map(modelYear, tidy)) |> 
   mutate(phi = purrr::map(modelYear, extract_phi)) |> 
   mutate(model_outputClimate = purrr::map(modelClimate, tidy)) |> 
-  mutate(predicted_newdata = map2(Trait_trans, ~pred)) ##Trying to add the new data to the nested datasets so I can predict into it.
+  mutate(predicted_newdata = list(pred)) |>
+  mutate(predicted_newdata = map2(predicted_newdata, modelClimate, ~ .x |> 
+                                    mutate(predicted = predict(.y, newdata = .x, level = 1, se.fit = TRUE)))) |> 
+  mutate(data = map2(data, modelYear, ~ .x |> 
+                       mutate(predicted_year = predict(.y, newdata = .x, level = 1, se.fit = TRUE))))
   
   
   # mutate(data = map2(data, modelYear, ~ {
