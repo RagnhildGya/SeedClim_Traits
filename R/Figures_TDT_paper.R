@@ -383,15 +383,21 @@ plot_space_and_time(models, "Plant_Height_mm_log")
 
 plot_space <-function(dat, trait) {
   
-  dat2 <- dat |> 
+  dat1 <- dat |> 
     filter(Trait_trans == trait) |> 
     unnest(data) |> 
     ungroup()
   
-  plot <- ggplot(dat2, aes(x = Temp_decade, y = value)) +
+  dat2 <- dat |> 
+    filter(Trait_trans == trait) |> 
+    unnest(predicted_newdata) |> 
+    ungroup()
+  
+  plot <- ggplot(dat1, aes(x = Temp_decade, y = value)) +
     geom_point(color = "lightgrey") +
-    geom_point(aes(x = Temp_decade, y = predicted_climate, color = Precip_level)) +
-    #geom_line(aes(x = Temp_decade, y = predicted_climate, color = Precip_level), linewidth = 1) +
+    #geom_point(aes(x = Temp_decade, y = predicted_climate, color = Precip_level)) +
+    geom_point(aes(x = Temp_decade, y = predicted, color = factor(Precip_decade)), data = dat2) +
+    #geom_line(aes(x = Temp_decade, y = predicted, color = Precip_decade), data = dat2, linewidth = 1) +
     labs(x = "Summer temperature", y = trait, color = "Precipitation Level") +
     scale_color_manual(values = Precip_palette) +
     theme_minimal(base_size = 15) 
@@ -399,7 +405,26 @@ plot_space <-function(dat, trait) {
   return(plot)
 }
   
-plot_space(models, "SLA_cm2_g")
+plot_space_SLA <- plot_space(models, "SLA_cm2_g")
+plot_space_LDMC <- plot_space(models, "LDMC")
+plot_space_LeafThickness <- plot_space(models, "Leaf_Thickness_Ave_mm")
+
+plot_space_CN <- plot_space(models, "CN_ratio")
+plot_space_N <- plot_space(models, "N_percent")
+plot_space_Drymass <- plot_space(models, "Dry_Mass_g_log")
+plot_space_LeafArea <- plot_space(models, "Leaf_Area_cm2_log")
+plot_space_C <- plot_space(models, "C_percent")
+plot_space_Height <- plot_space(models, "Plant_Height_mm_log")
+
+figure <- ggarrange(plot_space_LeafArea, plot_space_SLA, 
+                    plot_space_Height, plot_space_LDMC, 
+                    plot_space_Drymass, plot_space_LeafThickness,  
+                    plot_space_C, plot_space_N,  
+                    plot_space_CN,   
+                    nrow = 5, ncol = 2, common.legend = TRUE, legend = "bottom")
+
+
+ggsave(plot = figure, filename = "Traits_in_space.pdf",  width = 8, height = 30, units = "cm")
 
 
 ##OLD
