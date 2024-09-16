@@ -347,7 +347,11 @@ c <- ggarrange(Ord_plot_traits, Ord_plot_time, Ord_plot_precip, Ord_plot_temp,
 #### Mixed effect model plots ####
 
 ##NEW
+#augment instead of predict (a wrapper broom.mixed)
 
+#augment(model) |> 
+ #ggplot()
+  
 models |> 
   ungroup() |> 
   filter(Trait_trans == "SLA_cm2_g") |> 
