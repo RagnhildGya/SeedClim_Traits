@@ -377,6 +377,7 @@ plot_space_and_time <-function(dat, trait) {
 #Other traits are called: "CN_ratio", "C_percent", "Dry_Mass_g_log", "LDMC", 
 # "Leaf_Area_cm2_log", "Leaf_Thickness_Ave_mm", "N_percent", "Plant_Height_mm_log", "SLA_cm2_g", "Wet_Mass_g_log"   
 plot_space_and_time(models, "Plant_Height_mm_log")
+plot_space_and_time(models, "Leaf_Thickness_Ave_mm")
 
 
 #### Without year
