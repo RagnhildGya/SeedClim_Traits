@@ -409,6 +409,90 @@ plot_space <-function(dat, trait) {
   
   return(plot)
 }
+
+#### Testing to plot the predictions of the spatial models ----
+ test <- models |> 
+  filter(Trait_trans == "SLA_cm2_g") |> 
+  select(modelClimate)
+
+test2 <- test$modelClimate[[1]]
+
+SLA_dataset <- models |> 
+  filter(Trait_trans == "SLA_cm2_g") |> 
+  select(data)
+
+SLA_dataset <- SLA_dataset |> 
+  unnest(cols = c(data))
+
+# site_turf <- community_for_analysis |> 
+#   select(siteID, turfID) |> 
+#   unique() |> 
+#   mutate(Precip_decade = as.factor(case_when(siteID %in% c("Fauske", "Alrust", "Ulvehaugen") ~ "1000",
+#                                             siteID %in% c("Vikesland", "Hogsete", "Lavisdalen") ~ "1450",
+#                                             siteID %in% c("Arhelleren", "Rambera", "Gudmedalen") ~ "2400",
+#                                             siteID %in% c("Ovstedalen", "Veskre", "Skjelingahaugen") ~ "3500")))
+
+Temp_decade_vec <- seq(5.5, 12, length.out = 50)
+
+Precip_decade_vec <- c(1.0, 1.45, 2.4, 3.5)
+
+# pred <- expand.grid(Temp_decade = Temp_decade_vec, 
+#                     siteID = unique(site_turf$siteID))
+pred <- expand.grid(Temp_decade = Temp_decade_vec, 
+                    Precip_decade = Precip_decade_vec)
+
+# pred <- pred |> 
+#   left_join(site_turf, by = "siteID")
+
+
+pred$predicted_values <- predict(test2, newdata = pred, level = 0)
+
+pred <- pred |> 
+  mutate(Precip_level = factor(Precip_decade))
+
+SLA_dataset |> 
+  mutate(Precip_level = as.factor(case_when(siteID %in% c("Fauske", "Alrust", "Ulvehaugen") ~ "1",
+                                             siteID %in% c("Vikesland", "Hogsete", "Lavisdalen") ~ "1.45",
+                                             siteID %in% c("Arhelleren", "Rambera", "Gudmedalen") ~ "2.4",
+                                             siteID %in% c("Ovstedalen", "Veskre", "Skjelingahaugen") ~ "3.5"))) |> 
+  ggplot(aes(Temp_decade, mean, color = Precip_level)) + 
+  geom_point() +
+  geom_line(aes(y = predicted_values), data = pred, size = 1.5) +
+  scale_color_manual(values = Precip_palette)
+
+# augment(test2, newdata = pred) |>
+#   # mutate(precip_level = as.factor(case_when(siteID %in% c("Fauske", "Alrust", "Ulvehaugen") ~ "1000",
+#   #                                           siteID %in% c("Vikesland", "Hogsete", "Lavisdalen") ~ "1450",
+#   #                                           siteID %in% c("Arhelleren", "Rambera", "Gudmedalen") ~ "2400",
+#   #                                           siteID %in% c("Ovstedalen", "Veskre", "Skjelingahaugen") ~ "3500"))) |> 
+#   ggplot(aes(x = Temp_decade, y = .fitted, colour = Precip_decade)) +
+#   geom_point() +
+#   geom_line(size = 1) #+ 
+#   #geom_line(aes(y = .fixed), colour = "black", size = 1.5) +       
+#   #facet_wrap(~ precip_level) +                                     
+#   #theme(legend.position = "none")
+
+#### Old function for plotting spatial model - needs to be updated ----
+
+plot_space <-function(dat, trait) {
+  
+  dat1 <- dat |> 
+    filter(Trait_trans == trait) |> 
+    unnest(data) |> 
+    ungroup()
+  
+  plot <- augment(modelClimate) |> 
+    ggplot(dat1, aes(x = Temp_decade, y = value)) +
+    geom_point(color = "lightgrey") +
+    #geom_point(aes(x = Temp_decade, y = predicted_climate, color = Precip_level)) +
+    geom_point(aes(x = Temp_decade, y = predicted, color = factor(Precip_decade)), data = dat2) +
+    #geom_line(aes(x = Temp_decade, y = predicted, color = Precip_decade), data = dat2, linewidth = 1) +
+    labs(x = "Summer temperature", y = trait, color = "Precipitation Level") +
+    scale_color_manual(values = Precip_palette) +
+    theme_minimal(base_size = 15) 
+  
+  return(plot)
+}
   
 plot_space_SLA <- plot_space(models, "SLA_cm2_g")
 plot_space_LDMC <- plot_space(models, "LDMC")
