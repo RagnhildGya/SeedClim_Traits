@@ -421,7 +421,7 @@ models <- model_data |>
 models_output <- output(models)
 
 
-#write.table(models_output, row.names = TRUE, col.names = TRUE, file = "model_output_traits.csv")
+#write.table(models_output, row.names = TRUE, col.names = TRUE, file = "model_output_traitsNEW.csv")
 
 
 #### Running models - community ####
@@ -435,10 +435,7 @@ results_com <- com_data |>
 
 output_com <- outputYear_com(results_com)
 
-#write.table(output_com, row.names = TRUE, col.names = TRUE, file = "model_output_community.csv")
-
-  #mutate_if(is.numeric, round, digits = 5)
-
+#write.table(output_com, row.names = TRUE, col.names = TRUE, file = "model_output_communityNEW.csv")
 
 
 #### Correlation ####
