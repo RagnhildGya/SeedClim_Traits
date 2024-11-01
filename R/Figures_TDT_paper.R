@@ -364,15 +364,20 @@ plot_space_and_time <-function(dat, trait) {
   dat2 <- dat |> 
     filter(Trait_trans == trait) |> 
     unnest(data) |> 
-    ungroup()
+    ungroup() |> 
+    mutate(lower = predicted_year - se_predicted_year,
+           upper = predicted_year + se_predicted_year)
   
   plot <- ggplot(dat2, aes(x = year, y = value)) +
-    geom_point(color = "lightgrey") +
+    geom_point(aes(color = Precip_level)) +
     geom_line(aes(x = year, y = predicted_year, color = Precip_level), linewidth = 1) +
+    geom_ribbon(aes(x = year, y = predicted_year, ymin = lower, ymax = upper, fill = Precip_level), data = dat2, alpha = 0.22) +
     facet_wrap(~ Temp_level) +
     labs(x = "Year", y = trait, color = "Precipitation Level") +
     scale_color_manual(values = Precip_palette) +
-    theme_minimal(base_size = 15) 
+    scale_fill_manual(values = Precip_palette) +
+    theme_minimal(base_size = 12) +
+    guides(fill = "none")
     
     return(plot)
 }
@@ -380,120 +385,49 @@ plot_space_and_time <-function(dat, trait) {
 #Only plotting Plant_Height_mm_log now as it is the only significant one with time.
 #Other traits are called: "CN_ratio", "C_percent", "Dry_Mass_g_log", "LDMC", 
 # "Leaf_Area_cm2_log", "Leaf_Thickness_Ave_mm", "N_percent", "Plant_Height_mm_log", "SLA_cm2_g", "Wet_Mass_g_log"   
-plot_space_and_time(models, "Plant_Height_mm_log")
-plot_space_and_time(models, "Leaf_Thickness_Ave_mm")
+plot_space_time_Height <- plot_space_and_time(models, "Plant_Height_mm_log")
+plot_space_time_LeafThickness <- plot_space_and_time(models, "Leaf_Thickness_Ave_mm")
+
+ggsave(plot = plot_space_time_Height, filename = "Height_in_space_and_time.pdf",  width = 20, height = 10, units = "cm")
 
 
 #### Without year
 
 plot_space <-function(dat, trait) {
+
   
   dat1 <- dat |> 
     filter(Trait_trans == trait) |> 
     unnest(data) |> 
-    ungroup()
+    ungroup() |> 
+    mutate(Precip_decade_vec = case_when(Precip_level == 600 ~ 1.0,
+                                         Precip_level == 1200 ~ 1.45,
+                                         Precip_level == 2000 ~ 2.4,
+                                         Precip_level == 2700 ~ 3.5,
+                                         TRUE ~ NA_real_))
   
   dat2 <- dat |> 
     filter(Trait_trans == trait) |> 
     unnest(predicted_newdata) |> 
-    ungroup()
+    ungroup() |> 
+    mutate(lower = predicted - se_predicted,
+           upper = predicted + se_predicted)
   
   plot <- ggplot(dat1, aes(x = Temp_decade, y = value)) +
-    geom_point(color = "lightgrey") +
-    #geom_point(aes(x = Temp_decade, y = predicted_climate, color = Precip_level)) +
-    geom_point(aes(x = Temp_decade, y = predicted, color = factor(Precip_decade)), data = dat2) +
-    #geom_line(aes(x = Temp_decade, y = predicted, color = Precip_decade), data = dat2, linewidth = 1) +
+    geom_point(aes(color = factor(Precip_decade_vec))) +
+    geom_line(aes(x = Temp_decade, y = predicted, color = factor(Precip_decade)), data = dat2, linewidth = 1) +
+    geom_ribbon(aes(x = Temp_decade, y = predicted, ymin = lower, ymax = upper, fill = factor(Precip_decade)), data = dat2, alpha = 0.25) +
     labs(x = "Summer temperature", y = trait, color = "Precipitation Level") +
     scale_color_manual(values = Precip_palette) +
-    theme_minimal(base_size = 15) 
+    scale_fill_manual(values = Precip_palette) +
+    theme_minimal(base_size = 15) +
+    guides(fill = "none")
   
   return(plot)
 }
 
-#### Testing to plot the predictions of the spatial models ----
- test <- models |> 
-  filter(Trait_trans == "SLA_cm2_g") |> 
-  select(modelClimate)
+#### Plotting all the spatial models ----
 
-test2 <- test$modelClimate[[1]]
-
-SLA_dataset <- models |> 
-  filter(Trait_trans == "SLA_cm2_g") |> 
-  select(data)
-
-SLA_dataset <- SLA_dataset |> 
-  unnest(cols = c(data))
-
-# site_turf <- community_for_analysis |> 
-#   select(siteID, turfID) |> 
-#   unique() |> 
-#   mutate(Precip_decade = as.factor(case_when(siteID %in% c("Fauske", "Alrust", "Ulvehaugen") ~ "1000",
-#                                             siteID %in% c("Vikesland", "Hogsete", "Lavisdalen") ~ "1450",
-#                                             siteID %in% c("Arhelleren", "Rambera", "Gudmedalen") ~ "2400",
-#                                             siteID %in% c("Ovstedalen", "Veskre", "Skjelingahaugen") ~ "3500")))
-
-Temp_decade_vec <- seq(5.5, 12, length.out = 50)
-
-Precip_decade_vec <- c(1.0, 1.45, 2.4, 3.5)
-
-# pred <- expand.grid(Temp_decade = Temp_decade_vec, 
-#                     siteID = unique(site_turf$siteID))
-pred <- expand.grid(Temp_decade = Temp_decade_vec, 
-                    Precip_decade = Precip_decade_vec)
-
-# pred <- pred |> 
-#   left_join(site_turf, by = "siteID")
-
-
-pred$predicted_values <- predict(test2, newdata = pred, level = 0)
-
-pred <- pred |> 
-  mutate(Precip_level = factor(Precip_decade))
-
-SLA_dataset |> 
-  mutate(Precip_level = as.factor(case_when(siteID %in% c("Fauske", "Alrust", "Ulvehaugen") ~ "1",
-                                             siteID %in% c("Vikesland", "Hogsete", "Lavisdalen") ~ "1.45",
-                                             siteID %in% c("Arhelleren", "Rambera", "Gudmedalen") ~ "2.4",
-                                             siteID %in% c("Ovstedalen", "Veskre", "Skjelingahaugen") ~ "3.5"))) |> 
-  ggplot(aes(Temp_decade, mean, color = Precip_level)) + 
-  geom_point() +
-  geom_line(aes(y = predicted_values), data = pred, size = 1.5) +
-  scale_color_manual(values = Precip_palette)
-
-# augment(test2, newdata = pred) |>
-#   # mutate(precip_level = as.factor(case_when(siteID %in% c("Fauske", "Alrust", "Ulvehaugen") ~ "1000",
-#   #                                           siteID %in% c("Vikesland", "Hogsete", "Lavisdalen") ~ "1450",
-#   #                                           siteID %in% c("Arhelleren", "Rambera", "Gudmedalen") ~ "2400",
-#   #                                           siteID %in% c("Ovstedalen", "Veskre", "Skjelingahaugen") ~ "3500"))) |> 
-#   ggplot(aes(x = Temp_decade, y = .fitted, colour = Precip_decade)) +
-#   geom_point() +
-#   geom_line(size = 1) #+ 
-#   #geom_line(aes(y = .fixed), colour = "black", size = 1.5) +       
-#   #facet_wrap(~ precip_level) +                                     
-#   #theme(legend.position = "none")
-
-#### Old function for plotting spatial model - needs to be updated ----
-
-plot_space <-function(dat, trait) {
-  
-  dat1 <- dat |> 
-    filter(Trait_trans == trait) |> 
-    unnest(data) |> 
-    ungroup()
-  
-  plot <- augment(modelClimate) |> 
-    ggplot(dat1, aes(x = Temp_decade, y = value)) +
-    geom_point(color = "lightgrey") +
-    #geom_point(aes(x = Temp_decade, y = predicted_climate, color = Precip_level)) +
-    geom_point(aes(x = Temp_decade, y = predicted, color = factor(Precip_decade)), data = dat2) +
-    #geom_line(aes(x = Temp_decade, y = predicted, color = Precip_decade), data = dat2, linewidth = 1) +
-    labs(x = "Summer temperature", y = trait, color = "Precipitation Level") +
-    scale_color_manual(values = Precip_palette) +
-    theme_minimal(base_size = 15) 
-  
-  return(plot)
-}
-  
 plot_space_SLA <- plot_space(models, "SLA_cm2_g")
 plot_space_LDMC <- plot_space(models, "LDMC")
 plot_space_LeafThickness <- plot_space(models, "Leaf_Thickness_Ave_mm")
@@ -513,7 +447,8 @@ figure <- ggarrange(plot_space_LeafArea, plot_space_SLA,
                     nrow = 5, ncol = 2, common.legend = TRUE, legend = "bottom")
 
 
-ggsave(plot = figure, filename = "Traits_in_space.pdf",  width = 12, height = 30, units = "cm")
+#ggsave(plot = figure, filename = "Traits_in_space.pdf",  width = 14, height = 28, units = "cm")
+#ggsave(plot = figure, filename = "Traits_in_space.jpg",  width = 14, height = 28, units = "cm")
 
 
 ##OLD
