@@ -378,20 +378,13 @@ output <-function(dat) {
 
 # Running the model, tidying the model output
 #turfIDs <- unique(community_for_analysis$turfID) #Not needed anymore
-site_turf <- community_for_analysis |> select(siteID, turfID) |> unique()
+#site_turf <- community_for_analysis |> select(siteID, turfID) |> unique()
 Temp_decade_vec <- seq(5.5, 12, length.out = 50)
 Precip_decade_vec <- c(1.0, 1.45, 2.4, 3.5)
 
-pred <- expand.grid(Temp_decade = Temp_decade_vec, 
-                               Precip_decade = Precip_decade_vec, 
-                               siteID = unique(site_turf$siteID), 
-                               turfID = unique(site_turf$turfID))
+pred <- expand.grid(Temp_decade = Temp_decade_vec,
+                    Precip_decade = Precip_decade_vec)
   
-pred <- merge(pred, site_turf, by = c("siteID", "turfID"))
-  
-
-
-
 models <- model_data |>  
   mutate(modelYear = purrr::map(data, model_year)) |>
   mutate(modelClimate = purrr::map(data, model_climate)) |> 
@@ -400,9 +393,12 @@ models <- model_data |>
   mutate(model_outputClimate = purrr::map(modelClimate, tidy)) |> 
   mutate(predicted_newdata = list(pred)) |>
   mutate(predicted_newdata = map2(predicted_newdata, modelClimate, ~ .x |> 
-                                    mutate(predicted = predict(.y, newdata = .x, level = 1, se.fit = TRUE)))) |> 
+                                    mutate(
+                                      predicted = predict(.y, newdata = .x, level = 0, se.fit = TRUE)$fit,
+                                      se_predicted = predict(.y, newdata = .x, level = 0, se.fit = TRUE)$se.fit))) |> 
   mutate(data = map2(data, modelYear, ~ .x |> 
-                       mutate(predicted_year = predict(.y, newdata = .x, level = 1, se.fit = TRUE))))
+                       mutate(predicted_year = predict(.y, newdata = .x, level = 0, se.fit = TRUE)$fit,
+                              se_predicted_year = predict(.y, newdata = .x, level = 0, se.fit = TRUE)$se.fit)))
   
   
   # mutate(data = map2(data, modelYear, ~ {
@@ -444,217 +440,6 @@ output_com <- outputYear_com(results_com)
   #mutate_if(is.numeric, round, digits = 5)
 
 
-
-
-
-
-############# Below this is old code ###################
-
-
-
-#### Running models - trait without intraspecific variability ####
-
-# Running the mixed effects model
-
-results_TDT_without_intra <- memodel_data_without_intra  |>  
-  filter(moments %in% c("mean"))  |>   
-  mutate(model = purrr::map(data, model_TDT))
-
-#Tidying up the model output
-
-tidy_TDT_without_intra <- results_TDT_without_intra  |>  
-  mutate(model_output = purrr::map(model, tidy))  |>  
-  mutate(R_squared = purrr::map(model, rsquared))
-
-# Making a dataset with the model output and the test-statistics (R squared), summarizing across boootstraps.
-
-output_TDT_without_intra <- output(tidy_TDT_without_intra)  |>   
-  mutate(R2_conditional = round(R2_conditional, digits = 2),
-         R2_marginal = round(R2_marginal, digits = 2),
-         effect = round(effect, digits = 7),
-         CIlow.fit = round(CIlow.fit, digits = 7),
-         CIhigh.fit = round(CIhigh.fit, digits = 7),
-         std.error = round(std.error, digits = 7),
-         staticstic = round(staticstic, digits = 2),
-         df = round(df, digits = 5),
-         p.value = round(p.value, digits = 3)) |>   
-  filter(!Trait_trans == "Wet_Mass_g_log")
-
-#write.table(output_TDT_without_intra, row.names = TRUE, col.names = TRUE, file = "model_output_without_intra.csv")
-
-#### Simpler mixed effect models on specific traits to make predicted plots ####
-
-
-model_trait_summary <-function(dat, trait, moment) {
-  
-  
-  # Filter data for model
-  dat2 <- dat  |>  
-    filter(Trait_trans == trait,
-           moments == moment,
-           n == 75)  |>   
-    unnest(data)  |>   
-    ungroup() 
-  
-  # Run model
-  model <-   lmer(value ~ scale(Temp_decade) + scale(Precip_decade) + scale(Temp_annomalies) + scale(Precip_annomalies) + 
-                    scale(Temp_decade)*scale(Precip_decade) + scale(Temp_annomalies)*scale(Precip_annomalies) + 
-                    scale(Temp_decade)*scale(Temp_annomalies) + scale(Temp_decade)*scale(Precip_annomalies) + 
-                    scale(Precip_decade)*scale(Temp_annomalies) + scale(Precip_decade)*scale(Precip_annomalies) +
-                    + (1|siteID), data = dat2)
-  
-  return(model)
-}
-
-models_trait_predictions_space <-function(model) {
-
-  newdata <- expand.grid(Precip_decade = c(1.0, 1.45, 2.4, 3.5), 
-                         Temp_decade = seq(5.5,12, length = 200), 
-                         siteID = c("Alrust", "Arhelleren", "Fauske", "Gudmedalen", "Hogsete", "Lavisdalen", "Ovstedalen", "Rambera", "Skjelingahaugen", "Ulvehaugen", "Veskre", "Vikesland"),
-                         Precip_annomalies = 0,
-                         Temp_annomalies = 0)
-  
-  newdata$predicted <- predict(object = model, newdata = newdata, re.form = NA, allow.new.levels=TRUE)
-  
-  return(newdata)
-}
-
-models_trait_predictions_time <-function(model) {
-  
-  newdata <- expand.grid(Precip_decade = 3, 
-                         Temp_decade = 6, 
-                         siteID = c("Alrust", "Arhelleren", "Fauske", "Gudmedalen", "Hogsete", "Lavisdalen", "Ovstedalen", "Rambera", "Skjelingahaugen", "Ulvehaugen", "Veskre", "Vikesland"),
-                         Precip_annomalies = c(-1.5, 0, 1.5, 3),
-                         Temp_annomalies = seq(-3, 1.5, length = 200))
-  
-  newdata$predicted <- predict(object = model, newdata = newdata, re.form = NA, allow.new.levels=TRUE)
-  
-  return(newdata)
-}
-
-#### Get partial R2 for all models and traits ####
-
-library(ggpubr)
-library(patchwork)
-
- partR2_func <-function(dat, trait, moment) {
-  
-   dat2 <- dat  |>   
-   filter(Trait_trans == trait,
-          moments == moment,
-          n == 75)  |>   
-   unnest(data)  |>   
-   ungroup() 
- 
- mod <- lmer(value ~ scale(Temp_decade) + scale(Precip_decade) + scale(Temp_annomalies) + scale(Precip_annomalies) + 
-               scale(Temp_decade)*scale(Precip_decade) + scale(Temp_annomalies)*scale(Precip_annomalies) + 
-               scale(Temp_decade)*scale(Temp_annomalies) + scale(Temp_decade)*scale(Precip_annomalies) + 
-               scale(Precip_decade)*scale(Temp_annomalies) + scale(Precip_decade)*scale(Precip_annomalies) +
-               + (1|siteID), data = dat2)
- 
- part_space <- partR2(mod, data = dat2, partvars = c("scale(Temp_decade)", "scale(Precip_decade)", "scale(Temp_decade):scale(Precip_decade)"), R2_type = "conditional", nboot = 10)
- 
- part_time <- partR2(mod, data = dat2, partvars = c("scale(Temp_annomalies)", "scale(Precip_annomalies)", "scale(Temp_annomalies):scale(Precip_annomalies)"), R2_type = "conditional", nboot = 10)
- 
- part_space_and_time <- partR2(mod, data = dat2, partbatch = list(Space_and_Time = c("scale(Temp_annomalies):scale(Temp_decade)", "scale(Precip_annomalies):scale(Precip_decade)", "scale(Temp_decade)*scale(Precip_annomalies)", "scale(Precip_decade)*scale(Temp_annomalies)")), R2_type = "conditional", nboot = 10)
- 
- data <- part_space$R2  |>   
-   filter(term %in% c("Full", "scale(Temp_decade)", "scale(Precip_decade)", "scale(Temp_decade):scale(Precip_decade)"))  |>   
-   mutate(model = "space")
- 
- data2 <- part_time$R2  |>   
-   filter(term %in% c("scale(Temp_annomalies)", "scale(Precip_annomalies)", "scale(Temp_annomalies):scale(Precip_annomalies)"))  |>   
-   mutate(model = "time")
- 
- data3 <- part_space_and_time$R2  |>   
-   filter(term == "Space_and_Time")  |>   
-   mutate(model = "space_and_time")
- 
- data <- data  |>   
-   full_join(data2)  |>   
-   full_join(data3)  |>   
-   mutate(traits = trait)
- 
- return(data)
- }
- 
- LDMC_partR2 <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "LDMC")
- SLA_partR2 <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "SLA_cm2_g")
- Height_partR2 <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "Plant_Height_mm_log")
- CN_partR2 <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "CN_ratio")
- LA_partR2 <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "Leaf_Area_cm2_log")
- Lth_partR2 <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "Leaf_Thickness_Ave_mm")
- N_partR2 <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "N_percent")
- C_partR2 <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "C_percent")
- Mass_partR2 <- partR2_func(dat = memodel_data_fullcommunity, moment = "mean", trait = "Dry_Mass_g_log")
- 
- partR2_data <- LDMC_partR2  |>   
-   full_join(SLA_partR2)  |>   
-   full_join(Height_partR2)  |>   
-   full_join(CN_partR2)  |>   
-   full_join(LA_partR2)  |>   
-   full_join(Lth_partR2)  |>   
-   full_join(N_partR2)  |>   
-   full_join(C_partR2)  |>   
-   full_join(Mass_partR2)
- 
- partR2_data <- partR2_data  |>   
-   group_by(traits)  |>   
-   mutate(Full = first(estimate))  |>  
-   ungroup()  |>   
-   mutate(term = as.character(recode(term, "scale(Temp_decade)" = "Space: Temperature", "scale(Precip_decade)" = "Space: Precipitation", "scale(Temp_decade):scale(Precip_decade)" = "Space: T:P interaction", "scale(Temp_annomalies)" = "Time: Temperature", "scale(Precip_annomalies)" = "Time: Precipitation", "scale(Temp_annomalies):scale(Precip_annomalies)" = "Time: T:P Interaction", "Space_and_Time" = "Interactions Time and Space", "Full" = "Full model")))  |>   
-   mutate(term = factor(term, levels = c("Interactions Time and Space", "Time: T:P Interaction", "Time: Precipitation",  "Time: Temperature","Space: T:P interaction", "Space: Precipitation",  "Space: Temperature", "Full model")))  |>   
-   mutate(traits = as.character(recode(traits, "CN_ratio" = "Leaf C/N", "N_percent" = "Leaf N", "C_percent" = "Leaf C")))  |>   
-   mutate(Space_or_time = case_when(term %in% c("Space: Temperature", "Space: Precipitation", "Space: T:P interaction") ~ "Space",
-                                    term %in% c("Time: Temperature", "Time: Precipitation", "Time: T:P Interaction") ~ "Time",
-                                    term == "Full model" ~ "Full model",
-                                    term == "Interactions Time and Space" ~ "Interactions Time and Space"))  |>   
-   mutate(Temp_or_precip = case_when(term %in% c("Space: Temperature", "Time: Temperature") ~ "Temp",
-                                     term %in% c("Space: Precipitation", "Time: Precipitation") ~ "Precip",
-                                     term %in% c("Space: T:P interaction", "Time: T:P Interaction", "Interactions Time and Space") ~ "Interactions",
-                                     term == "Full model" ~ "Full model"))  |>   
-   mutate(Space_or_time = factor(Space_or_time, levels = c("Full model","Space", "Time", "Interactions Time and Space")),
-          Temp_or_precip = factor(Temp_or_precip, levels = c("Full model","Temp", "Precip", "Interactions")))  |>   
-   mutate(proportion = estimate/Full * 100)
- 
- # Partial_R2_plot <- (SLA_partR2_plot | LDMC_partR2_plot | Lth_partR2_plot | CN_partR2_plot | N_partR2_plot) /
- #   (Height_partR2_plot | LA_partR2_plot | Mass_partR2_plot | C_partR2_plot | plot_spacer())
- # 
- # ggsave("Partial_R2.pdf", width = 20 , height = 11, units = "cm", plot = Partial_R2_plot)
-
-#### Make datasets with modeled values for different traits for plotting ####
-
-SLA_mean_sum_yc <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "SLA_cm2_g", "mean")
-SLA_mean_pred_space <- models_trait_predictions_space(SLA_mean_sum_yc)
-SLA_mean_pred_time <- models_trait_predictions_time(SLA_mean_sum_yc)
-
-LDMC_mean_sum_yc <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "LDMC", "mean")
-LDMC_mean_pred_space <- models_trait_predictions_space(LDMC_mean_sum_yc)
-LDMC_mean_pred_time <- models_trait_predictions_time(LDMC_mean_sum_yc)
-
-Height_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Plant_Height_mm_log", "mean")
-Height_mean_pred_space <- models_trait_predictions_space(Height_mean_sum)
-
-CN_ratio_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "CN_ratio", "mean")
-CN_ratio_mean_pred_space <- models_trait_predictions_space(CN_ratio_mean_sum)
-
-LA_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Leaf_Area_cm2_log", "mean")
-LA_mean_pred_space <- models_trait_predictions_space(LA_mean_sum)
-
-C_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "C_percent", "mean")
-C_mean_pred_space <- models_trait_predictions_space(C_mean_sum)
-
-N_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "N_percent", "mean")
-N_mean_pred_space <- models_trait_predictions_space(N_mean_sum)
-
-Mass_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Dry_Mass_g_log", "mean")
-Mass_mean_pred_space <- models_trait_predictions_space(Mass_mean_sum)
-
-LDMC_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "LDMC", "mean")
-LDMC_mean_pred_space <- models_trait_predictions_space(LDMC_mean_sum)
-
-Lth_mean_sum <- model_trait_summary(memodel_data_fullcommunity_nottransformed, "Leaf_Thickness_Ave_mm", "mean")
-Lth_mean_pred_space <- models_trait_predictions_space(Lth_mean_sum)
 
 #### Correlation ####
 
