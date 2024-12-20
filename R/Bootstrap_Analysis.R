@@ -275,22 +275,72 @@ model_year <- function(df) {
       na.action = na.omit)
 }
 
-
 #Model testing traits and how they vary with spatial climate
 model_climate <- function(df) {
   
   df <- df |> 
-    select(siteID, turfID, Temp_decade, Precip_decade, mean_decade) |> 
+    select(siteID, turfID, Temp_decade, Precip_decade, value, year) |> 
     unique()
   
-  lme(mean_decade ~ Temp_decade * Precip_decade,
+  lme(value ~ Temp_decade * Precip_decade,
       random = ~ 1|siteID/turfID,
       data = df)
+}
+
+model_temp <- function(df) {
+  
+  df <- df |> 
+    select(siteID, turfID, Temp_decade, value) |> 
+    unique()
+  
+  lme(value ~ Temp_decade,
+      random = ~ 1|siteID/turfID,
+      data = df)
+}
+
+
+
+df <- model_data |> 
+  filter(Trait_trans == "Plant_Height_mm_log") |> 
+  unnest(data) |> 
+  select(siteID, turfID, Temp_decade, Precip_decade, value, year) |> 
+  unique()
+
+model_year_mult <- lme(value ~ Temp_decade * Precip_decade * year,
+    random = ~ 1|siteID/turfID,
+    correlation = corAR1(form = ~ year | siteID/turfID),
+    data = df)
+
+model_year_add <- lme(value ~ Temp_decade * Precip_decade + year,
+                      random = ~ 1|siteID/turfID,
+                      correlation = corAR1(form = ~ year | siteID/turfID),
+                      data = df)
+
+model_climate_aut <- lme(value ~ Temp_decade * Precip_decade,
+                     random = ~ 1|siteID/turfID,
+                     correlation = corAR1(form = ~ year | siteID/turfID),
+                     data = df)
+
+model_climate <- lme(value ~ Temp_decade * Precip_decade,
+                     random = ~ 1|siteID/turfID,
+                     data = df)
+
+anova(model_year_mult, model_year_add, model_climate_aut, model_climate)
+anova(model_climate_aut, model_climate)
+
+model_climate2 <- function(df) {
+  
+  df <- df |> 
+    select(siteID, turfID, Temp_decade, Precip_decade, value) |> 
+    unique()
+  
+  lmer(value ~ Temp_decade * Precip_decade + (1|siteID), data = df)
 }
 
 extract_phi <- function(model) {
   coef(model$modelStruct$corStruct, unconstrained = FALSE)
 }
+
 
 # extract_random_effect <- function(model) {
 #   coef(model$modelStruct$reStruct)
@@ -377,20 +427,22 @@ output <-function(dat) {
 #### Running models - traits ####
 
 # Running the model, tidying the model output
-#turfIDs <- unique(community_for_analysis$turfID) #Not needed anymore
-#site_turf <- community_for_analysis |> select(siteID, turfID) |> unique()
 Temp_decade_vec <- seq(5.5, 12, length.out = 50)
 Precip_decade_vec <- c(1.0, 1.45, 2.4, 3.5)
 
 pred <- expand.grid(Temp_decade = Temp_decade_vec,
-                    Precip_decade = Precip_decade_vec)
+                     Precip_decade = Precip_decade_vec)
   
 models <- model_data |>  
   mutate(modelYear = purrr::map(data, model_year)) |>
   mutate(modelClimate = purrr::map(data, model_climate)) |> 
+  mutate(modelClimate2 = purrr::map(data, model_climate2)) |> 
+  mutate(modelTemp = purrr::map(data, model_temp)) |> 
   mutate(model_outputYear = purrr::map(modelYear, tidy)) |> 
   mutate(phi = purrr::map(modelYear, extract_phi)) |> 
-  mutate(model_outputClimate = purrr::map(modelClimate, tidy)) |> 
+  mutate(model_outputClimate = purrr::map(modelClimate, tidy)) |>   
+  mutate(model_outputClimate2 = purrr::map(modelClimate2, tidy)) |> 
+  mutate(model_outputTemp = purrr::map(modelTemp, tidy)) |> 
   mutate(predicted_newdata = list(pred)) |>
   mutate(predicted_newdata = map2(predicted_newdata, modelClimate, ~ .x |> 
                                     mutate(
@@ -398,8 +450,7 @@ models <- model_data |>
                                       se_predicted = predict(.y, newdata = .x, level = 0, se.fit = TRUE)$se.fit))) |> 
   mutate(data = map2(data, modelYear, ~ .x |> 
                        mutate(predicted_year = predict(.y, newdata = .x, level = 0, se.fit = TRUE)$fit,
-                              se_predicted_year = predict(.y, newdata = .x, level = 0, se.fit = TRUE)$se.fit)))
-  
+                              se_predicted_year = predict(.y, newdata = .x, level = 0, se.fit = TRUE)$se.fit))) |> 
   
   # mutate(data = map2(data, modelYear, ~ {
   #   preds <- predict(.y, newdata = .x, level = 1, se.fit = TRUE)
