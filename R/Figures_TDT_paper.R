@@ -388,7 +388,8 @@ plot_space_and_time <-function(dat, trait) {
 plot_space_time_Height <- plot_space_and_time(models, "Plant_Height_mm_log")
 plot_space_time_LeafThickness <- plot_space_and_time(models, "Leaf_Thickness_Ave_mm")
 
-ggsave(plot = plot_space_time_Height, filename = "Height_in_space_and_time.pdf",  width = 20, height = 10, units = "cm")
+#ggsave(plot = plot_space_time_Height, filename = "Height_in_space_and_time.pdf",  width = 20, height = 10, units = "cm")
+#ggsave(plot = plot_space_time_LeafThickness, filename = "LeafThickness_in_space_and_time.pdf",  width = 20, height = 10, units = "cm")
 
 
 #### Without year
