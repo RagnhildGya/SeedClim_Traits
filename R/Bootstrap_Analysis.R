@@ -275,6 +275,11 @@ model_year <- function(df) {
       na.action = na.omit)
 }
 
+#Function for extracting phi from the model with autocorrelation
+extract_phi <- function(model) {
+  coef(model$modelStruct$corStruct, unconstrained = FALSE)
+}
+
 #Model testing traits and how they vary with spatial climate
 model_climate <- function(df) {
   
@@ -287,73 +292,65 @@ model_climate <- function(df) {
       data = df)
 }
 
-model_temp <- function(df) {
-  
-  df <- df |> 
-    select(siteID, turfID, Temp_decade, value) |> 
-    unique()
-  
-  lme(value ~ Temp_decade,
-      random = ~ 1|siteID/turfID,
-      data = df)
+#Functionsl for model selection
+
+# Define the models for climate
+climate_models <- list(
+  "Temp * Precip" = value ~ Temp_decade * Precip_decade,
+  "Temp + Precip" = value ~ Temp_decade + Precip_decade,
+  "Temp" = value ~ Temp_decade,
+  "Precip" = value ~ Precip_decade
+)
+
+# Define the models for temporal
+temporal_models <- list(
+  "Temp * Precip * Year" = value ~ Temp_decade * Precip_decade * year,
+  "Temp * Precip + Year" = value ~ Temp_decade * Precip_decade + year,
+  "Temp * Year + Precip * Year" = value ~ Temp_decade * year + Precip_decade * year,
+  "Temp * Year + Precip + Year" = value ~ Temp_decade * year + Precip_decade + year,
+  "Temp + Precip * Year + Year" = value ~ Temp_decade + Precip_decade * year + year,
+  "Temp + Precip + Year" = value ~ Temp_decade + Precip_decade + year,
+  "Temp + Year" = value ~ Temp_decade + year,
+  "Precip + Year" = value ~ Precip_decade + year
+)
+
+#Define random effects
+random_effects <- as.formula("~ 1|siteID/turfID")
+
+#Fit and compare models
+fit_and_compare_models <- function(df, models, random_effects, correlation = NULL) {
+  results <- map(models, ~ {
+    model <- lme(.x, random = random_effects, correlation = correlation, data = df, na.action = na.omit)
+    list(model = model, AIC = AIC(model))
+  })
+  best_model <- results[[which.min(map_dbl(results, "AIC"))]]
+  return(list(best_model = best_model$model, all_AICs = results))
 }
 
+modelstest <- model_data |>  
+  mutate(
+    climateModelResults = map(data, ~ fit_and_compare_models(.x, climate_models, random_effects)),
+    temporalModelResults = map(data, ~ fit_and_compare_models(.x, temporal_models, random_effects, correlation = corAR1(form = ~ year | siteID/turfID)))
+  ) |>
+  mutate(
+    bestClimateModel = map(climateModelResults, "best_model"),
+    bestTemporalModel = map(temporalModelResults, "best_model"),
+    climateAICs = map(climateModelResults, ~ map_dbl(.x$all_AICs, "AIC")),
+    temporalAICs = map(temporalModelResults, ~ map_dbl(.x$all_AICs, "AIC"))
+  )
 
+model_test2 <- modelstest |> 
+  mutate(phi = purrr::map(bestTemporalModel, extract_phi)) |> 
+  mutate(model_outputClimate = purrr::map(bestClimateModel, tidy)) |> 
+  mutate(model_outputTemporal = purrr::map(bestTemporalModel, tidy))
 
-df <- model_data |> 
-  filter(Trait_trans == "Plant_Height_mm_log") |> 
-  unnest(data) |> 
-  select(siteID, turfID, Temp_decade, Precip_decade, value, year) |> 
-  unique()
-
-model_year_mult <- lme(value ~ Temp_decade * Precip_decade * year,
-    random = ~ 1|siteID/turfID,
-    correlation = corAR1(form = ~ year | siteID/turfID),
-    data = df)
-
-model_year_add <- lme(value ~ Temp_decade * Precip_decade + year,
-                      random = ~ 1|siteID/turfID,
-                      correlation = corAR1(form = ~ year | siteID/turfID),
-                      data = df)
-
-model_climate_aut <- lme(value ~ Temp_decade * Precip_decade,
-                     random = ~ 1|siteID/turfID,
-                     correlation = corAR1(form = ~ year | siteID/turfID),
-                     data = df)
-
-model_climate <- lme(value ~ Temp_decade * Precip_decade,
-                     random = ~ 1|siteID/turfID,
-                     data = df)
-
-anova(model_year_mult, model_year_add, model_climate_aut, model_climate)
-anova(model_climate_aut, model_climate)
-
-model_climate2 <- function(df) {
-  
-  df <- df |> 
-    select(siteID, turfID, Temp_decade, Precip_decade, value) |> 
-    unique()
-  
-  lmer(value ~ Temp_decade * Precip_decade + (1|siteID), data = df)
-}
-
-extract_phi <- function(model) {
-  coef(model$modelStruct$corStruct, unconstrained = FALSE)
-}
-
-
-# extract_random_effect <- function(model) {
-#   coef(model$modelStruct$reStruct)
-# }
-#VarCorr(models[[3]][[1]])
-#Not sure what to use here. What is normal to report on nested random effects?
-
-outputYear <-function(dat) {
+# Functions to get output from models
+outputTemporal <-function(dat) {
   
   model_output <- dat  |> 
     unnest(phi) |> 
-    select(Trait_trans, model_outputYear, phi)  |>   
-    unnest(model_outputYear)  |>  
+    select(Trait_trans, model_outputTemporal, phi)  |>   
+    unnest(model_outputTemporal)  |>  
     select(Trait_trans, term, estimate, std.error, statistic, df, p.value, phi)  |>   
     ungroup() |> 
     mutate(model = "year") |> 
@@ -366,11 +363,11 @@ outputYear <-function(dat) {
   return(model_output)
 }
 
-outputYear_com <-function(dat) {
+outputTemporal_com <-function(dat) {
   
   model_output <- dat  |> 
     unnest(phi) |> 
-    select(community_properties, model_outputYear, phi)  |>   
+    select(community_properties, model_outputTemporal, phi)  |>   
     unnest(model_outputYear)  |>  
     select(community_properties, term, estimate, std.error, statistic, df, p.value, phi)  |>   
     ungroup() |> 
@@ -397,16 +394,19 @@ outputClimate <-function(dat) {
 
 output <-function(dat) {
   
-  dat1 <- outputYear(dat)
+  dat1 <- outputTemporal(dat)
   dat2 <- outputClimate(dat)
   
   dat3 <- dat1 |> 
     bind_rows(dat2) |> 
-    mutate(estimate = round(estimate, digits = 2)) |> 
-    mutate(std.error = round(std.error, digits = 2)) |> 
-    mutate(statistic = round(statistic, digits = 2)) |> 
-    mutate(p.value = round(p.value, digits = 5)) |> 
-    mutate(phi = round(phi, digits = 3))
+    mutate(estimate = round(estimate, digits = 2)) |>
+    mutate(std.error = round(std.error, digits = 2)) |>
+    mutate(statistic = round(statistic, digits = 2)) |>
+    mutate(p.value = round(p.value, digits = 5)) |>
+    mutate(phi = round(phi, digits = 3)) |> 
+    mutate(significant = case_when(p.value > 0.05 ~ "NO",
+                                   p.value < 0.05 ~ "YES",
+                                   ))
   
   return(dat3)
 }
@@ -427,11 +427,11 @@ output <-function(dat) {
 #### Running models - traits ####
 
 # Running the model, tidying the model output
-Temp_decade_vec <- seq(5.5, 12, length.out = 50)
-Precip_decade_vec <- c(1.0, 1.45, 2.4, 3.5)
-
-pred <- expand.grid(Temp_decade = Temp_decade_vec,
-                     Precip_decade = Precip_decade_vec)
+# Temp_decade_vec <- seq(5.5, 12, length.out = 50)
+# Precip_decade_vec <- c(1.0, 1.45, 2.4, 3.5)
+# 
+# pred <- expand.grid(Temp_decade = Temp_decade_vec,
+#                      Precip_decade = Precip_decade_vec)
   
 models <- model_data |>  
   mutate(modelYear = purrr::map(data, model_year)) |>
@@ -469,10 +469,11 @@ models <- model_data |>
   
 
 
-models_output <- output(models)
+models_output2 <- output(model_test2)
 
 
 #write.table(models_output, row.names = TRUE, col.names = TRUE, file = "model_output_traitsNEW.csv")
+#write.table(models_output2, row.names = TRUE, col.names = TRUE, file = "model_output_traits_AfterModelSelection.csv")
 
 
 #### Running models - community ####
