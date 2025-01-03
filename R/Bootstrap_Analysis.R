@@ -23,6 +23,8 @@ library(partR2)
 #library(default)
 library(conflicted)
 library(nlme)
+library(flextable)
+library(officer)
 
 set.seed(47)
 
@@ -318,28 +320,29 @@ temporal_models <- list(
 random_effects <- as.formula("~ 1|siteID/turfID")
 
 #Fit and compare models
-fit_and_compare_models <- function(df, models, random_effects, correlation = NULL) {
+fit_and_compare_models <- function(df, models, random_effects, correlation = NULL, model_type) {
   results <- map(models, ~ {
     model <- lme(.x, random = random_effects, correlation = correlation, data = df, na.action = na.omit)
-    list(model = model, AIC = AIC(model))
+    fixed_effects <- as.character(formula(model))[3]
+    list(fixed_effects = fixed_effects, model = model, AIC = AIC(model), model_type = model_type)
   })
   best_model <- results[[which.min(map_dbl(results, "AIC"))]]
   return(list(best_model = best_model$model, all_AICs = results))
 }
 
-modelstest <- model_data |>  
+models <- model_data |>  
   mutate(
-    climateModelResults = map(data, ~ fit_and_compare_models(.x, climate_models, random_effects)),
-    temporalModelResults = map(data, ~ fit_and_compare_models(.x, temporal_models, random_effects, correlation = corAR1(form = ~ year | siteID/turfID)))
+    climateModelResults = map(data, ~ fit_and_compare_models(.x, climate_models, random_effects, model_type = "climate")),
+    temporalModelResults = map(data, ~ fit_and_compare_models(.x, temporal_models, random_effects, correlation = corAR1(form = ~ year | siteID/turfID), model_type = "temporal"))
   ) |>
   mutate(
     bestClimateModel = map(climateModelResults, "best_model"),
     bestTemporalModel = map(temporalModelResults, "best_model"),
-    climateAICs = map(climateModelResults, ~ map_dbl(.x$all_AICs, "AIC")),
-    temporalAICs = map(temporalModelResults, ~ map_dbl(.x$all_AICs, "AIC"))
+    climateAICs = map(climateModelResults, ~ map(.x$all_AICs, ~ list(fixed_effects = .x$fixed_effects, AIC = .x$AIC, model_type = .x$model_type))),
+    temporalAICs = map(temporalModelResults, ~ map(.x$all_AICs, ~ list(fixed_effects = .x$fixed_effects, AIC = .x$AIC, model_type = .x$model_type)))
   )
 
-model_test2 <- modelstest |> 
+models <- models |> 
   mutate(phi = purrr::map(bestTemporalModel, extract_phi)) |> 
   mutate(model_outputClimate = purrr::map(bestClimateModel, tidy)) |> 
   mutate(model_outputTemporal = purrr::map(bestTemporalModel, tidy))
@@ -433,47 +436,78 @@ output <-function(dat) {
 # pred <- expand.grid(Temp_decade = Temp_decade_vec,
 #                      Precip_decade = Precip_decade_vec)
   
-models <- model_data |>  
-  mutate(modelYear = purrr::map(data, model_year)) |>
-  mutate(modelClimate = purrr::map(data, model_climate)) |> 
-  mutate(modelClimate2 = purrr::map(data, model_climate2)) |> 
-  mutate(modelTemp = purrr::map(data, model_temp)) |> 
-  mutate(model_outputYear = purrr::map(modelYear, tidy)) |> 
-  mutate(phi = purrr::map(modelYear, extract_phi)) |> 
-  mutate(model_outputClimate = purrr::map(modelClimate, tidy)) |>   
-  mutate(model_outputClimate2 = purrr::map(modelClimate2, tidy)) |> 
-  mutate(model_outputTemp = purrr::map(modelTemp, tidy)) |> 
-  mutate(predicted_newdata = list(pred)) |>
-  mutate(predicted_newdata = map2(predicted_newdata, modelClimate, ~ .x |> 
-                                    mutate(
-                                      predicted = predict(.y, newdata = .x, level = 0, se.fit = TRUE)$fit,
-                                      se_predicted = predict(.y, newdata = .x, level = 0, se.fit = TRUE)$se.fit))) |> 
-  mutate(data = map2(data, modelYear, ~ .x |> 
-                       mutate(predicted_year = predict(.y, newdata = .x, level = 0, se.fit = TRUE)$fit,
-                              se_predicted_year = predict(.y, newdata = .x, level = 0, se.fit = TRUE)$se.fit))) |> 
-  
-  # mutate(data = map2(data, modelYear, ~ {
-  #   preds <- predict(.y, newdata = .x, level = 1, se.fit = TRUE)
-  #   .x |> 
-  #     mutate(predicted_year = preds$fit,
-  #            se_predicted_year = preds$se.fit)
-  # }))
-  # 
-  # mutate(predictions = map2(data, modelYear, predict(modelYear, newdata = data, level = 1, se.fit =TRUE)))
-
-#This code does predict, but not making great lines.
-   mutate(data = map2(data, modelYear, ~ .x |> 
-                       mutate(predicted_year = predict(.y, newdata = .x, level = 1, se.fit = TRUE)))) |> 
-  mutate(data = map2(data, modelClimate, ~ .x |> 
-                       mutate(predicted_climate = predict(.y, newdata = .x, level = 1, se.fit = TRUE))))
-  
-
-
-models_output2 <- output(model_test2)
+# models <- model_data |>  
+#   mutate(modelYear = purrr::map(data, model_year)) |>
+#   mutate(modelClimate = purrr::map(data, model_climate)) |> 
+#   mutate(modelClimate2 = purrr::map(data, model_climate2)) |> 
+#   mutate(modelTemp = purrr::map(data, model_temp)) |> 
+#   mutate(model_outputYear = purrr::map(modelYear, tidy)) |> 
+#   mutate(phi = purrr::map(modelYear, extract_phi)) |> 
+#   mutate(model_outputClimate = purrr::map(modelClimate, tidy)) |>   
+#   mutate(model_outputClimate2 = purrr::map(modelClimate2, tidy)) |> 
+#   mutate(model_outputTemp = purrr::map(modelTemp, tidy)) |> 
+#   mutate(predicted_newdata = list(pred)) |>
+#   mutate(predicted_newdata = map2(predicted_newdata, modelClimate, ~ .x |> 
+#                                     mutate(
+#                                       predicted = predict(.y, newdata = .x, level = 0, se.fit = TRUE)$fit,
+#                                       se_predicted = predict(.y, newdata = .x, level = 0, se.fit = TRUE)$se.fit))) |> 
+#   mutate(data = map2(data, modelYear, ~ .x |> 
+#                        mutate(predicted_year = predict(.y, newdata = .x, level = 0, se.fit = TRUE)$fit,
+#                               se_predicted_year = predict(.y, newdata = .x, level = 0, se.fit = TRUE)$se.fit))) |> 
+#   
+#   # mutate(data = map2(data, modelYear, ~ {
+#   #   preds <- predict(.y, newdata = .x, level = 1, se.fit = TRUE)
+#   #   .x |> 
+#   #     mutate(predicted_year = preds$fit,
+#   #            se_predicted_year = preds$se.fit)
+#   # }))
+#   # 
+#   # mutate(predictions = map2(data, modelYear, predict(modelYear, newdata = data, level = 1, se.fit =TRUE)))
+# 
+# #This code does predict, but not making great lines.
+#    mutate(data = map2(data, modelYear, ~ .x |> 
+#                        mutate(predicted_year = predict(.y, newdata = .x, level = 1, se.fit = TRUE)))) |> 
+#   mutate(data = map2(data, modelClimate, ~ .x |> 
+#                        mutate(predicted_climate = predict(.y, newdata = .x, level = 1, se.fit = TRUE))))
+#   
 
 
-#write.table(models_output, row.names = TRUE, col.names = TRUE, file = "model_output_traitsNEW.csv")
-#write.table(models_output2, row.names = TRUE, col.names = TRUE, file = "model_output_traits_AfterModelSelection.csv")
+models_output <- output(models)
+
+
+#write.table(models_output, row.names = TRUE, col.names = TRUE, file = "model_output_traits_AfterModelSelection.csv")
+
+
+#### Get AIC for every model ----
+
+models_AIC_climate <- models |> 
+  select(Trait_trans, climateAICs) |> 
+  unnest_longer(climateAICs) |> 
+  unnest_wider(climateAICs) |> 
+  select(Trait_trans, fixed_effects, AIC, model_type)
+
+models_AIC_temporal <- models |> 
+  select(Trait_trans, temporalAICs) |> 
+  unnest_longer(temporalAICs) |> 
+  unnest_wider(temporalAICs) |> 
+  select(Trait_trans, fixed_effects, AIC, model_type)
+
+models_AIC <- models_AIC_climate |> 
+  bind_rows(models_AIC_temporal)
+
+
+## Make a table of this for the paper 
+
+table_AIC <- flextable(models_AIC)
+
+# Create a Word document and add the flextable
+doc <- read_docx() |> 
+  body_add_flextable(table_AIC) |> 
+  body_add_par("AIC Values for Different Models", style = "heading 1")
+
+# Save the Word document
+#print(doc, target = "models_AIC_table.docx")
+#Don't override now (I made some pretty-changes :) )
 
 
 #### Running models - community ####
