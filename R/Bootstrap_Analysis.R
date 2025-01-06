@@ -298,42 +298,98 @@ model_climate <- function(df) {
 
 # Define the models for climate
 climate_models <- list(
-  "Temp * Precip" = value ~ Temp_decade * Precip_decade,
-  "Temp + Precip" = value ~ Temp_decade + Precip_decade,
   "Temp" = value ~ Temp_decade,
-  "Precip" = value ~ Precip_decade
+  "Precip" = value ~ Precip_decade,
+  "Temp + Precip" = value ~ Temp_decade + Precip_decade,
+  "Temp * Precip" = value ~ Temp_decade * Precip_decade
 )
 
 # Define the models for temporal
 temporal_models <- list(
-  "Temp * Precip * Year" = value ~ Temp_decade * Precip_decade * year,
-  "Temp * Precip + Year" = value ~ Temp_decade * Precip_decade + year,
-  "Temp * Year + Precip * Year" = value ~ Temp_decade * year + Precip_decade * year,
+  "Temp + Year" = value ~ Temp_decade + year,
+  "Precip + Year" = value ~ Precip_decade + year,
+  "Temp + Precip + Year" = value ~ Temp_decade + Precip_decade + year,
   "Temp * Year + Precip + Year" = value ~ Temp_decade * year + Precip_decade + year,
   "Temp + Precip * Year + Year" = value ~ Temp_decade + Precip_decade * year + year,
-  "Temp + Precip + Year" = value ~ Temp_decade + Precip_decade + year,
-  "Temp + Year" = value ~ Temp_decade + year,
-  "Precip + Year" = value ~ Precip_decade + year
+  "Temp * Year + Precip * Year" = value ~ Temp_decade * year + Precip_decade * year,
+  "Temp * Precip + Year" = value ~ Temp_decade * Precip_decade + year,
+  "Temp * Precip * Year" = value ~ Temp_decade * Precip_decade * year
+)
+
+# Define the hierarchy for climate models
+climate_hierarchy <- list(
+  "Temp" = 1,
+  "Precip" = 1,
+  "Temp + Precip" = 2,
+  "Temp * Precip" = 3
+)
+
+# Define the hierarchy for temporal models
+temporal_hierarchy <- list(
+  "Temp + Year" = 1,
+  "Precip + Year" = 1,
+  "Temp + Precip + Year" = 2,
+  "Temp * Year + Precip + Year" = 3,
+  "Temp + Precip * Year + Year" = 3,
+  "Temp * Year + Precip * Year" = 4,
+  "Temp * Precip + Year" = 5,
+  "Temp * Precip * Year" = 6
 )
 
 #Define random effects
 random_effects <- as.formula("~ 1|siteID/turfID")
 
+#Function for comparing models with AIC and rules for hierarchy of models
+# compare_models <- function(models, hierarchy) {
+#   best_model <- models[[1]]
+#   for (i in 2:length(models)) {
+#     current_model <- models[[i]]
+#     if (current_model$AIC < best_model$AIC - 2 || 
+#         (current_model$AIC < best_model$AIC && hierarchy[[current_model$formula]] <= hierarchy[[best_model$formula]])) {
+#       best_model <- current_model
+#     }
+#   }
+#   return(best_model)
+# }
+
+compare_models <- function(models, hierarchy) {
+  best_model <- models[[1]]
+  best_name <- names(models)[1]
+  
+  for (i in 2:length(models)) {
+    current_model <- models[[i]]
+    current_name <- names(models)[i]
+    
+    if (!is.null(hierarchy[[current_name]]) && !is.null(hierarchy[[best_name]])) {
+      if (current_model$AIC < best_model$AIC - 2) {
+        best_model <- current_model
+        best_name <- current_name
+      } else if (current_model$AIC < best_model$AIC && (best_model$AIC - current_model$AIC) < 2) {
+        if (hierarchy[[current_name]] <= hierarchy[[best_name]]) {
+          best_model <- current_model
+          best_name <- current_name
+        }
+      }
+    }
+  }
+  return(best_model)
+}
+
 #Fit and compare models
-fit_and_compare_models <- function(df, models, random_effects, correlation = NULL, model_type) {
+fit_and_compare_models <- function(df, models, random_effects, correlation = NULL, model_type, hierarchy) {
   results <- map(models, ~ {
     model <- lme(.x, random = random_effects, correlation = correlation, data = df, na.action = na.omit)
     fixed_effects <- as.character(formula(model))[3]
     list(fixed_effects = fixed_effects, model = model, AIC = AIC(model), model_type = model_type)
   })
-  best_model <- results[[which.min(map_dbl(results, "AIC"))]]
+  best_model <- compare_models(results, hierarchy)
   return(list(best_model = best_model$model, all_AICs = results))
 }
 
 models <- model_data |>  
   mutate(
-    climateModelResults = map(data, ~ fit_and_compare_models(.x, climate_models, random_effects, model_type = "climate")),
-    temporalModelResults = map(data, ~ fit_and_compare_models(.x, temporal_models, random_effects, correlation = corAR1(form = ~ year | siteID/turfID), model_type = "temporal"))
+    climateModelResults = map(data, ~ fit_and_compare_models(.x, climate_models, random_effects, model_type = "climate", hierarchy = climate_hierarchy)),
+    temporalModelResults = map(data, ~ fit_and_compare_models(.x, temporal_models, random_effects, correlation = corAR1(form = ~ year | siteID/turfID), model_type = "temporal", hierarchy = temporal_hierarchy))
   ) |>
   mutate(
     bestClimateModel = map(climateModelResults, "best_model"),
@@ -516,18 +572,18 @@ table_AIC <- flextable(models_AIC)
 
 #Running the mixed effect model
 
-results_com <- com_data |>  
-  mutate(modelYear = purrr::map(data, model_year)) |> 
-  mutate(model_outputYear = purrr::map(modelYear, tidy)) |> 
-  mutate(phi = purrr::map(modelYear, extract_phi))
-
-output_com <- outputYear_com(results_com)
+# results_com <- com_data |>  
+#   mutate(modelYear = purrr::map(data, model_year)) |> 
+#   mutate(model_outputYear = purrr::map(modelYear, tidy)) |> 
+#   mutate(phi = purrr::map(modelYear, extract_phi))
+# 
+# output_com <- outputYear_com(results_com)
 
 
 models_com <- com_data |>  
   mutate(
-    climateModelResults = map(data, ~ fit_and_compare_models(.x, climate_models, random_effects, model_type = "climate")),
-    temporalModelResults = map(data, ~ fit_and_compare_models(.x, temporal_models, random_effects, correlation = corAR1(form = ~ year | siteID/turfID), model_type = "temporal"))
+    climateModelResults = map(data, ~ fit_and_compare_models(.x, climate_models, random_effects, model_type = "climate", hierarchy = climate_hierarchy)),
+    temporalModelResults = map(data, ~ fit_and_compare_models(.x, temporal_models, random_effects, correlation = corAR1(form = ~ year | siteID/turfID), model_type = "temporal", hierarchy = temporal_hierarchy))
   ) |>
   mutate(
     bestClimateModel = map(climateModelResults, "best_model"),
@@ -574,6 +630,54 @@ table_com_AIC <- flextable(models_com_AIC)
 # # Save the Word document
 # print(doc, target = "models_com_AIC_table.docx")
 # #Don't override now (I made some pretty-changes :) )
+
+
+#### Make predictions ####
+
+Temp_decade_vec <- seq(5.5, 12, length.out = 50)
+Precip_decade_factor <- c(1.0, 1.45, 2.4, 3.5)
+Precip_decade_vec <- seq(0.75, 4.5, length.out = 50)
+Temp_decade_factor <- c(6.5, 8.5, 10.5)
+
+pred_temp <- expand.grid(Temp_decade = Temp_decade_vec, Precip_decade = mean(Precip_decade_factor))
+pred_precip <- expand.grid(Precip_decade = Precip_decade_vec, Temp_decade = mean(Temp_decade_factor))
+pred_interaction <- expand.grid(Precip_decade = Precip_decade_vec, Temp_decade = Temp_decade_factor)
+
+temp_traits <- c("C_percent", "Dry_Mass_g_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "Wet_Mass_g_log")
+precip_traits <- c("CN_ratio", "LDMC", "Leaf_Thickness_Ave_mm", "N_percent")
+interaction_traits <- c("SLA_cm2_g")
+
+
+models_pred <- models |> 
+  mutate(predicted_newdata = map2(bestClimateModel, Trait_trans, ~ {
+    pred <- if (.y %in% temp_traits) {
+      pred_temp
+    } else if (.y %in% precip_traits) {
+      pred_precip
+    } else if (.y %in% interaction_traits) {
+      pred_interaction
+    }
+    pred <- pred |> mutate(
+      predicted = predict(.x, newdata = pred, level = 0, se.fit = TRUE)$fit,
+      se_predicted = predict(.x, newdata = pred, level = 0, se.fit = TRUE)$se.fit
+    )
+    pred
+  })) |>
+  mutate(data = map2(data, bestTemporalModel, ~ .x |> 
+                       mutate(predicted_year = predict(.y, newdata = .x, level = 0, se.fit = TRUE)$fit,
+                              se_predicted_year = predict(.y, newdata = .x, level = 0, se.fit = TRUE)$se.fit)))
+
+#Extract predictions for vizualization
+predictions_climate <- models_pred |> 
+  select(Trait_trans, predicted_newdata) |> 
+  unnest(predicted_newdata)
+
+predictions_temporal <- models_pred |> 
+  select(Trait_trans, data) |> 
+  unnest(data) |> 
+  select(Trait_trans, predicted_year, se_predicted_year)
+
+
 
 
 #### Correlation ####
