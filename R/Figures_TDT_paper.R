@@ -346,6 +346,80 @@ c <- ggarrange(Ord_plot_traits, Ord_plot_time, Ord_plot_precip, Ord_plot_temp,
 
 #### Mixed effect model plots ####
 
+## New after the model selection process:
+
+# Plot climate predictions
+temp_traits_dat <- predictions_climate |> 
+  filter(Trait_trans %in% temp_traits)
+
+precip_traits_dat <- predictions_climate |> 
+  filter(Trait_trans %in% precip_traits)
+
+interactions_traits_dat <- predictions_climate |> 
+  filter(Trait_trans %in% interaction_traits)
+
+
+plot_temp_sizetraits <-
+  ggplot(temp_traits_dat, aes(x = Temp_decade, y = predicted)) +
+  geom_point(aes(x = Temp_decade, y = value), alpha = 0.2, 
+             data = (models_pred |> 
+                       select(Trait_trans, data) |> 
+                       unnest(data) |> 
+                       filter(Trait_trans %in% temp_traits))) +
+  geom_line() +
+  geom_ribbon(aes(ymin = predicted - se_predicted, ymax = predicted + se_predicted), alpha = 0.2) +
+  labs(x = "Summer temperature (C)", y = NULL) +
+  facet_wrap(~Trait_trans, scales = "free_y", ncol = 1) +
+  theme_minimal(base_size = 15) 
+  
+  
+plot_precip_LEtraits <- 
+  ggplot(precip_traits_dat, aes(x = Precip_decade, y = predicted)) +
+    geom_point(aes(x = Precip_decade, y = value), alpha = 0.2, 
+               data = (models_pred |> 
+                         select(Trait_trans, data) |> 
+                         unnest(data) |> 
+                         filter(Trait_trans %in% precip_traits))) +
+  geom_line() +
+  geom_ribbon(aes(ymin = predicted - se_predicted, ymax = predicted + se_predicted), alpha = 0.2) +
+  labs(x = NULL, y = NULL) +
+  facet_wrap(~Trait_trans, scales = "free_y", ncol = 1) +
+  theme_minimal(base_size = 15)
+
+
+plot_interaction_SLA <- 
+ggplot(interactions_traits_dat, aes(x = Precip_decade, y = predicted)) +
+   geom_point(aes(x = Precip_decade, y = value, color = Temp_level), alpha = 0.2, 
+              data = (models_pred |> 
+                        select(Trait_trans, data) |> 
+                        unnest(data) |> 
+                        filter(Trait_trans %in% interaction_traits) |> 
+                        select(Trait_trans, Precip_decade, value, Temp_level)
+                      )) +
+  geom_line(aes(fill = as.factor(Temp_decade))) +
+  geom_ribbon(aes(ymin = predicted - se_predicted, ymax = predicted + se_predicted, fill = as.factor(Temp_decade)), alpha = 0.5) +
+  labs(x = "Precipitation (m/year)", y = NULL) +
+  scale_fill_manual(values = Temp_palette) +
+  scale_color_manual(values = Temp_palette) +
+  theme_minimal(base_size = 15) +
+  theme(legend.position = "none") 
+
+
+combined_plots <- plot_temp_sizetraits  | 
+  (plot_precip_LEtraits / plot_interaction_SLA) +
+  plot_layout(widths = c(1,1), heights = c(4,1))
+
+
+# Plot temporal predictions
+ggplot(predictions_temporal, aes(x = year, y = predicted_year)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = predicted_year - se_predicted_year, ymax = predicted_year + se_predicted_year), alpha = 0.2) +
+  labs(title = "Temporal Model Predictions", x = "Year", y = "Predicted Value")
+
+
+
+
+
 ##NEW
 #augment instead of predict (a wrapper broom.mixed)
 
