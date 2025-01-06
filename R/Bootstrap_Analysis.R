@@ -125,53 +125,53 @@ Imputed_traits_fullcommunity <- Trait_impute_per_year(com_dat = community_for_bo
 sum_moments_fullcommunity <- trait_summarise_boot_moments(Imputed_traits_fullcommunity)
 
 
-Trait_impute_without_intraA <- function(com_dat, trait_dat){
-  
-  trait_dat <- trait_dat  |>   
-    mutate(turfID = "")
-  
-  com_dat <- com_dat  |>   
-    filter(siteID %in% c("Hogsete", "Ulvehaugen", "Vikesland", "Gudmedalen", "Rambera", "Arhelleren"))
-  
-  SeedClim_traits <- trait_np_bootstrap(trait_fill(comm = com_dat,
-                                                     traits = trait_dat, 
-                                                     scale_hierarchy = "turfID",
-                                                     taxon_col = c("Full_name", "Genus", "Family"),
-                                                     trait_col = "Trait_trans",
-                                                     value_col = "Value",
-                                                     other_col = "year",
-                                                     abundance_col = "cover")) 
-  
-  return(SeedClim_traits)
-}
-
-Trait_impute_without_intraB <- function(com_dat, trait_dat){
-  
-  trait_dat <- trait_dat  |>   
-    mutate(turfID = "")
-  
-  com_dat <- com_dat  |>   
-    filter(siteID %in% c("Skjelingahaugen", "Veskre", "Ovstedalen", "Alrust", "Fauske", "Lavisdalen"))
-  
-  SeedClim_traits <- trait_np_bootstrap(trait_fill(comm = com_dat,
-                                                     traits = trait_dat, 
-                                                     scale_hierarchy = "turfID",
-                                                     taxon_col = c("Full_name", "Genus", "Family"),
-                                                     trait_col = "Trait_trans",
-                                                     value_col = "Value",
-                                                     other_col = "year",
-                                                     abundance_col = "cover")) 
-  
-  return(SeedClim_traits)
-}
-
-Imputed_traits_without_intraA <- Trait_impute_without_intraA(com_dat = community_for_boostrapping, trait_dat = traitdata)
-Imputed_traits_without_intraB <- Trait_impute_without_intraB(com_dat = community_for_boostrapping, trait_dat = traitdata)
-Imputed_traits_without_intra = bind_rows(Imputed_traits_without_intraA, Imputed_traits_without_intraB)
-
-sum_moments_without_intraA <- trait_summarise_boot_moments(Imputed_traits_without_intraA)
-sum_moments_without_intraB <- trait_summarise_boot_moments(Imputed_traits_without_intraB)
-sum_moment_without_intra = bind_rows(sum_moments_without_intraA, sum_moments_without_intraB)
+# Trait_impute_without_intraA <- function(com_dat, trait_dat){
+#   
+#   trait_dat <- trait_dat  |>   
+#     mutate(turfID = "")
+#   
+#   com_dat <- com_dat  |>   
+#     filter(siteID %in% c("Hogsete", "Ulvehaugen", "Vikesland", "Gudmedalen", "Rambera", "Arhelleren"))
+#   
+#   SeedClim_traits <- trait_np_bootstrap(trait_fill(comm = com_dat,
+#                                                      traits = trait_dat, 
+#                                                      scale_hierarchy = "turfID",
+#                                                      taxon_col = c("Full_name", "Genus", "Family"),
+#                                                      trait_col = "Trait_trans",
+#                                                      value_col = "Value",
+#                                                      other_col = "year",
+#                                                      abundance_col = "cover")) 
+#   
+#   return(SeedClim_traits)
+# }
+# 
+# Trait_impute_without_intraB <- function(com_dat, trait_dat){
+#   
+#   trait_dat <- trait_dat  |>   
+#     mutate(turfID = "")
+#   
+#   com_dat <- com_dat  |>   
+#     filter(siteID %in% c("Skjelingahaugen", "Veskre", "Ovstedalen", "Alrust", "Fauske", "Lavisdalen"))
+#   
+#   SeedClim_traits <- trait_np_bootstrap(trait_fill(comm = com_dat,
+#                                                      traits = trait_dat, 
+#                                                      scale_hierarchy = "turfID",
+#                                                      taxon_col = c("Full_name", "Genus", "Family"),
+#                                                      trait_col = "Trait_trans",
+#                                                      value_col = "Value",
+#                                                      other_col = "year",
+#                                                      abundance_col = "cover")) 
+#   
+#   return(SeedClim_traits)
+# }
+# 
+# Imputed_traits_without_intraA <- Trait_impute_without_intraA(com_dat = community_for_boostrapping, trait_dat = traitdata)
+# Imputed_traits_without_intraB <- Trait_impute_without_intraB(com_dat = community_for_boostrapping, trait_dat = traitdata)
+# Imputed_traits_without_intra = bind_rows(Imputed_traits_without_intraA, Imputed_traits_without_intraB)
+# 
+# sum_moments_without_intraA <- trait_summarise_boot_moments(Imputed_traits_without_intraA)
+# sum_moments_without_intraB <- trait_summarise_boot_moments(Imputed_traits_without_intraB)
+# sum_moment_without_intra = bind_rows(sum_moments_without_intraA, sum_moments_without_intraB)
 
 #### Adding climate info & pivoting longer ####
 
@@ -348,13 +348,14 @@ models <- models |>
   mutate(model_outputTemporal = purrr::map(bestTemporalModel, tidy))
 
 # Functions to get output from models
-outputTemporal <-function(dat) {
+outputTemporal <-function(dat, unnesting) {
+  unnesting_sym <- sym(unnesting)
   
   model_output <- dat  |> 
     unnest(phi) |> 
-    select(Trait_trans, model_outputTemporal, phi)  |>   
+    select(!!unnesting_sym, model_outputTemporal, phi)  |>   
     unnest(model_outputTemporal)  |>  
-    select(Trait_trans, term, estimate, std.error, statistic, df, p.value, phi)  |>   
+    select(!!unnesting_sym, term, estimate, std.error, statistic, df, p.value, phi)  |>   
     ungroup() |> 
     mutate(model = "year") |> 
     mutate(estimate = round(estimate, digits = 2)) |> 
@@ -366,39 +367,40 @@ outputTemporal <-function(dat) {
   return(model_output)
 }
 
-outputTemporal_com <-function(dat) {
-  
-  model_output <- dat  |> 
-    unnest(phi) |> 
-    select(community_properties, model_outputTemporal, phi)  |>   
-    unnest(model_outputYear)  |>  
-    select(community_properties, term, estimate, std.error, statistic, df, p.value, phi)  |>   
-    ungroup() |> 
-    mutate(estimate = round(estimate, digits = 2)) |> 
-    mutate(std.error = round(std.error, digits = 2)) |> 
-    mutate(statistic = round(statistic, digits = 2)) |> 
-    mutate(p.value = round(p.value, digits = 5)) |> 
-    mutate(phi = round(phi, digits = 3))
-  
-  return(model_output)
-}
+# outputTemporal_com <-function(dat) {
+#   
+#   model_output <- dat  |> 
+#     unnest(phi) |> 
+#     select(community_properties, model_outputTemporal, phi)  |>   
+#     unnest(model_outputYear)  |>  
+#     select(community_properties, term, estimate, std.error, statistic, df, p.value, phi)  |>   
+#     ungroup() |> 
+#     mutate(estimate = round(estimate, digits = 2)) |> 
+#     mutate(std.error = round(std.error, digits = 2)) |> 
+#     mutate(statistic = round(statistic, digits = 2)) |> 
+#     mutate(p.value = round(p.value, digits = 5)) |> 
+#     mutate(phi = round(phi, digits = 3))
+#   
+#   return(model_output)
+# }
 
-outputClimate <-function(dat) {
+outputClimate <-function(dat, unnesting) {
+  unnesting_sym <- sym(unnesting)
   
   model_output <- dat  |> 
-    select(Trait_trans, model_outputClimate)  |>   
+    select(!!unnesting_sym, model_outputClimate)  |>   
     unnest(model_outputClimate)  |>  
-    select(Trait_trans, term, estimate, std.error, statistic, df, p.value)  |>   
+    select(!!unnesting_sym, term, estimate, std.error, statistic, df, p.value)  |>   
     ungroup() |> 
     mutate(model = "climate")
   
   return(model_output)
 }
 
-output <-function(dat) {
+output <-function(dat, unnesting) {
   
-  dat1 <- outputTemporal(dat)
-  dat2 <- outputClimate(dat)
+  dat1 <- outputTemporal(dat, unnesting)
+  dat2 <- outputClimate(dat, unnesting)
   
   dat3 <- dat1 |> 
     bind_rows(dat2) |> 
@@ -472,7 +474,7 @@ output <-function(dat) {
 #   
 
 
-models_output <- output(models)
+models_output <- output(models, unnesting = "Trait_trans")
 
 
 #write.table(models_output, row.names = TRUE, col.names = TRUE, file = "model_output_traits_AfterModelSelection.csv")
@@ -501,9 +503,9 @@ models_AIC <- models_AIC_climate |>
 table_AIC <- flextable(models_AIC)
 
 # Create a Word document and add the flextable
-doc <- read_docx() |> 
-  body_add_flextable(table_AIC) |> 
-  body_add_par("AIC Values for Different Models", style = "heading 1")
+# doc <- read_docx() |> 
+#   body_add_flextable(table_AIC) |> 
+#   body_add_par("AIC Values for Different Models", style = "heading 1")
 
 # Save the Word document
 #print(doc, target = "models_AIC_table.docx")
@@ -521,7 +523,57 @@ results_com <- com_data |>
 
 output_com <- outputYear_com(results_com)
 
-#write.table(output_com, row.names = TRUE, col.names = TRUE, file = "model_output_communityNEW.csv")
+
+models_com <- com_data |>  
+  mutate(
+    climateModelResults = map(data, ~ fit_and_compare_models(.x, climate_models, random_effects, model_type = "climate")),
+    temporalModelResults = map(data, ~ fit_and_compare_models(.x, temporal_models, random_effects, correlation = corAR1(form = ~ year | siteID/turfID), model_type = "temporal"))
+  ) |>
+  mutate(
+    bestClimateModel = map(climateModelResults, "best_model"),
+    bestTemporalModel = map(temporalModelResults, "best_model"),
+    climateAICs = map(climateModelResults, ~ map(.x$all_AICs, ~ list(fixed_effects = .x$fixed_effects, AIC = .x$AIC, model_type = .x$model_type))),
+    temporalAICs = map(temporalModelResults, ~ map(.x$all_AICs, ~ list(fixed_effects = .x$fixed_effects, AIC = .x$AIC, model_type = .x$model_type)))
+  )
+
+models_com <- models_com |> 
+  mutate(phi = purrr::map(bestTemporalModel, extract_phi)) |> 
+  mutate(model_outputClimate = purrr::map(bestClimateModel, tidy)) |> 
+  mutate(model_outputTemporal = purrr::map(bestTemporalModel, tidy))
+
+models_com_output <- output(models_com, unnesting = "community_properties")
+
+#write.table(models_com_output, row.names = TRUE, col.names = TRUE, file = "model_output_communityNEW.csv")
+
+#### Get AIC for every model ----
+
+models_com_AIC_climate <- models_com |> 
+  select(community_properties, climateAICs) |> 
+  unnest_longer(climateAICs) |> 
+  unnest_wider(climateAICs) |> 
+  select(community_properties, fixed_effects, AIC, model_type)
+
+models_com_AIC_temporal <- models_com |> 
+  select(community_properties, temporalAICs) |> 
+  unnest_longer(temporalAICs) |> 
+  unnest_wider(temporalAICs) |> 
+  select(community_properties, fixed_effects, AIC, model_type)
+
+models_com_AIC <- models_com_AIC_climate |> 
+  bind_rows(models_com_AIC_temporal)
+
+
+## Make a table of this for the paper 
+
+table_com_AIC <- flextable(models_com_AIC)
+
+# # Create a Word document and add the flextable
+#  doc <- read_docx() |> 
+#    body_add_flextable(table_com_AIC)
+# 
+# # Save the Word document
+# print(doc, target = "models_com_AIC_table.docx")
+# #Don't override now (I made some pretty-changes :) )
 
 
 #### Correlation ####
@@ -545,16 +597,14 @@ Ord_boot_traits <- sum_moments_climate_fullcommunity  |>
   group_by(uniqueID, Trait_trans)  |>   
   mutate(mean_mean = mean(mean))  |>   
   filter(!Trait_trans == "Wet_Mass_g_log")  |>   
-  select(uniqueID, siteID, year, templevel_year, turfID, Trait_trans, Temp_level, Precip_level, mean_mean, Temp_annomalies, Precip_annomalies)  |>  
+  select(uniqueID, siteID, year, templevel_year, turfID, Trait_trans, Temp_level, Precip_level, mean_mean)  |>  
   unique()  |>   
-  #gather(Moment, Value, -(turfID:P_cat))  |>   
-  #unite(temp, Trait, Moment)  |>   
   pivot_wider(names_from = Trait_trans, values_from = mean_mean)  |>   
   column_to_rownames("uniqueID")  |>   
   rename("Leaf C "= "C_percent", "Leaf C/N" = "CN_ratio", "Dry mass" = "Dry_Mass_g_log", "Leaf area" = "Leaf_Area_cm2_log", "Leaf thickness" = "Leaf_Thickness_Ave_mm", "Leaf N" = "N_percent", "Plant height" = "Plant_Height_mm_log", "SLA" = "SLA_cm2_g")
 
 ### Do ordination
-pca_trait <- prcomp(Ord_boot_traits[, -(1:8)], scale = TRUE)
+pca_trait <- prcomp(Ord_boot_traits[, -(1:6)], scale = TRUE)
 
 ### Get variable
 var <- get_pca_var(pca_trait)
@@ -563,14 +613,23 @@ var <- get_pca_var(pca_trait)
 pca_trait_results <- get_pca_ind(pca_trait)
 
 #### Constrained ordination ####
-RDA_temp <- rda(Ord_boot_traits[, -(1:8)]~ Temp_level, scale = TRUE, data = Ord_boot_traits)
-RDA_precip <- rda(Ord_boot_traits[, -(1:8)]~ Precip_level, scale = TRUE, data = Ord_boot_traits)
-RDA_space_additive <- rda(Ord_boot_traits[, -(1:8)]~ Temp_level+Precip_level, scale = TRUE, data = Ord_boot_traits)
-RDA_space <- rda(Ord_boot_traits[, -(1:8)]~ Temp_level*Precip_level, scale = TRUE, data = Ord_boot_traits)
-RDA_space_add_time <- rda(Ord_boot_traits[, -(1:8)]~ Temp_level*Precip_level + Temp_annomalies*Precip_annomalies, scale = TRUE, data = Ord_boot_traits)
-RDA_space_and_time <- rda(Ord_boot_traits[, -(1:8)]~ Temp_level*Precip_level * Temp_annomalies*Precip_annomalies, scale = TRUE, data = Ord_boot_traits)
-RDA_add_year <- rda(Ord_boot_traits[, -(1:8)]~ Temp_level*Precip_level+year, scale = TRUE, data = Ord_boot_traits)
-RDA_year <- rda(Ord_boot_traits[, -(1:8)]~ Temp_level*Precip_level*year, scale = TRUE, data = Ord_boot_traits)
+RDA_null <- rda(Ord_boot_traits[, -(1:6)] ~ 1, scale = TRUE, data = Ord_boot_traits)
+RDA_temp <- rda(Ord_boot_traits[, -(1:6)] ~ Temp_level, scale = TRUE, data = Ord_boot_traits)
+RDA_precip <- rda(Ord_boot_traits[, -(1:6)] ~ Precip_level, scale = TRUE, data = Ord_boot_traits)
+RDA_year <- rda(Ord_boot_traits[, -(1:6)] ~ year, scale = TRUE, data = Ord_boot_traits)
+RDA_space_additive <- rda(Ord_boot_traits[, -(1:6)] ~ Temp_level+Precip_level, scale = TRUE, data = Ord_boot_traits)
+RDA_space <- rda(Ord_boot_traits[, -(1:6)] ~ Temp_level*Precip_level, scale = TRUE, data = Ord_boot_traits)
+RDA_add_year <- rda(Ord_boot_traits[, -(1:6)] ~ Temp_level*Precip_level+year, scale = TRUE, data = Ord_boot_traits)
+RDA_multi_year <- rda(Ord_boot_traits[, -(1:6)] ~ Temp_level*Precip_level*year, scale = TRUE, data = Ord_boot_traits)
+
+#Set seed and permutations to get the same p-value every time
+set.seed(43)
+perm <- how(nperm = 20000)
+
+#Testing against the null model
+anova(RDA_null, RDA_year, permutations = perm)
+anova(RDA_null, RDA_temp, permutations = perm)
+anova(RDA_null, RDA_precip, permutations = perm)
 
 #Testing temp alone against temp + precip and temp * precip
 anova(RDA_temp, RDA_space_additive)
@@ -583,22 +642,14 @@ anova(RDA_precip, RDA_space)
 #Testing temp + precip against temp* precip
 anova(RDA_space_additive, RDA_space)
 
-#Testing space alone and space + time
-anova(RDA_space, RDA_space_add_time)
-
-#Testing space alone and space * time
-anova(RDA_space, RDA_space_and_time)
-
 #Testing space alone and space + year
-anova(RDA_space, RDA_add_year)
+anova(RDA_space, RDA_add_year, permutations = perm)
 
 #Testing space alone and space * year
-anova(RDA_space, RDA_year)
+anova(RDA_space, RDA_multi_year, permutations = perm)
 
 #Getting R2
 RsquareAdj(RDA_space_additive)$adj.r.squared
 RsquareAdj(RDA_space)$adj.r.squared
-RsquareAdj(RDA_space_add_time)$adj.r.squared
-RsquareAdj(RDA_space_and_time)$adj.r.squared
 RsquareAdj(RDA_add_year)$adj.r.squared
-RsquareAdj(RDA_year)$adj.r.squared
+RsquareAdj(RDA_multi_year)$adj.r.squared
