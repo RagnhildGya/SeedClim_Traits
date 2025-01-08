@@ -125,63 +125,10 @@ Imputed_traits_fullcommunity <- Trait_impute_per_year(com_dat = community_for_bo
 sum_moments_fullcommunity <- trait_summarise_boot_moments(Imputed_traits_fullcommunity)
 
 
-# Trait_impute_without_intraA <- function(com_dat, trait_dat){
-#   
-#   trait_dat <- trait_dat  |>   
-#     mutate(turfID = "")
-#   
-#   com_dat <- com_dat  |>   
-#     filter(siteID %in% c("Hogsete", "Ulvehaugen", "Vikesland", "Gudmedalen", "Rambera", "Arhelleren"))
-#   
-#   SeedClim_traits <- trait_np_bootstrap(trait_fill(comm = com_dat,
-#                                                      traits = trait_dat, 
-#                                                      scale_hierarchy = "turfID",
-#                                                      taxon_col = c("Full_name", "Genus", "Family"),
-#                                                      trait_col = "Trait_trans",
-#                                                      value_col = "Value",
-#                                                      other_col = "year",
-#                                                      abundance_col = "cover")) 
-#   
-#   return(SeedClim_traits)
-# }
-# 
-# Trait_impute_without_intraB <- function(com_dat, trait_dat){
-#   
-#   trait_dat <- trait_dat  |>   
-#     mutate(turfID = "")
-#   
-#   com_dat <- com_dat  |>   
-#     filter(siteID %in% c("Skjelingahaugen", "Veskre", "Ovstedalen", "Alrust", "Fauske", "Lavisdalen"))
-#   
-#   SeedClim_traits <- trait_np_bootstrap(trait_fill(comm = com_dat,
-#                                                      traits = trait_dat, 
-#                                                      scale_hierarchy = "turfID",
-#                                                      taxon_col = c("Full_name", "Genus", "Family"),
-#                                                      trait_col = "Trait_trans",
-#                                                      value_col = "Value",
-#                                                      other_col = "year",
-#                                                      abundance_col = "cover")) 
-#   
-#   return(SeedClim_traits)
-# }
-# 
-# Imputed_traits_without_intraA <- Trait_impute_without_intraA(com_dat = community_for_boostrapping, trait_dat = traitdata)
-# Imputed_traits_without_intraB <- Trait_impute_without_intraB(com_dat = community_for_boostrapping, trait_dat = traitdata)
-# Imputed_traits_without_intra = bind_rows(Imputed_traits_without_intraA, Imputed_traits_without_intraB)
-# 
-# sum_moments_without_intraA <- trait_summarise_boot_moments(Imputed_traits_without_intraA)
-# sum_moments_without_intraB <- trait_summarise_boot_moments(Imputed_traits_without_intraB)
-# sum_moment_without_intra = bind_rows(sum_moments_without_intraA, sum_moments_without_intraB)
-
 #### Adding climate info & pivoting longer ####
 
 sum_moments_climate_fullcommunity = bind_rows(
   sum_moments_fullcommunity  |>   
-    left_join(env, by = c("siteID" = "siteID", "year" = "year")))
-
-sum_moments_climate_without_intra = bind_rows(
-  sum_moment_without_intra  |>   
-    left_join(turf_site_dict, by = c("turfID" = "turfID"))  |>   
     left_join(env, by = c("siteID" = "siteID", "year" = "year")))
 
 
@@ -190,33 +137,12 @@ moments_clim_long_fullcommunity <- Imputed_traits_fullcommunity  |>
   left_join(env, by = c("siteID" = "siteID", "year" = "year"))
 
 
-moments_clim_long_without_intra <- Imputed_traits_without_intra  |>   
-  pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value")  |>   
-  left_join(turf_site_dict, by = c("turfID" = "turfID"))  |>   
-  left_join(env, by = c("siteID" = "siteID", "year" = "year"))
-
 rm(Imputed_traits_fullcommunity)
-rm(Imputed_traits_without_intraA)
-rm(Imputed_traits_without_intraB)
-rm(Imputed_traits_without_intra)
-rm(sum_moments_without_intraA)
-rm(sum_moments_without_intraB)
 rm(sum_moments_fullcommunity)
 
 ###### Mixed effect model testing ######
 
 #### Making dataset for models ####
-
-# With intraspecific variability
-# memodel_data_fullcommunity <- moments_clim_long_fullcommunity  |>   
-#   ungroup()  |>  
-#   select(Trait_trans, moments, siteID, turfID, Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, value, year)  |>  
-#   mutate(value_not_transformed = value) |> 
-#   mutate(value = scale(value))  |>  
-#   group_by(Trait_trans, moments)  |>   
-#   nest()
-# 
-# rm(moments_clim_long_fullcommunity)
 
 #Making this for the summarized dataset
 model_data <- sum_moments_climate_fullcommunity  |>   
@@ -234,17 +160,6 @@ model_data <- sum_moments_climate_fullcommunity  |>
   ungroup() |> 
   group_by(Trait_trans)  |>   
   nest()
-
-# Without intraspecific variability
-# memodel_data_without_intra <- moments_clim_long_without_intra  |>   
-#   ungroup()  |>  
-#   select(Trait_trans, moments, siteID, turfID,Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, value, year)  |>  
-#   mutate(value_not_transformed = value) |> 
-#   mutate(value = scale(value))  |>   
-#   group_by(Trait_trans, moments)  |>   
-#   nest()
-# 
-# rm(moments_clim_long_without_intra)
 
 # community data
 
@@ -340,18 +255,6 @@ temporal_hierarchy <- list(
 random_effects <- as.formula("~ 1|siteID/turfID")
 
 #Function for comparing models with AIC and rules for hierarchy of models
-# compare_models <- function(models, hierarchy) {
-#   best_model <- models[[1]]
-#   for (i in 2:length(models)) {
-#     current_model <- models[[i]]
-#     if (current_model$AIC < best_model$AIC - 2 || 
-#         (current_model$AIC < best_model$AIC && hierarchy[[current_model$formula]] <= hierarchy[[best_model$formula]])) {
-#       best_model <- current_model
-#     }
-#   }
-#   return(best_model)
-# }
-
 compare_models <- function(models, hierarchy) {
   best_model <- models[[1]]
   best_name <- names(models)[1]
@@ -386,22 +289,6 @@ fit_and_compare_models <- function(df, models, random_effects, correlation = NUL
   return(list(best_model = best_model$model, all_AICs = results))
 }
 
-models <- model_data |>  
-  mutate(
-    climateModelResults = map(data, ~ fit_and_compare_models(.x, climate_models, random_effects, model_type = "climate", hierarchy = climate_hierarchy)),
-    temporalModelResults = map(data, ~ fit_and_compare_models(.x, temporal_models, random_effects, correlation = corAR1(form = ~ year | siteID/turfID), model_type = "temporal", hierarchy = temporal_hierarchy))
-  ) |>
-  mutate(
-    bestClimateModel = map(climateModelResults, "best_model"),
-    bestTemporalModel = map(temporalModelResults, "best_model"),
-    climateAICs = map(climateModelResults, ~ map(.x$all_AICs, ~ list(fixed_effects = .x$fixed_effects, AIC = .x$AIC, model_type = .x$model_type))),
-    temporalAICs = map(temporalModelResults, ~ map(.x$all_AICs, ~ list(fixed_effects = .x$fixed_effects, AIC = .x$AIC, model_type = .x$model_type)))
-  )
-
-models <- models |> 
-  mutate(phi = purrr::map(bestTemporalModel, extract_phi)) |> 
-  mutate(model_outputClimate = purrr::map(bestClimateModel, tidy)) |> 
-  mutate(model_outputTemporal = purrr::map(bestTemporalModel, tidy))
 
 # Functions to get output from models
 outputTemporal <-function(dat, unnesting) {
@@ -422,23 +309,6 @@ outputTemporal <-function(dat, unnesting) {
   
   return(model_output)
 }
-
-# outputTemporal_com <-function(dat) {
-#   
-#   model_output <- dat  |> 
-#     unnest(phi) |> 
-#     select(community_properties, model_outputTemporal, phi)  |>   
-#     unnest(model_outputYear)  |>  
-#     select(community_properties, term, estimate, std.error, statistic, df, p.value, phi)  |>   
-#     ungroup() |> 
-#     mutate(estimate = round(estimate, digits = 2)) |> 
-#     mutate(std.error = round(std.error, digits = 2)) |> 
-#     mutate(statistic = round(statistic, digits = 2)) |> 
-#     mutate(p.value = round(p.value, digits = 5)) |> 
-#     mutate(phi = round(phi, digits = 3))
-#   
-#   return(model_output)
-# }
 
 outputClimate <-function(dat, unnesting) {
   unnesting_sym <- sym(unnesting)
@@ -471,64 +341,26 @@ output <-function(dat, unnesting) {
   
   return(dat3)
 }
-  
-# output_com <-function(dat) {
-#   
-#   model_output <- dat  |>   
-#     select(community_properties, model_output, R_squared)  |>   
-#     unnest(c(model_output, R_squared))  |>   
-#     filter(!term %in% c("(Intercept)", "sd__(Intercept)", "sd__Observation"))  |>   
-#     select(community_properties, term, estimate, std.error, statistic, df, p.value, Marginal, Conditional)  |>   
-#     ungroup() 
-#   
-#   return(model_output)
-# }
 
 
 #### Running models - traits ####
 
-# Running the model, tidying the model output
-# Temp_decade_vec <- seq(5.5, 12, length.out = 50)
-# Precip_decade_vec <- c(1.0, 1.45, 2.4, 3.5)
-# 
-# pred <- expand.grid(Temp_decade = Temp_decade_vec,
-#                      Precip_decade = Precip_decade_vec)
-  
-# models <- model_data |>  
-#   mutate(modelYear = purrr::map(data, model_year)) |>
-#   mutate(modelClimate = purrr::map(data, model_climate)) |> 
-#   mutate(modelClimate2 = purrr::map(data, model_climate2)) |> 
-#   mutate(modelTemp = purrr::map(data, model_temp)) |> 
-#   mutate(model_outputYear = purrr::map(modelYear, tidy)) |> 
-#   mutate(phi = purrr::map(modelYear, extract_phi)) |> 
-#   mutate(model_outputClimate = purrr::map(modelClimate, tidy)) |>   
-#   mutate(model_outputClimate2 = purrr::map(modelClimate2, tidy)) |> 
-#   mutate(model_outputTemp = purrr::map(modelTemp, tidy)) |> 
-#   mutate(predicted_newdata = list(pred)) |>
-#   mutate(predicted_newdata = map2(predicted_newdata, modelClimate, ~ .x |> 
-#                                     mutate(
-#                                       predicted = predict(.y, newdata = .x, level = 0, se.fit = TRUE)$fit,
-#                                       se_predicted = predict(.y, newdata = .x, level = 0, se.fit = TRUE)$se.fit))) |> 
-#   mutate(data = map2(data, modelYear, ~ .x |> 
-#                        mutate(predicted_year = predict(.y, newdata = .x, level = 0, se.fit = TRUE)$fit,
-#                               se_predicted_year = predict(.y, newdata = .x, level = 0, se.fit = TRUE)$se.fit))) |> 
-#   
-#   # mutate(data = map2(data, modelYear, ~ {
-#   #   preds <- predict(.y, newdata = .x, level = 1, se.fit = TRUE)
-#   #   .x |> 
-#   #     mutate(predicted_year = preds$fit,
-#   #            se_predicted_year = preds$se.fit)
-#   # }))
-#   # 
-#   # mutate(predictions = map2(data, modelYear, predict(modelYear, newdata = data, level = 1, se.fit =TRUE)))
-# 
-# #This code does predict, but not making great lines.
-#    mutate(data = map2(data, modelYear, ~ .x |> 
-#                        mutate(predicted_year = predict(.y, newdata = .x, level = 1, se.fit = TRUE)))) |> 
-#   mutate(data = map2(data, modelClimate, ~ .x |> 
-#                        mutate(predicted_climate = predict(.y, newdata = .x, level = 1, se.fit = TRUE))))
-#   
+models <- model_data |>  
+  mutate(
+    climateModelResults = map(data, ~ fit_and_compare_models(.x, climate_models, random_effects, model_type = "climate", hierarchy = climate_hierarchy)),
+    temporalModelResults = map(data, ~ fit_and_compare_models(.x, temporal_models, random_effects, correlation = corAR1(form = ~ year | siteID/turfID), model_type = "temporal", hierarchy = temporal_hierarchy))
+  ) |>
+  mutate(
+    bestClimateModel = map(climateModelResults, "best_model"),
+    bestTemporalModel = map(temporalModelResults, "best_model"),
+    climateAICs = map(climateModelResults, ~ map(.x$all_AICs, ~ list(fixed_effects = .x$fixed_effects, AIC = .x$AIC, model_type = .x$model_type))),
+    temporalAICs = map(temporalModelResults, ~ map(.x$all_AICs, ~ list(fixed_effects = .x$fixed_effects, AIC = .x$AIC, model_type = .x$model_type)))
+  )
 
+models <- models |> 
+  mutate(phi = purrr::map(bestTemporalModel, extract_phi)) |> 
+  mutate(model_outputClimate = purrr::map(bestClimateModel, tidy)) |> 
+  mutate(model_outputTemporal = purrr::map(bestTemporalModel, tidy))
 
 models_output <- output(models, unnesting = "Trait_trans")
 
@@ -569,16 +401,6 @@ table_AIC <- flextable(models_AIC)
 
 
 #### Running models - community ####
-
-#Running the mixed effect model
-
-# results_com <- com_data |>  
-#   mutate(modelYear = purrr::map(data, model_year)) |> 
-#   mutate(model_outputYear = purrr::map(modelYear, tidy)) |> 
-#   mutate(phi = purrr::map(modelYear, extract_phi))
-# 
-# output_com <- outputYear_com(results_com)
-
 
 models_com <- com_data |>  
   mutate(
@@ -676,8 +498,6 @@ predictions_temporal <- models_pred |>
   select(Trait_trans, data) |> 
   unnest(data) |> 
   select(Trait_trans, predicted_year, se_predicted_year)
-
-
 
 
 #### Correlation ####
