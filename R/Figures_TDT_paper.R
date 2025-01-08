@@ -16,15 +16,15 @@ library(ggnewscale)
 library(gghighlight)
 library(merTools)
 library(patchwork)
-#library(conflicted)
+library(conflicted)
 library(broom)
 
 #### Setting conflict standards ####
 
-# conflict_prefer("select", winner = "dplyr")
-# conflict_prefer("corrpot", winner = "corrplot")
-# conflict_prefer("arm", winner = "corrplot")
-# conflict_prefer("filter", winner = "dplyr")
+conflict_prefer("select", winner = "dplyr")
+conflict_prefer("corrpot", winner = "corrplot")
+conflict_prefer("arm", winner = "corrplot")
+conflict_prefer("filter", winner = "dplyr")
 
 #### Color palettes ####
 Temp_palette <- c("#d8c593", "#dd7631", "#bb3b0e")
@@ -47,7 +47,7 @@ env_shift <- env %>%
          sd_shift_precip = sd(shift_precip))
 
 
-env %>% 
+Temp_figure <- env %>% 
   mutate(Temp_level = recode(Temp_level, "10.5" = "Boreal",
                              "8.5" = "Sub-alpine",
                              "6.5" = "Alpine")) %>% 
@@ -61,10 +61,10 @@ env %>%
   xlab("Year") +
   scale_x_continuous(breaks = c(2009, 2011, 2013, 2015, 2017, 2019))
 
-#ggsave("Temperature_over_time.png", width = 20 , height = 11, units = "cm")
+#ggsave(plot = Temp_figure, "Temperature_over_time.pdf", width = 20 , height = 11, units = "cm")
 
 
-env %>% 
+Precip_figure <- env %>% 
   mutate(Precip_level = recode(Precip_level, "600" = "Driest",
                                "1200" = "Dry",
                                "2000" = "Wet",
@@ -79,7 +79,7 @@ env %>%
   xlab("Year") +
   scale_x_continuous(breaks = c(2009, 2011, 2013, 2015, 2017, 2019))
 
-#ggsave("Precipitation_over_time.png", width = 22 , height = 11, units = "cm")
+#ggsave(plot = Precip_figure, "Precipitation_over_time.pdf", width = 22 , height = 11, units = "cm")
 
 
 climate <- env %>% 
@@ -201,33 +201,33 @@ plot <- Zoomed_in_map +
 
 # Correlations 
 
-# Trait_climate_corr <- Corr_traits %>% 
-#   select(-Temp_yearly_prev, -Temp_summer, -Precip_yearly_spring) %>% 
-#   rename(Temp_summer = Temp_yearly_spring)
-# 
-# Climate_corr <- Corr_traits %>% 
-#   select(Temp_yearly_prev, Temp_summer, Precip_yearly_spring, Precip_yearly, Temp_yearly_spring) %>% 
-#   rename(Temp_summer_MaySeptember = Temp_summer,
-#          Temp_summer_MayJuly = Temp_yearly_spring)
-# 
-# corr <- round(cor(Trait_climate_corr), 1) 
-# corr1 <- round(cor(Climate_corr, use = "complete.obs"), 2) 
-# 
-# # P-values 
-# p.mat <- cor_pmat(Corr_traits)
-# #head(p.mat_17[, 1:4])
-# 
-# # Correlation plot
-# 
-# ggcorrplot(corr, hc.order = FALSE,
-#            type = "lower", lab = TRUE,)
-# 
-# #ggsave("Correlation_plot.pdf", width = 22 , height = 16, units = "cm")
-# 
-# ggcorrplot(corr1, hc.order = FALSE,
-#            type = "lower", lab = TRUE,)
-# 
-# #ggsave("Correlation_plot_climate.pdf", width = 20 , height = 15, units = "cm")
+Trait_climate_corr <- Corr_traits %>%
+  select(-Temp_yearly_prev, -Temp_summer, -Precip_yearly_spring) %>%
+  rename(Temp_summer = Temp_yearly_spring)
+
+Climate_corr <- Corr_traits %>%
+  select(Temp_yearly_prev, Temp_summer, Precip_yearly_spring, Precip_yearly, Temp_yearly_spring) %>%
+  rename(Temp_summer_MaySeptember = Temp_summer,
+         Temp_summer_MayJuly = Temp_yearly_spring)
+
+corr <- round(cor(Trait_climate_corr), 1)
+corr1 <- round(cor(Climate_corr, use = "complete.obs"), 2)
+
+# P-values
+p.mat <- cor_pmat(Corr_traits)
+#head(p.mat_17[, 1:4])
+
+# Correlation plot
+
+cor_traits <- ggcorrplot(corr, hc.order = FALSE,
+           type = "lower", lab = TRUE,)
+
+#ggsave(plot = cor_traits, "Correlation_plot.pdf", width = 22 , height = 16, units = "cm")
+
+cor_climate <- ggcorrplot(corr1, hc.order = FALSE,
+           type = "lower", lab = TRUE,)
+
+#ggsave(plot = cor_climate, "Correlation_plot_climate.pdf", width = 20 , height = 15, units = "cm")
 
 
 #### Ordination ####
@@ -262,8 +262,8 @@ Ord_plot_traits <- fviz_pca_biplot(pca_trait, repel = TRUE,
   #scale_color_manual(name = "Summer temperature", values = c("#8DD5E1", "#FCB971", "#B93B3B")) +
   coord_fixed() +
   labs(title = "") +
-  xlab("PCA1 (43.9%)") + #Numbers added manually from the fviz_eig plot above
-  ylab("PCA2 (19.0%)") + #Numbers added manually from the fviz_eig plot above
+  xlab("PCA1 (43.5%)") + #Numbers added manually from the fviz_eig plot above
+  ylab("PCA2 (20.5%)") + #Numbers added manually from the fviz_eig plot above
   theme(plot.title = element_text(hjust = 0.1))
 
 #ggsave("Ordination_LES_Size.svg", width = 22 , height = 16, units = "cm", dpi = 600)
@@ -283,8 +283,8 @@ Ord_plot_temp <- fviz_pca_ind(pca_trait, repel = TRUE,
   #scale_color_manual(name = "Summer temperature", values = c("#8DD5E1", "#FCB971", "#B93B3B")) +
   theme(legend.text=element_text(size=14), legend.title = element_text(size = 14), plot.title = element_blank()) +
   labs(title = "", fill = "Summer temperature", color = "Summer temperature", shape = "Summer temperature") +
-  xlab("PCA1 (43.9%)") + #Numbers added manually from the fviz_eig plot above
-  ylab("PCA2 (19.0%)") + #Numbers added manually from the fviz_eig plot above
+  xlab("PCA1 (43.5%)") + #Numbers added manually from the fviz_eig plot above
+  ylab("PCA2 (20.5%)") + #Numbers added manually from the fviz_eig plot above
   coord_fixed() +
   theme(plot.title = element_text(hjust = 0.1),legend.position = 'top')
 
@@ -305,8 +305,8 @@ Ord_plot_precip <- fviz_pca_ind(pca_trait, repel = TRUE,
   #scale_color_manual(name = "Summer temperature", values = c("#8DD5E1", "#FCB971", "#B93B3B")) +
   theme(legend.text=element_text(size=14), legend.title = element_text(size = 14), plot.title = element_blank()) +
   labs(title = "", fill = "Yearly precipitation", color = "Yearly precipitation", shape = "Yearly precipitation") +
-  xlab("PCA1 (43.9%)") + #Numbers added manually from the fviz_eig plot above
-  ylab("PCA2 (19.0%)") + #Numbers added manually from the fviz_eig plot above
+  xlab("PCA1 (43.5%)") + #Numbers added manually from the fviz_eig plot above
+  ylab("PCA2 (20.5%)") + #Numbers added manually from the fviz_eig plot above
   coord_fixed() +
   theme(plot.title = element_text(hjust = 0.1), legend.position = 'top')
 
@@ -330,8 +330,8 @@ Ord_plot_time <- pca_fort %>%
   theme_minimal(base_size = 14) +
   theme(legend.text=element_text(size=14), legend.title = element_text(size = 14), plot.title = element_text(hjust = 0.1)) +
   labs(fill = "Yearly precipitation", color = "Yearly precipitation", shape = "Yearly precipitation") +
-  xlab("PCA1 (43.9%)") + #Numbers added manually from the fviz_eig plot above
-  ylab("PCA2 (19.0%)") + #Numbers added manually from the fviz_eig plot above
+  xlab("PCA1 (43.5%)") + #Numbers added manually from the fviz_eig plot above
+  ylab("PCA2 (20.5%)") + #Numbers added manually from the fviz_eig plot above
   guides(color = "none") +
   scale_shape_manual(values = c(16, 17, 15))
 
@@ -350,7 +350,8 @@ c <- ggarrange(Ord_plot_traits, Ord_plot_time, Ord_plot_precip, Ord_plot_temp,
 
 # Plot climate predictions
 temp_traits_dat <- predictions_climate |> 
-  filter(Trait_trans %in% temp_traits)
+  filter(Trait_trans %in% temp_traits) |> 
+  filter(Trait_trans != "Wet_Mass_g_log")
 
 precip_traits_dat <- predictions_climate |> 
   filter(Trait_trans %in% precip_traits)
@@ -359,18 +360,23 @@ interactions_traits_dat <- predictions_climate |>
   filter(Trait_trans %in% interaction_traits)
 
 
-plot_temp_sizetraits <-
-  ggplot(temp_traits_dat, aes(x = Temp_decade, y = predicted)) +
-  geom_point(aes(x = Temp_decade, y = value), alpha = 0.2, 
+plot_temp_sizetraits <- temp_traits_dat |> 
+  mutate(significant = case_when(Trait_trans %in% c("Dry_Mass_g_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log") ~ "YES",
+                                 Trait_trans == "C_percent" ~ "NO")) |> 
+  ggplot(aes(x = Temp_decade, y = predicted)) +
+  geom_point(aes(x = Temp_decade, y = value, color = "grey"), 
              data = (models_pred |> 
                        select(Trait_trans, data) |> 
                        unnest(data) |> 
-                       filter(Trait_trans %in% temp_traits))) +
-  geom_line() +
+                       filter(Trait_trans %in% temp_traits) |> 
+                       filter(Trait_trans != "Wet_Mass_g_log"))) +
+  geom_line(aes(color = significant)) +
   geom_ribbon(aes(ymin = predicted - se_predicted, ymax = predicted + se_predicted), alpha = 0.2) +
   labs(x = "Summer temperature (C)", y = NULL) +
   facet_wrap(~Trait_trans, scales = "free_y", ncol = 1) +
-  theme_minimal(base_size = 15) 
+  theme_minimal(base_size = 15) +
+  scale_color_manual(values = c("black", "red", "grey")) +
+  theme(legend.position = "none") 
   
   
 plot_precip_LEtraits <- 
@@ -410,12 +416,14 @@ combined_plots <- plot_temp_sizetraits  |
   plot_layout(widths = c(1,1), heights = c(4,1))
 
 
+#ggsave(plot = combined_plots, "Linear_mixed_effect_models_spatial.pdf", width = 15 , height = 26, units = "cm")
+
+
 # Plot temporal predictions
 ggplot(predictions_temporal, aes(x = year, y = predicted_year)) +
   geom_line() +
   geom_ribbon(aes(ymin = predicted_year - se_predicted_year, ymax = predicted_year + se_predicted_year), alpha = 0.2) +
   labs(title = "Temporal Model Predictions", x = "Year", y = "Predicted Value")
-
 
 
 
