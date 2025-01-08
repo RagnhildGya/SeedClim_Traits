@@ -1,4 +1,4 @@
-#### Bottstrapping and analysis for trait driver theory paper with climate in time and space ####
+#### Bootstrapping and analysis for trait paper with climate and temporal trends ####
 
 #### Source ####
 
@@ -557,3 +557,4 @@ RsquareAdj(RDA_space_additive)$adj.r.squared
 RsquareAdj(RDA_space)$adj.r.squared
 RsquareAdj(RDA_add_year)$adj.r.squared
 RsquareAdj(RDA_multi_year)$adj.r.squared
+
