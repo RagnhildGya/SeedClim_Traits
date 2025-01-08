@@ -183,31 +183,11 @@ com_data <- community_for_analysis  |>
 #### Functions for models and model outputs ####
 
 
-#Full model testing how traits and community properties varies with years and if that is dependent on climate
-model_year <- function(df) {
-  lme(value ~ Temp_decade * Precip_decade * year,
-      random = ~ 1|siteID/turfID, 
-      correlation = corAR1(form = ~ year | siteID/turfID),
-      data = df,
-      na.action = na.omit)
-}
-
 #Function for extracting phi from the model with autocorrelation
 extract_phi <- function(model) {
   coef(model$modelStruct$corStruct, unconstrained = FALSE)
 }
 
-#Model testing traits and how they vary with spatial climate
-model_climate <- function(df) {
-  
-  df <- df |> 
-    select(siteID, turfID, Temp_decade, Precip_decade, value, year) |> 
-    unique()
-  
-  lme(value ~ Temp_decade * Precip_decade,
-      random = ~ 1|siteID/turfID,
-      data = df)
-}
 
 #Functionsl for model selection
 
