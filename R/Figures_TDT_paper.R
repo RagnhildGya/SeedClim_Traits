@@ -362,7 +362,7 @@ interactions_traits_dat <- predictions_climate |>
 
 plot_temp_sizetraits <- temp_traits_dat |> 
   mutate(significant = case_when(Trait_trans %in% c("Dry_Mass_g_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log") ~ "YES",
-                                 Trait_trans == "C_percent" ~ "NO")) |> 
+                                 Trait_trans == "C_percent" ~ "Nearly")) |> 
   ggplot(aes(x = Temp_decade, y = predicted)) +
   geom_point(aes(x = Temp_decade, y = value, color = "grey"), 
              data = (models_pred |> 
@@ -370,53 +370,68 @@ plot_temp_sizetraits <- temp_traits_dat |>
                        unnest(data) |> 
                        filter(Trait_trans %in% temp_traits) |> 
                        filter(Trait_trans != "Wet_Mass_g_log"))) +
-  geom_line(aes(color = significant)) +
-  geom_ribbon(aes(ymin = predicted - se_predicted, ymax = predicted + se_predicted), alpha = 0.2) +
-  labs(x = "Summer temperature (C)", y = NULL) +
+  geom_ribbon(aes(ymin = predicted - se_predicted, ymax = predicted + se_predicted, fill = significant), alpha = 0.3) +
+  geom_line(aes(color = significant, linetype = significant), size = 1) +
+  labs(x = NULL, y = NULL) +
   facet_wrap(~Trait_trans, scales = "free_y", ncol = 1) +
   theme_minimal(base_size = 15) +
-  scale_color_manual(values = c("black", "red", "grey")) +
-  theme(legend.position = "none") 
+  scale_color_manual(values = c("#e8907d", "#e8907d", "grey")) +
+  scale_fill_manual(values = c("#e8907d", "#e8907d")) +
+  scale_linetype_manual(values = c(5,1)) +
+  theme(legend.position = "none",
+        axis.text.x = element_blank()) 
   
   
-plot_precip_LEtraits <- 
-  ggplot(precip_traits_dat, aes(x = Precip_decade, y = predicted)) +
-    geom_point(aes(x = Precip_decade, y = value), alpha = 0.2, 
+plot_precip_LEtraits <- precip_traits_dat |> 
+  mutate(significant = case_when(Trait_trans %in% c("CN_ratio", "LDMC", "Leaf_Thickness_Ave_mm") ~ "NO",
+                                 Trait_trans == "N_percent" ~ "Nearly")) |> 
+  ggplot( aes(x = Precip_decade, y = predicted)) +
+    geom_point(aes(x = Precip_decade, y = value, color = "grey"), 
                data = (models_pred |> 
                          select(Trait_trans, data) |> 
                          unnest(data) |> 
                          filter(Trait_trans %in% precip_traits))) +
-  geom_line() +
-  geom_ribbon(aes(ymin = predicted - se_predicted, ymax = predicted + se_predicted), alpha = 0.2) +
+  geom_ribbon(aes(ymin = predicted - se_predicted, ymax = predicted + se_predicted, fill = significant), alpha = 0.3) +
+  geom_line(aes(color = significant, linetype = significant), size = 1) +
   labs(x = NULL, y = NULL) +
   facet_wrap(~Trait_trans, scales = "free_y", ncol = 1) +
-  theme_minimal(base_size = 15)
+  theme_minimal(base_size = 15)+
+  scale_color_manual(values = c("black", "#70a7cf", "grey")) +
+  scale_fill_manual(values = c("black", "#70a7cf")) +
+  scale_linetype_manual(values = c(3, 5)) +
+  theme(legend.position = "none",
+        axis.text.x = element_blank()) 
 
 
 plot_interaction_SLA <- 
 ggplot(interactions_traits_dat, aes(x = Precip_decade, y = predicted)) +
-   geom_point(aes(x = Precip_decade, y = value, color = Temp_level), alpha = 0.2, 
+   geom_point(aes(x = Precip_decade, y = value, color = Temp_level), 
               data = (models_pred |> 
                         select(Trait_trans, data) |> 
                         unnest(data) |> 
                         filter(Trait_trans %in% interaction_traits) |> 
                         select(Trait_trans, Precip_decade, value, Temp_level)
                       )) +
-  geom_line(aes(fill = as.factor(Temp_decade))) +
+  geom_line(aes(color = as.factor(Temp_decade)), size = 1) +
   geom_ribbon(aes(ymin = predicted - se_predicted, ymax = predicted + se_predicted, fill = as.factor(Temp_decade)), alpha = 0.5) +
-  labs(x = "Precipitation (m/year)", y = NULL) +
-  scale_fill_manual(values = Temp_palette) +
-  scale_color_manual(values = Temp_palette) +
+  labs(x = NULL, y = NULL) +
+  scale_fill_manual(values = c("#70a7cf",  "#a398d6", "#cf9bb9")) + 
+  scale_color_manual(values = c("#70a7cf",  "#a398d6", "#cf9bb9")) +
   theme_minimal(base_size = 15) +
-  theme(legend.position = "none") 
+  theme(legend.position = "none",
+        axis.text.x = element_blank()) 
 
 
-combined_plots <- plot_temp_sizetraits  | 
-  (plot_precip_LEtraits / plot_interaction_SLA) +
-  plot_layout(widths = c(1,1), heights = c(4,1))
+Leaf_economic_layout <- ggarrange(plot_precip_LEtraits, plot_interaction_SLA, nrow = 2, ncol = 1,
+                                  heights = c(4, 1))
+
+Size_layout <- ggarrange(plot_temp_sizetraits, plot_spacer(), nrow = 2, ncol = 1,
+                         heights = c(4,1))
+
+combined_plots <- ggarrange(Size_layout, Leaf_economic_layout, ncol = 2)
 
 
-#ggsave(plot = combined_plots, "Linear_mixed_effect_models_spatial.pdf", width = 15 , height = 26, units = "cm")
+#ggsave(plot = combined_plots, "Linear_mixed_effect_models_spatial.pdf", width = 15 , height = 22, units = "cm")
 
 
 # Plot temporal predictions
