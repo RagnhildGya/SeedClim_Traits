@@ -18,6 +18,7 @@ library(merTools)
 library(patchwork)
 library(conflicted)
 library(broom)
+library(ggpattern)
 
 #### Setting conflict standards ####
 
@@ -375,11 +376,13 @@ plot_temp_sizetraits <- temp_traits_dat |>
   labs(x = NULL, y = NULL) +
   facet_wrap(~Trait_trans, scales = "free_y", ncol = 1) +
   theme_minimal(base_size = 15) +
-  scale_color_manual(values = c("#e8907d", "#e8907d", "grey")) +
-  scale_fill_manual(values = c("#e8907d", "#e8907d")) +
+  scale_color_manual(values = c("#dd7631", "#dd7631", "grey")) +
+  scale_fill_manual(values = c("#dd7631", "#dd7631")) +
   scale_linetype_manual(values = c(5,1)) +
   theme(legend.position = "none",
         axis.text.x = element_blank()) 
+#Temp_palette <- c("#d8c593", "#dd7631", "#bb3b0e")
+#Precip_palette <- c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")
   
   
 plot_precip_LEtraits <- precip_traits_dat |> 
@@ -396,8 +399,8 @@ plot_precip_LEtraits <- precip_traits_dat |>
   labs(x = NULL, y = NULL) +
   facet_wrap(~Trait_trans, scales = "free_y", ncol = 1) +
   theme_minimal(base_size = 15)+
-  scale_color_manual(values = c("black", "#70a7cf", "grey")) +
-  scale_fill_manual(values = c("black", "#70a7cf")) +
+  scale_color_manual(values = c("black", "#2E75B6", "grey")) +
+  scale_fill_manual(values = c("black", "#2E75B6")) +
   scale_linetype_manual(values = c(3, 5)) +
   theme(legend.position = "none",
         axis.text.x = element_blank()) 
@@ -415,8 +418,8 @@ ggplot(interactions_traits_dat, aes(x = Precip_decade, y = predicted)) +
   geom_line(aes(color = as.factor(Temp_decade)), size = 1) +
   geom_ribbon(aes(ymin = predicted - se_predicted, ymax = predicted + se_predicted, fill = as.factor(Temp_decade)), alpha = 0.5) +
   labs(x = NULL, y = NULL) +
-  scale_fill_manual(values = c("#70a7cf",  "#a398d6", "#cf9bb9")) + 
-  scale_color_manual(values = c("#70a7cf",  "#a398d6", "#cf9bb9")) +
+  scale_fill_manual(values = c("#d8c593", "#dd7631", "#bb3b0e")) + 
+  scale_color_manual(values = c("#d8c593", "#dd7631", "#bb3b0e")) +
   theme_minimal(base_size = 15) +
   theme(legend.position = "none",
         axis.text.x = element_blank()) 
@@ -428,18 +431,258 @@ Leaf_economic_layout <- ggarrange(plot_precip_LEtraits, plot_interaction_SLA, nr
 Size_layout <- ggarrange(plot_temp_sizetraits, plot_spacer(), nrow = 2, ncol = 1,
                          heights = c(4,1))
 
-combined_plots <- ggarrange(Size_layout, Leaf_economic_layout, ncol = 2)
+combined_plots_spatial <- ggarrange(Size_layout, Leaf_economic_layout, ncol = 2)
 
 
 #ggsave(plot = combined_plots, "Linear_mixed_effect_models_spatial.pdf", width = 15 , height = 22, units = "cm")
 
 
 # Plot temporal predictions
-ggplot(predictions_temporal, aes(x = year, y = predicted_year)) +
-  geom_line() +
-  geom_ribbon(aes(ymin = predicted_year - se_predicted_year, ymax = predicted_year + se_predicted_year), alpha = 0.2) +
-  labs(title = "Temporal Model Predictions", x = "Year", y = "Predicted Value")
+# ggplot(predictions_temporal, aes(x = year, y = predicted_year)) +
+#   geom_line() +
+#   geom_ribbon(aes(ymin = predicted_year - se_predicted_year, ymax = predicted_year + se_predicted_year), alpha = 0.2) +
+#   labs(title = "Temporal Model Predictions", x = "Year", y = "Predicted Value") +
+#   facet_wrap(~Trait_trans)
 
+temp_traits_dat_temporal <- predictions_temporal |> 
+  filter(Trait_trans %in% temp_traits) |> 
+  filter(Trait_trans != "Wet_Mass_g_log")
+
+precip_traits_dat_temporal <- predictions_temporal |> 
+  filter(Trait_trans %in% precip_traits)
+
+interactions_traits_dat_temporal <- predictions_temporal |> 
+  filter(Trait_trans %in% interaction_traits)
+
+plot_year_sizetraits <- predictions_temporal |> 
+  filter(Trait_trans %in% temp_traits) |> 
+  filter(Trait_trans != "Wet_Mass_g_log") |> 
+  mutate(significant = case_when(Trait_trans %in% c("Dry_Mass_g_log", "Leaf_Area_cm2_log") ~ "YES",
+                                 Trait_trans == "Plant_Height_mm_log" ~ "Nearly",
+                                 Trait_trans == "C_percent" ~ "No")) |> 
+ggplot(aes(x = year, y = predicted_year, color = as.factor(Temp_decade))) +
+  geom_point(aes(x = year, y = value, color = "grey"), 
+             data = (models_pred |> 
+                       select(Trait_trans, data) |> 
+                       unnest(data) |> 
+                       filter(Trait_trans %in% temp_traits) |> 
+                       filter(Trait_trans != "Wet_Mass_g_log"))) +
+  geom_ribbon(aes(ymin = predicted_year - se_predicted_year, ymax = predicted_year + se_predicted_year, fill = as.factor(Temp_decade)), alpha = 0.2) +
+  geom_line(aes(color = interaction(significant, Temp_decade), linetype = significant), size = 1) +
+  labs(title = "Temporal Model Predictions", x = "Year", y = "Predicted Value") +
+  facet_wrap(~Trait_trans, scales = "free_y", ncol = 1) +
+  theme_minimal(base_size = 15) +
+  scale_color_manual(values = c("YES.6.5" = Temp_palette[1], "YES.8.5" = Temp_palette[2], "YES.10.5" = Temp_palette[3],
+                                "Nearly.6.5" = Temp_palette[1], "Nearly.8.5" = Temp_palette[2], "Nearly.10.5" = Temp_palette[3],
+                                "No.6.5" = "grey", "No.8.5" = "grey", "No.10.5" = "grey")) +
+  scale_fill_manual(values = Temp_palette) +
+  scale_linetype_manual(values = c("YES" = 1, "Nearly" = 5, "No" = 3)) +
+  theme(legend.position = "none")
+
+
+plot_year_LEStraits <- predictions_temporal |> 
+  filter(Trait_trans %in% precip_traits) |> 
+  mutate(significant = case_when(Trait_trans %in% c("CN_ratio", "N_percent") ~ "No",
+                                 Trait_trans == "LDMC" ~ "YES",
+                                 Trait_trans == "Leaf_Thickness_Ave_mm"  ~ "Nearly")) |> 
+  ggplot(aes(x = year, y = predicted_year)) +
+  geom_point(aes(x = year, y = value, color = "grey"), 
+             data = (models_pred |> 
+                       select(Trait_trans, data) |> 
+                       unnest(data) |> 
+                       filter(Trait_trans %in% precip_traits))) +
+  geom_ribbon(aes(ymin = predicted_year - se_predicted_year, ymax = predicted_year + se_predicted_year, fill = as.factor(Precip_decade)), alpha = 0.2) +
+  geom_line(aes(color = interaction(significant, Precip_decade), linetype = significant), size = 1) +
+  labs(title = "Temporal Model Predictions", x = "Year", y = "Predicted Value") +
+  facet_wrap(~Trait_trans, scales = "free_y", ncol = 1) +
+  theme_minimal(base_size = 15) +
+  scale_color_manual(values = c("YES.1.0" = Precip_palette[1], "YES.1.45" = Precip_palette[2], "YES.2.4" = Precip_palette[3], "YES.3.5" = Precip_palette[4],
+                                "Nearly.1.0" = Precip_palette[1], "Nearly.1.45" = Precip_palette[2], "Nearly.2.4" = Precip_palette[3], "Nearly.3.5" = Precip_palette[4],
+                                "No.1.0" = "grey", "No.1.45" = "grey", "No.2.4" = "grey", "No.3.5" = "grey")) +
+  scale_fill_manual(values = Precip_palette) +
+  scale_linetype_manual(values = c("YES" = 1, "Nearly" = 5, "No" = 3)) +
+  theme(legend.position = "none")
+
+
+Precip_decade_factor <- c(1.0, 1.45, 2.4, 3.5)
+
+plot_year_SLA <- predictions_temporal |> 
+  filter(Trait_trans %in% interaction_traits) |> 
+  ggplot(aes(x = year, y = predicted_year)) +
+  geom_point(aes(x = year, y = value, color = as.factor(Temp_decade)), 
+             data = (models_pred |> 
+                       select(Trait_trans, data) |> 
+                       unnest(data) |> 
+                       filter(Trait_trans %in% interaction_traits) |> 
+                       mutate(Precip_decade = as.factor(recode(siteID, Ulvehaugen = 1.0, Alrust = 1.0, Fauske = 1.0, Lavisdalen = 1.45, Hogsete = 1.45, Vikesland = 1.45, Gudmedalen = 2.4, Rambera = 2.4, Arhelleren = 2.4, Skjelingahaugen = 3.5, Veskre = 3.5, Ovstedalen = 3.5))) |> 
+                       select(Trait_trans, year, value, Temp_level, Precip_decade) |> 
+                       rename(Temp_decade = Temp_level))) +
+  geom_line(aes(color = as.factor(Temp_decade)), size = 1, linetype = 3) +
+  geom_ribbon(aes(ymin = predicted_year - se_predicted_year, ymax = predicted_year + se_predicted_year, fill = as.factor(Temp_decade)), alpha = 0.5) +
+  labs(x = "Year", y = "Predicted Value") +
+  scale_fill_manual(values = Temp_palette) + 
+  scale_color_manual(values = Temp_palette) +
+  theme_minimal(base_size = 15) +
+  theme(legend.position = "none") +
+  facet_wrap(~Precip_decade, nrow = 1)
+
+
+
+combined_columns <- ggarrange(plot_year_sizetraits, plot_year_LEStraits,ncol = 2, heights = c(4, 4))
+
+combined_plots_temporal <- ggarrange(combined_columns, plot_year_SLA, nrow = 2, heights = c(6, 2))
+
+
+
+#### Comparing spatial and temporal patterns ####
+
+custom_colors <- c(
+  "Temperature Temporal" = Temp_palette[1],
+  "Temperature Spatial" = Temp_palette[2],
+  "Precipitation Temporal" = Precip_palette[1],
+  "Precipitation Spatial" = Precip_palette[3]
+)
+
+trait_order <- rev(c(temp_traits, interaction_traits, precip_traits))
+
+pretty_trait_names <- c(
+  "C_percent" = "Leaf C (%)",
+  "N_percent" = "Leaf N (%)",
+  "CN_ratio" = "Leaf C/N",
+  "LDMC" = "LDMC",
+  "Leaf_Thickness_Ave_mm" = "Leaf Thickness",
+  "SLA_cm2_g" = "SLA",
+  "Leaf_Area_cm2_log" = "Leaf Area",
+  "Plant_Height_mm_log" = "Plant Height",
+  "Wet_Mass_g_log" = "Leaf Wet Mass",
+  "Dry_Mass_g_log" = "Leaf Dry Mass"
+)
+
+
+SpatialTemporal_comparison1 <- SpatialTemporal_comparison |> 
+  mutate(
+    trend_short = if_else(str_detect(trend, "spatial"), "Spatial", "Temporal"),
+    driver = case_when(
+      Trait_trans %in% temp_traits ~ "Temperature",
+      Trait_trans %in% precip_traits ~ "Precipitation",
+      Trait_trans %in% interaction_traits ~ "Temperature" 
+    ),
+    driver_trend = paste(driver, trend_short, sep = " "),
+    significance_alpha = if_else(significant == "YES", 1, 0.4)
+  ) |> 
+  mutate(Trait_trans = factor(Trait_trans, levels = trait_order)) |> 
+  filter(!Trait_trans %in% c("SLA_cm2_g", "CN_ratio", "Wet_Mass_g_log")) |> 
+  mutate(driver_trend = factor(driver_trend,
+                               levels = c("Temperature Temporal","Temperature Spatial",
+                                          "Precipitation Temporal", "Precipitation Spatial"))) |> 
+  mutate(Trait_pretty = recode(Trait_trans, !!!pretty_trait_names))
+
+
+ggplot(SpatialTemporal_comparison1, 
+       aes(x = estimate, y = Trait_pretty, 
+           fill = driver_trend, 
+           pattern = ifelse(significant == "YES", "none", "stripe"),
+           group = driver_trend)) +
+  geom_col_pattern(
+    position = position_dodge(width = 0.6),
+    width = 0.5,
+    color = "black",
+    pattern_density = 0.3,
+    pattern_spacing = 0.02,
+    pattern_fill = "white",
+    pattern_alpha = 0.3
+  ) +
+  
+  scale_fill_manual(values = custom_colors) +
+  scale_pattern_manual(values = c("none" = "none", "stripe" = "stripe")) +
+  labs(
+    x = "Effect Size (per °C temperature or m precipitation)",
+    y = "Trait",
+    fill = "Driver & Trend",
+    pattern = "Significance",
+    title = ""
+  ) +
+  
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "right",
+    panel.grid.major.y = element_blank()
+  )
+
+### SLA intercation ###
+
+climate_grid <- expand.grid(
+  Temp_decade = Temp_decade_vec,
+  Precip_decade = Precip_decade_vec)
+
+#model coefficients
+
+#Spatial
+
+SLA_spatial_intercept <- SLA_interaction_effect |> 
+  filter(term == "(Intercept)") |> 
+  pull(estimate)
+
+SLA_spatial_temp <- SLA_interaction_effect |> 
+  filter(term == "Temp_decade") |> 
+  pull(estimate)
+
+SLA_spatial_precip <- SLA_interaction_effect |> 
+  filter(term == "Precip_decade") |> 
+  pull(estimate)
+
+SLA_spatial_interaction <- SLA_interaction_effect |> 
+  filter(term == "Temp_decade:Precip_decade") |> 
+  pull(estimate)
+
+#Temporal
+
+SLA_temporal_year <- SLA_year_effect |> 
+  pull(estimate)
+
+SLA_temporal_temp <- SLA_temporal_year / temp_year_effect
+SLA_temporal_precip <- SLA_temporal_year / precip_year_effect
+
+climate_grid$SLA_pred_spatial <- SLA_spatial_intercept +
+  SLA_spatial_temp * climate_grid$Temp_decade +
+  SLA_spatial_precip * climate_grid$Precip_decade +
+  SLA_spatial_interaction * climate_grid$Temp_decade * climate_grid$Precip_decade
+
+
+climate_grid$SLA_pred_temporal <- SLA_temporal_intercept +
+  SLA_temporal_temp * climate_grid$Temp_decade +
+  SLA_temporal_precip * climate_grid$Precip_decade
+
+
+ggplot(climate_grid, aes(x = Temp_decade, y = Precip_decade, fill = SLA_pred_spatial)) +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  labs(
+    title = "Predicted SLA Change Based on Climate Interactions",
+    x = "Temperature Change",
+    y = "Precipitation Change",
+    fill = "Predicted SLA"
+  ) +
+  theme_minimal()
+
+ggplot(climate_grid, aes(x = Temp_decade, y = Precip_decade, fill = SLA_pred_temporal)) +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  labs(
+    title = "Predicted SLA Change Based on Climate Interactions",
+    x = "Temperature Change",
+    y = "Precipitation Change",
+    fill = "Predicted SLA"
+  ) +
+  theme_minimal()
+
+
+
+################################################################################################
+#####################                                                      #####################
+#####################                        OLD CODE                      #####################
+#####################                                                      #####################
+################################################################################################
 
 
 
