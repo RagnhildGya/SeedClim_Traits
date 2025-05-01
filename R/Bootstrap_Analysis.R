@@ -281,11 +281,11 @@ outputTemporal <-function(dat, unnesting) {
     select(!!unnesting_sym, term, estimate, std.error, statistic, df, p.value, phi)  |>   
     ungroup() |> 
     mutate(model = "year") |> 
-    mutate(estimate = round(estimate, digits = 2)) |> 
-    mutate(std.error = round(std.error, digits = 2)) |> 
-    mutate(statistic = round(statistic, digits = 2)) |> 
+    mutate(estimate = round(estimate, digits = 5)) |> 
+    mutate(std.error = round(std.error, digits = 5)) |> 
+    mutate(statistic = round(statistic, digits = 5)) |> 
     mutate(p.value = round(p.value, digits = 5)) |> 
-    mutate(phi = round(phi, digits = 3))
+    mutate(phi = round(phi, digits = 5))
   
   return(model_output)
 }
@@ -310,11 +310,11 @@ output <-function(dat, unnesting) {
   
   dat3 <- dat1 |> 
     bind_rows(dat2) |> 
-    mutate(estimate = round(estimate, digits = 2)) |>
-    mutate(std.error = round(std.error, digits = 2)) |>
-    mutate(statistic = round(statistic, digits = 2)) |>
+    mutate(estimate = round(estimate, digits = 5)) |>
+    mutate(std.error = round(std.error, digits = 5)) |>
+    mutate(statistic = round(statistic, digits = 5)) |>
     mutate(p.value = round(p.value, digits = 5)) |>
-    mutate(phi = round(phi, digits = 3)) |> 
+    mutate(phi = round(phi, digits = 5)) |> 
     mutate(significant = case_when(p.value > 0.05 ~ "NO",
                                    p.value < 0.05 ~ "YES",
                                    ))
@@ -440,18 +440,22 @@ Temp_decade_vec <- seq(5.5, 12, length.out = 50)
 Precip_decade_factor <- c(1.0, 1.45, 2.4, 3.5)
 Precip_decade_vec <- seq(0.75, 4.5, length.out = 50)
 Temp_decade_factor <- c(6.5, 8.5, 10.5)
+year_vec <- seq(2008,2020, by = 1)
 
 pred_temp <- expand.grid(Temp_decade = Temp_decade_vec, Precip_decade = mean(Precip_decade_factor))
 pred_precip <- expand.grid(Precip_decade = Precip_decade_vec, Temp_decade = mean(Temp_decade_factor))
 pred_interaction <- expand.grid(Precip_decade = Precip_decade_vec, Temp_decade = Temp_decade_factor)
+pred_temp_year <- expand.grid(year = year_vec, Temp_decade = Temp_decade_factor, Precip_decade = mean(Precip_decade_factor))
+pred_precip_year <- expand.grid(year = year_vec, Precip_decade = Precip_decade_factor, Temp_decade = mean(Temp_decade_factor))
+pred_interaction_year <- expand.grid(year = year_vec, Precip_decade = Precip_decade_factor, Temp_decade = Temp_decade_factor)
 
-temp_traits <- c("C_percent", "Dry_Mass_g_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "Wet_Mass_g_log")
-precip_traits <- c("CN_ratio", "LDMC", "Leaf_Thickness_Ave_mm", "N_percent")
+temp_traits <- c("Plant_Height_mm_log", "Leaf_Area_cm2_log","Dry_Mass_g_log", "Wet_Mass_g_log", "C_percent")
+precip_traits <- c("N_percent", "CN_ratio", "LDMC", "Leaf_Thickness_Ave_mm")
 interaction_traits <- c("SLA_cm2_g")
 
 
 models_pred <- models |> 
-  mutate(predicted_newdata = map2(bestClimateModel, Trait_trans, ~ {
+  mutate(predicted_newdataClimate = map2(bestClimateModel, Trait_trans, ~ {
     pred <- if (.y %in% temp_traits) {
       pred_temp
     } else if (.y %in% precip_traits) {
@@ -465,19 +469,111 @@ models_pred <- models |>
     )
     pred
   })) |>
-  mutate(data = map2(data, bestTemporalModel, ~ .x |> 
-                       mutate(predicted_year = predict(.y, newdata = .x, level = 0, se.fit = TRUE)$fit,
-                              se_predicted_year = predict(.y, newdata = .x, level = 0, se.fit = TRUE)$se.fit)))
+  mutate(predicted_newdataTemporal = map2(bestTemporalModel, Trait_trans, ~ {
+    pred_year <- if (.y %in% temp_traits) {
+      pred_temp_year
+    } else if (.y %in% precip_traits) {
+      pred_precip_year
+    } else if (.y %in% interaction_traits) {
+      pred_interaction_year
+    }
+    pred_year <- pred_year |> mutate(
+      predicted_year = predict(.x, newdata = pred_year, level = 0, se.fit = TRUE)$fit,
+      se_predicted_year = predict(.x, newdata = pred_year, level = 0, se.fit = TRUE)$se.fit
+    )
+    pred_year
+  }))
 
 #Extract predictions for vizualization
 predictions_climate <- models_pred |> 
-  select(Trait_trans, predicted_newdata) |> 
-  unnest(predicted_newdata)
+  select(Trait_trans, predicted_newdataClimate) |> 
+  unnest(predicted_newdataClimate)
 
 predictions_temporal <- models_pred |> 
-  select(Trait_trans, data) |> 
-  unnest(data) |> 
-  select(Trait_trans, predicted_year, se_predicted_year)
+  select(Trait_trans, predicted_newdataTemporal) |> 
+  unnest(predicted_newdataTemporal)
+
+
+#### Compare spatial and temporal models ####
+
+## Climate effect size over time
+
+temp_year_effect <- tidy(temp_model) |> 
+  filter(term == "year") |> 
+  pull(estimate)
+
+precip_year_effect <- tidy(precip_model) |> 
+  filter(term == "year") |> 
+  pull(estimate)
+
+## Traits
+
+temp_traits 
+precip_traits 
+interaction_traits 
+
+## Temperature traits
+
+temp_spatial_effect <- models_output |> 
+  filter(Trait_trans %in% c(temp_traits, "SLA_cm2_g"),
+         term == "Temp_decade",
+         model == "climate") |> 
+  select(Trait_trans, term, estimate, p.value, significant) |> 
+  mutate(trend = "temp_spatial")
+
+temp_temporal_effect <- models_output |> 
+  filter(Trait_trans %in% c(temp_traits, "SLA_cm2_g"),
+         term == "year",
+         model == "year") |> 
+  select(Trait_trans, term, estimate, p.value, significant) |> 
+  mutate(estimate = estimate/temp_year_effect) |> 
+  mutate(term = "Temp_decade") |> 
+  mutate(trend = "temp_temporal")
+
+temp_trait_spatialANDtemporal <- temp_spatial_effect |> 
+  bind_rows(temp_temporal_effect)
+
+
+## Precipitation traits
+
+precip_spatial_effect <- models_output |> 
+  filter(Trait_trans %in% c(precip_traits, "SLA_cm2_g"),
+         term == "Precip_decade",
+         model == "climate") |> 
+  select(Trait_trans, term, estimate, p.value, significant) |> 
+  mutate(trend = "precip_spatial")
+
+precip_temporal_effect <- models_output |> 
+  filter(Trait_trans %in% c(precip_traits, "SLA_cm2_g"),
+         term == "year",
+         model == "year") |> 
+  select(Trait_trans, term, estimate, p.value, significant) |> 
+  mutate(estimate = estimate/precip_year_effect) |> 
+  mutate(term = "Precip_decade") |> 
+  mutate(trend = "precip_temporal")
+
+
+precip_trait_spatialANDtemporal <- precip_spatial_effect |> 
+  bind_rows(precip_temporal_effect)
+
+SpatialTemporal_comparison <- temp_trait_spatialANDtemporal |> 
+  bind_rows(precip_trait_spatialANDtemporal)
+
+## Interaction - SLA
+
+SLA_interaction_effect <- models_output |> 
+  filter(Trait_trans == "SLA_cm2_g",
+         model == "climate") |> 
+  select(Trait_trans, term, estimate, p.value, significant, model) 
+
+SLA_year_effect <- models_output |> 
+  filter(Trait_trans == "SLA_cm2_g",
+         model == "year",
+         term == "year") |> 
+  select(Trait_trans, term, estimate, p.value, significant, model) 
+
+
+
 
 
 #### Correlation ####
