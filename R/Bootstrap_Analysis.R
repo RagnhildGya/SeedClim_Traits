@@ -453,6 +453,19 @@ temp_traits <- c("Plant_Height_mm_log", "Leaf_Area_cm2_log","Dry_Mass_g_log", "W
 precip_traits <- c("N_percent", "CN_ratio", "LDMC", "Leaf_Thickness_Ave_mm")
 interaction_traits <- c("SLA_cm2_g")
 
+pretty_trait_names <- c(
+  "C_percent" = "Leaf C (%)",
+  "N_percent" = "Leaf N (%)",
+  "CN_ratio" = "Leaf C/N",
+  "LDMC" = "LDMC",
+  "Leaf_Thickness_Ave_mm" = "Leaf Thickness",
+  "SLA_cm2_g" = "SLA",
+  "Leaf_Area_cm2_log" = "Leaf Area",
+  "Plant_Height_mm_log" = "Plant Height",
+  "Wet_Mass_g_log" = "Leaf Wet Mass",
+  "Dry_Mass_g_log" = "Leaf Dry Mass"
+)
+
 
 models_pred <- models |> 
   mutate(predicted_newdataClimate = map2(bestClimateModel, Trait_trans, ~ {
@@ -482,7 +495,9 @@ models_pred <- models |>
       se_predicted_year = predict(.x, newdata = pred_year, level = 0, se.fit = TRUE)$se.fit
     )
     pred_year
-  }))
+  })) |>
+  mutate(Trait_pretty = recode(Trait_trans, !!!pretty_trait_names))
+  
 
 #Extract predictions for vizualization
 predictions_climate <- models_pred |> 
