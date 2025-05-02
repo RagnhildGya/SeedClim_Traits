@@ -363,18 +363,19 @@ interactions_traits_dat <- predictions_climate |>
 
 plot_temp_sizetraits <- temp_traits_dat |> 
   mutate(significant = case_when(Trait_trans %in% c("Dry_Mass_g_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log") ~ "YES",
-                                 Trait_trans == "C_percent" ~ "Nearly")) |> 
+                                 Trait_trans == "C_percent" ~ "Nearly")) |>
+  mutate(Trait_pretty = recode(Trait_trans, !!!pretty_trait_names)) |> 
   ggplot(aes(x = Temp_decade, y = predicted)) +
   geom_point(aes(x = Temp_decade, y = value, color = "grey"), 
              data = (models_pred |> 
-                       select(Trait_trans, data) |> 
+                       select(Trait_trans, Trait_pretty, data) |> 
                        unnest(data) |> 
                        filter(Trait_trans %in% temp_traits) |> 
                        filter(Trait_trans != "Wet_Mass_g_log"))) +
   geom_ribbon(aes(ymin = predicted - se_predicted, ymax = predicted + se_predicted, fill = significant), alpha = 0.3) +
   geom_line(aes(color = significant, linetype = significant), size = 1) +
   labs(x = NULL, y = NULL) +
-  facet_wrap(~Trait_trans, scales = "free_y", ncol = 1) +
+  facet_wrap(~Trait_pretty, scales = "free_y", ncol = 1) +
   theme_minimal(base_size = 15) +
   scale_color_manual(values = c("#dd7631", "#dd7631", "grey")) +
   scale_fill_manual(values = c("#dd7631", "#dd7631")) +
@@ -571,7 +572,7 @@ SpatialTemporal_comparison1 <- SpatialTemporal_comparison |>
     significance_alpha = if_else(significant == "YES", 1, 0.4)
   ) |> 
   mutate(Trait_trans = factor(Trait_trans, levels = trait_order)) |> 
-  filter(!Trait_trans %in% c("SLA_cm2_g", "CN_ratio", "Wet_Mass_g_log")) |> 
+  filter(!Trait_trans %in% c("SLA_cm2_g", "Wet_Mass_g_log")) |> 
   mutate(driver_trend = factor(driver_trend,
                                levels = c("Temperature Temporal","Temperature Spatial",
                                           "Precipitation Temporal", "Precipitation Spatial"))) |> 
@@ -602,7 +603,6 @@ ggplot(SpatialTemporal_comparison1,
     pattern = "Significance",
     title = ""
   ) +
-  
   theme_minimal(base_size = 14) +
   theme(
     legend.position = "right",
