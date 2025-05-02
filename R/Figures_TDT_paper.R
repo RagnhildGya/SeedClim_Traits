@@ -361,6 +361,23 @@ interactions_traits_dat <- predictions_climate |>
   filter(Trait_trans %in% interaction_traits)
 
 
+pretty_trait_names_LES <- c(
+  "N_percent" = "Leaf N (%)",
+  "CN_ratio" = "Leaf C/N",
+  "LDMC" = "LDMC",
+  "Leaf_Thickness_Ave_mm" = "Leaf Thickness"
+)
+
+
+pretty_trait_names_size <- c(
+  "C_percent" = "Leaf C (%)",
+  "Leaf_Area_cm2_log" = "Leaf Area",
+  "Plant_Height_mm_log" = "Plant Height",
+  "Dry_Mass_g_log" = "Leaf Dry Mass"
+)
+
+
+
 plot_temp_sizetraits <- temp_traits_dat |> 
   mutate(significant = case_when(Trait_trans %in% c("Dry_Mass_g_log", "Leaf_Area_cm2_log", "Plant_Height_mm_log") ~ "YES",
                                  Trait_trans == "C_percent" ~ "Nearly")) |>
@@ -381,30 +398,30 @@ plot_temp_sizetraits <- temp_traits_dat |>
   scale_fill_manual(values = c("#dd7631", "#dd7631")) +
   scale_linetype_manual(values = c(5,1)) +
   theme(legend.position = "none",
-        axis.text.x = element_blank()) 
-#Temp_palette <- c("#d8c593", "#dd7631", "#bb3b0e")
-#Precip_palette <- c("#BAD8F7", "#89B7E1", "#2E75B6", "#213964")
-  
+        axis.ticks.x = element_line()) +
+  scale_x_continuous()
   
 plot_precip_LEtraits <- precip_traits_dat |> 
   mutate(significant = case_when(Trait_trans %in% c("CN_ratio", "LDMC", "Leaf_Thickness_Ave_mm") ~ "NO",
                                  Trait_trans == "N_percent" ~ "Nearly")) |> 
+  mutate(Trait_pretty = recode(Trait_trans, !!!pretty_trait_names)) |> 
   ggplot( aes(x = Precip_decade, y = predicted)) +
     geom_point(aes(x = Precip_decade, y = value, color = "grey"), 
                data = (models_pred |> 
-                         select(Trait_trans, data) |> 
+                         select(Trait_trans, Trait_pretty, data) |> 
                          unnest(data) |> 
                          filter(Trait_trans %in% precip_traits))) +
   geom_ribbon(aes(ymin = predicted - se_predicted, ymax = predicted + se_predicted, fill = significant), alpha = 0.3) +
   geom_line(aes(color = significant, linetype = significant), size = 1) +
   labs(x = NULL, y = NULL) +
-  facet_wrap(~Trait_trans, scales = "free_y", ncol = 1) +
-  theme_minimal(base_size = 15)+
+  facet_wrap(~Trait_pretty, scales = "free_y", ncol = 1) +
+  theme_minimal(base_size = 15) +
+  theme(legend.position = "none",
+        axis.ticks.x = element_line()) +
   scale_color_manual(values = c("black", "#2E75B6", "grey")) +
   scale_fill_manual(values = c("black", "#2E75B6")) +
   scale_linetype_manual(values = c(3, 5)) +
-  theme(legend.position = "none",
-        axis.text.x = element_blank()) 
+  scale_x_continuous()
 
 
 plot_interaction_SLA <- 
@@ -423,7 +440,8 @@ ggplot(interactions_traits_dat, aes(x = Precip_decade, y = predicted)) +
   scale_color_manual(values = c("#d8c593", "#dd7631", "#bb3b0e")) +
   theme_minimal(base_size = 15) +
   theme(legend.position = "none",
-        axis.text.x = element_blank()) 
+        axis.ticks.x = element_line()) +
+  scale_x_continuous()
 
 
 Leaf_economic_layout <- ggarrange(plot_precip_LEtraits, plot_interaction_SLA, nrow = 2, ncol = 1,
@@ -435,7 +453,7 @@ Size_layout <- ggarrange(plot_temp_sizetraits, plot_spacer(), nrow = 2, ncol = 1
 combined_plots_spatial <- ggarrange(Size_layout, Leaf_economic_layout, ncol = 2)
 
 
-#ggsave(plot = combined_plots, "Linear_mixed_effect_models_spatial.pdf", width = 15 , height = 22, units = "cm")
+#ggsave(plot = combined_plots_spatial, filename = "Linear_mixed_effect_models_spatial.pdf",  width = 17, height = 26, units = "cm", dpi = 300)
 
 
 # Plot temporal predictions
@@ -455,51 +473,74 @@ precip_traits_dat_temporal <- predictions_temporal |>
 interactions_traits_dat_temporal <- predictions_temporal |> 
   filter(Trait_trans %in% interaction_traits)
 
+
+
 plot_year_sizetraits <- predictions_temporal |> 
   filter(Trait_trans %in% temp_traits) |> 
   filter(Trait_trans != "Wet_Mass_g_log") |> 
   mutate(significant = case_when(Trait_trans %in% c("Dry_Mass_g_log", "Leaf_Area_cm2_log") ~ "YES",
                                  Trait_trans == "Plant_Height_mm_log" ~ "Nearly",
-                                 Trait_trans == "C_percent" ~ "No")) |> 
-ggplot(aes(x = year, y = predicted_year, color = as.factor(Temp_decade))) +
+                                 Trait_trans == "C_percent" ~ "No"),
+         Trait_pretty = pretty_trait_names_size[Trait_trans]
+         ) |> 
+ggplot(aes(x = year, y = predicted_year)) +
   geom_point(aes(x = year, y = value, color = "grey"), 
              data = (models_pred |> 
-                       select(Trait_trans, data) |> 
+                       select(Trait_trans, Trait_pretty, data) |> 
                        unnest(data) |> 
                        filter(Trait_trans %in% temp_traits) |> 
                        filter(Trait_trans != "Wet_Mass_g_log"))) +
   geom_ribbon(aes(ymin = predicted_year - se_predicted_year, ymax = predicted_year + se_predicted_year, fill = as.factor(Temp_decade)), alpha = 0.2) +
   geom_line(aes(color = interaction(significant, Temp_decade), linetype = significant), size = 1) +
-  labs(title = "Temporal Model Predictions", x = "Year", y = "Predicted Value") +
-  facet_wrap(~Trait_trans, scales = "free_y", ncol = 1) +
+  labs(title = NULL, x = NULL, y = NULL) +
+  facet_wrap(~Trait_pretty, scales = "free_y", ncol = 1) +
+  scale_x_continuous(
+    breaks = c(2009, 2011, 2013, 2015, 2017, 2019), 
+    labels = c(2009, 2011, 2013, 2015, 2017, 2019)
+  ) +
   theme_minimal(base_size = 15) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    axis.ticks.x = element_line(), 
+    legend.position = "none"
+  ) +
   scale_color_manual(values = c("YES.6.5" = Temp_palette[1], "YES.8.5" = Temp_palette[2], "YES.10.5" = Temp_palette[3],
                                 "Nearly.6.5" = Temp_palette[1], "Nearly.8.5" = Temp_palette[2], "Nearly.10.5" = Temp_palette[3],
-                                "No.6.5" = "grey", "No.8.5" = "grey", "No.10.5" = "grey")) +
+                                "No.6.5" = "black", "No.8.5" = "black", "No.10.5" = "black")) +
   scale_fill_manual(values = Temp_palette) +
-  scale_linetype_manual(values = c("YES" = 1, "Nearly" = 5, "No" = 3)) +
-  theme(legend.position = "none")
+  scale_linetype_manual(values = c("YES" = 1, "Nearly" = 5, "No" = 3)) 
 
 
 plot_year_LEStraits <- predictions_temporal |> 
   filter(Trait_trans %in% precip_traits) |> 
   mutate(significant = case_when(Trait_trans %in% c("CN_ratio", "N_percent") ~ "No",
                                  Trait_trans == "LDMC" ~ "YES",
-                                 Trait_trans == "Leaf_Thickness_Ave_mm"  ~ "Nearly")) |> 
+                                 Trait_trans == "Leaf_Thickness_Ave_mm"  ~ "Nearly"),
+         Trait_pretty = pretty_trait_names_LES[Trait_trans]
+         ) |> 
   ggplot(aes(x = year, y = predicted_year)) +
   geom_point(aes(x = year, y = value, color = "grey"), 
              data = (models_pred |> 
-                       select(Trait_trans, data) |> 
+                       select(Trait_trans, Trait_pretty, data) |> 
                        unnest(data) |> 
                        filter(Trait_trans %in% precip_traits))) +
   geom_ribbon(aes(ymin = predicted_year - se_predicted_year, ymax = predicted_year + se_predicted_year, fill = as.factor(Precip_decade)), alpha = 0.2) +
   geom_line(aes(color = interaction(significant, Precip_decade), linetype = significant), size = 1) +
-  labs(title = "Temporal Model Predictions", x = "Year", y = "Predicted Value") +
-  facet_wrap(~Trait_trans, scales = "free_y", ncol = 1) +
+  labs(title = NULL, x = NULL, y = NULL) +
+  facet_wrap(~Trait_pretty, scales = "free_y", ncol = 1) +
+  scale_x_continuous(
+    breaks = c(2009, 2011, 2013, 2015, 2017, 2019), 
+    labels = c(2009, 2011, 2013, 2015, 2017, 2019)
+  ) +
   theme_minimal(base_size = 15) +
-  scale_color_manual(values = c("YES.1.0" = Precip_palette[1], "YES.1.45" = Precip_palette[2], "YES.2.4" = Precip_palette[3], "YES.3.5" = Precip_palette[4],
-                                "Nearly.1.0" = Precip_palette[1], "Nearly.1.45" = Precip_palette[2], "Nearly.2.4" = Precip_palette[3], "Nearly.3.5" = Precip_palette[4],
-                                "No.1.0" = "grey", "No.1.45" = "grey", "No.2.4" = "grey", "No.3.5" = "grey")) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    axis.ticks.x = element_line(), 
+    legend.position = "none"
+  ) +
+  scale_color_manual(values = c("YES.1" = Precip_palette[1], "YES.1.45" = Precip_palette[2], "YES.2.4" = Precip_palette[3], "YES.3.5" = Precip_palette[4],
+                                "Nearly.1" = Precip_palette[1], "Nearly.1.45" = Precip_palette[2], "Nearly.2.4" = Precip_palette[3], "Nearly.3.5" = Precip_palette[4],
+                                "No.1" = "black", "No.1.45" = "black", "No.2.4" = "black", "No.3.5" = "black")) +
   scale_fill_manual(values = Precip_palette) +
   scale_linetype_manual(values = c("YES" = 1, "Nearly" = 5, "No" = 3)) +
   theme(legend.position = "none")
@@ -519,19 +560,31 @@ plot_year_SLA <- predictions_temporal |>
                        select(Trait_trans, year, value, Temp_level, Precip_decade) |> 
                        rename(Temp_decade = Temp_level))) +
   geom_line(aes(color = as.factor(Temp_decade)), size = 1, linetype = 3) +
-  geom_ribbon(aes(ymin = predicted_year - se_predicted_year, ymax = predicted_year + se_predicted_year, fill = as.factor(Temp_decade)), alpha = 0.5) +
-  labs(x = "Year", y = "Predicted Value") +
+  geom_ribbon(aes(ymin = predicted_year - se_predicted_year, ymax = predicted_year + se_predicted_year, fill = as.factor(Temp_decade)), alpha = 0.2) +
+  labs(x = NULL, y = NULL, title = "SLA") +
   scale_fill_manual(values = Temp_palette) + 
   scale_color_manual(values = Temp_palette) +
+  scale_x_continuous(
+    breaks = c(2009, 2011, 2013, 2015, 2017, 2019), 
+    labels = c(2009, 2011, 2013, 2015, 2017, 2019)
+  ) +
   theme_minimal(base_size = 15) +
-  theme(legend.position = "none") +
-  facet_wrap(~Precip_decade, nrow = 1)
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    axis.ticks.x = element_line(), 
+    legend.position = "none",
+    plot.title = element_text(hjust = 0.5),
+    strip.text = element_blank()
+  ) +
+  facet_wrap(~Precip_decade, nrow = 1) 
 
 
 
 combined_columns <- ggarrange(plot_year_sizetraits, plot_year_LEStraits,ncol = 2, heights = c(4, 4))
 
 combined_plots_temporal <- ggarrange(combined_columns, plot_year_SLA, nrow = 2, heights = c(6, 2))
+
+#ggsave(plot = combined_plots_temporal, filename = "Linear_mixed_effect_models_temporal.pdf",  width = 18, height = 28, units = "cm", dpi = 300)
 
 
 
