@@ -629,13 +629,14 @@ SpatialTemporal_comparison1 <- SpatialTemporal_comparison |>
   mutate(driver_trend = factor(driver_trend,
                                levels = c("Temperature Temporal","Temperature Spatial",
                                           "Precipitation Temporal", "Precipitation Spatial"))) |> 
-  mutate(Trait_pretty = recode(Trait_trans, !!!pretty_trait_names))
+  mutate(Trait_pretty = recode(Trait_trans, !!!pretty_trait_names)) |> 
+  mutate(pattern_type = ifelse(significant == "YES", "none", "stripe"))
 
 
 ggplot(SpatialTemporal_comparison1, 
        aes(x = estimate, y = Trait_pretty, 
            fill = driver_trend, 
-           pattern = ifelse(significant == "YES", "none", "stripe"),
+           pattern = pattern_type,
            group = driver_trend)) +
   geom_col_pattern(
     position = position_dodge(width = 0.6),
@@ -661,6 +662,8 @@ ggplot(SpatialTemporal_comparison1,
     legend.position = "right",
     panel.grid.major.y = element_blank()
   )
+
+
 
 ### SLA intercation ###
 
@@ -709,7 +712,7 @@ climate_grid$SLA_pred_temporal <- SLA_temporal_intercept +
 
 ggplot(climate_grid, aes(x = Temp_decade, y = Precip_decade, fill = SLA_pred_spatial)) +
   geom_tile() +
-  scale_fill_viridis_c() +
+  scale_fill_viridis_c() +r
   labs(
     title = "Predicted SLA Change Based on Climate Interactions",
     x = "Temperature Change",
