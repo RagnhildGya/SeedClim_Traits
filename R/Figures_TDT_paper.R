@@ -676,21 +676,21 @@ SpatialTemporal_comparison1 <- SpatialTemporal_comparison |>
   mutate(pattern_type = ifelse(significant == "YES", "none", "stripe"))
 
 
-ggplot(SpatialTemporal_comparison1, 
-       aes(x = estimate, y = Trait_pretty, 
-           fill = driver_trend, 
-           pattern = pattern_type,
-           group = driver_trend)) +
+compare_spatial_temporal_plot <- ggplot(SpatialTemporal_comparison1, 
+                                        aes(x = estimate, y = Trait_pretty, 
+                                            fill = driver_trend, 
+                                            pattern = pattern_type,
+                                            group = driver_trend)) +
   geom_col_pattern(
     position = position_dodge(width = 0.6),
     width = 0.5,
     color = "black",
-    pattern_density = 0.3,
-    pattern_spacing = 0.02,
+    size = 0.3,
+    pattern_density = 0.25,
+    pattern_spacing = 0.015,
     pattern_fill = "white",
     pattern_alpha = 0.3
   ) +
-  
   scale_fill_manual(values = custom_colors) +
   scale_pattern_manual(values = c("none" = "none", "stripe" = "stripe")) +
   labs(
@@ -706,7 +706,7 @@ ggplot(SpatialTemporal_comparison1,
     panel.grid.major.y = element_blank()
   )
 
-
+#ggsave(plot = compare_spatial_temporal_plot, filename = "Compare_spatial_temporal_figure.pdf",  width = 25, height = 14, units = "cm", dpi = 300)
 
 ### SLA intercation ###
 
@@ -755,7 +755,7 @@ climate_grid$SLA_pred_temporal <- SLA_temporal_intercept +
 
 ggplot(climate_grid, aes(x = Temp_decade, y = Precip_decade, fill = SLA_pred_spatial)) +
   geom_tile() +
-  scale_fill_viridis_c() +r
+  scale_fill_viridis_c() +
   labs(
     title = "Predicted SLA Change Based on Climate Interactions",
     x = "Temperature Change",
