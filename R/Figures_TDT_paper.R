@@ -11,7 +11,7 @@ library(gridExtra)
 library(maps)
 library(mapdata)
 library(grid)
-library(ggvegan)
+#library(ggvegan)
 library(ggnewscale)
 library(gghighlight)
 library(merTools)
@@ -211,7 +211,7 @@ Climate_corr <- Corr_traits %>%
   rename(Temp_summer_MaySeptember = Temp_summer,
          Temp_summer_MayJuly = Temp_yearly_spring)
 
-corr <- round(cor(Trait_climate_corr), 1)
+corr <- round(cor(Trait_climate_corr), 2)
 corr1 <- round(cor(Climate_corr, use = "complete.obs"), 2)
 
 # P-values
@@ -220,13 +220,56 @@ p.mat <- cor_pmat(Corr_traits)
 
 # Correlation plot
 
-cor_traits <- ggcorrplot(corr, hc.order = FALSE,
-           type = "lower", lab = TRUE,)
+# New order
+new_order_traits <- c("Leaf_Area_cm2_log", "C_percent", "Dry_Mass_g_log", 
+                      "Wet_Mass_g_log", "Plant_Height_mm_log",
+                      "LDMC", "CN_ratio", "N_percent", 
+                      "Leaf_Thickness_Ave_mm", "SLA_cm2_g", 
+                      "Temp_summer", "Precip_yearly")
+
+new_order_climate <- c("Temp_summer_MaySeptember", "Temp_summer_MayJuly", 
+                       "Temp_yearly_prev", 
+                      "Precip_yearly", "Precip_yearly_spring")
+
+# Pretty names for plotting
+new_names_traits <- c("Leaf Area", "Leaf C (%)", "Leaf Dry Mass", 
+                      "Leaf Wet Mass", "Plant Height",
+                      "LDMC", "Leaf C/N", "Leaf N (%)", 
+                      "Leaf Thickness", "SLA", 
+                      "Summer temperature", "Annual precipitation")
+
+new_names_climate <- c("Summer temperature (May-September, tetraterm)", "Summer temperature (May-July)", 
+                      "Summer temperature previous year (tetraterm)",
+                      "Annual precipitation", 
+                      "Summer precipitation")
+
+
+# Reorder and subset the correlation matrix
+corr_ordered <- corr[new_order_traits, new_order_traits]
+corr_ordered <- corr[new_order_traits, new_order_traits]
+
+corr_ordered_climate <- corr1[new_order_climate, new_order_climate]
+corr_ordered_climate <- corr1[new_order_climate, new_order_climate]
+
+# Rename the row and column names
+rownames(corr_ordered) <- new_names_traits
+colnames(corr_ordered) <- new_names_traits
+
+rownames(corr_ordered_climate) <- new_names_climate
+colnames(corr_ordered_climate) <- new_names_climate
+
+# Plot
+cor_traits <- ggcorrplot(corr_ordered, 
+                         hc.order = FALSE, 
+                         type = "lower", 
+                         lab = TRUE)
 
 #ggsave(plot = cor_traits, "Correlation_plot.pdf", width = 22 , height = 16, units = "cm")
 
-cor_climate <- ggcorrplot(corr1, hc.order = FALSE,
-           type = "lower", lab = TRUE,)
+cor_climate <- ggcorrplot(corr_ordered_climate, 
+                          hc.order = FALSE,
+                          type = "lower",
+                          lab = TRUE)
 
 #ggsave(plot = cor_climate, "Correlation_plot_climate.pdf", width = 20 , height = 15, units = "cm")
 
