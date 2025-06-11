@@ -527,6 +527,8 @@ temp_traits
 precip_traits 
 interaction_traits 
 
+
+
 ## Temperature traits
 
 temp_spatial_effect <- models_output |> 
@@ -588,8 +590,54 @@ SLA_year_effect <- models_output |>
   select(Trait_trans, term, estimate, p.value, significant, model) 
 
 
+# Extract coefficients
+b_temp <- SLA_interaction_effect %>% filter(term == "Temp_decade") %>% pull(estimate)
+b_precip <- SLA_interaction_effect %>% filter(term == "Precip_decade") %>% pull(estimate)
+b_interaction <- SLA_interaction_effect %>% filter(term == "Temp_decade:Precip_decade") %>% pull(estimate)
+year_effect <- SLA_year_effect %>% pull(estimate)
 
+# Climate grid
+temp_levels <- c(6.5, 8.5, 10.5)
+precip_levels <- c(1.0, 1.45, 2.4, 3.5)
 
+# Spatial effects
+temp_effects <- b_temp + b_interaction * precip_levels
+names(temp_effects) <- paste0("Temperature trend at: ", precip_levels, " m/year")
+
+precip_effects <- b_precip + b_interaction * temp_levels
+names(precip_effects) <- paste0("Precipitation trend at: ", temp_levels, " °C")
+
+# Temporal effects (translated)
+temp_effect_temporal <- year_effect / temp_year_effect
+precip_effect_temporal <- year_effect / precip_year_effect
+
+# Assemble for plotting
+spatial_temp_df <- tibble(
+  variable = "Temperature",
+  level = names(temp_effects),
+  effect = as.numeric(temp_effects),
+  source = "Spatial"
+)
+
+spatial_precip_df <- tibble(
+  variable = "Precipitation",
+  level = names(precip_effects),
+  effect = as.numeric(precip_effects),
+  source = "Spatial"
+)
+
+temporal_df <- tibble(
+  variable = c("Temperature", "Precipitation"),
+  level = c("Temperature (temporal)", "Precipitation (temporal)"),
+  effect = c(temp_effect_temporal, precip_effect_temporal),
+  source = "Temporal"
+) 
+
+effects_df <- bind_rows(spatial_temp_df, spatial_precip_df, temporal_df) 
+
+effects_df <- effects_df |> 
+  mutate(significant = case_when(source == "Spatial" ~ "YES",
+                                 source == "Temporal" ~ "NO"))
 
 #### Correlation ####
 
