@@ -348,6 +348,19 @@ models_output <- output(models, unnesting = "Trait_trans")
 #write.table(models_output, row.names = TRUE, col.names = TRUE, file = "model_output_traits_AfterModelSelection.csv")
 
 
+## Make a table of this for the paper 
+
+table_models_output <- flextable(models_output)
+
+# Create a Word document and add the flextable
+ doc <- read_docx() |> 
+   body_add_flextable(table_models_output) |> 
+   body_add_par("Model outputs", style = "heading 1")
+
+# Save the Word document
+print(doc, target = "models_output.docx")
+#Don't override now (I made some pretty-changes :) )
+
 #### Get AIC for every model ----
 
 models_AIC_climate <- models |> 
