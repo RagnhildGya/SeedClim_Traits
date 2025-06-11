@@ -655,6 +655,9 @@ pretty_trait_names <- c(
   "Dry_Mass_g_log" = "Leaf Dry Mass"
 )
 
+common_driver_trend_levels <- c("Temperature Temporal","Temperature Spatial",
+                                "Precipitation Temporal", "Precipitation Spatial")
+
 
 SpatialTemporal_comparison1 <- SpatialTemporal_comparison |> 
   mutate(
@@ -667,13 +670,14 @@ SpatialTemporal_comparison1 <- SpatialTemporal_comparison |>
     driver_trend = paste(driver, trend_short, sep = " "),
     significance_alpha = if_else(significant == "YES", 1, 0.4)
   ) |> 
+  mutate(driver_trend = factor(driver_trend, levels = common_driver_trend_levels)) |> 
   mutate(Trait_trans = factor(Trait_trans, levels = trait_order)) |> 
   filter(!Trait_trans %in% c("SLA_cm2_g", "Wet_Mass_g_log")) |> 
   mutate(driver_trend = factor(driver_trend,
                                levels = c("Temperature Temporal","Temperature Spatial",
                                           "Precipitation Temporal", "Precipitation Spatial"))) |> 
   mutate(Trait_pretty = recode(Trait_trans, !!!pretty_trait_names)) |> 
-  mutate(pattern_type = ifelse(significant == "YES", "none", "stripe"))
+  mutate(pattern_type = ifelse(significant == "YES", "Significant", "Non-Significant"))
 
 
 compare_spatial_temporal_plot <- ggplot(SpatialTemporal_comparison1, 
@@ -688,11 +692,11 @@ compare_spatial_temporal_plot <- ggplot(SpatialTemporal_comparison1,
     size = 0.3,
     pattern_density = 0.25,
     pattern_spacing = 0.015,
-    pattern_fill = "white",
+    pattern_fill = "black",
     pattern_alpha = 0.3
   ) +
   scale_fill_manual(values = custom_colors) +
-  scale_pattern_manual(values = c("none" = "none", "stripe" = "stripe")) +
+  scale_pattern_manual(values = c("Significant" = "none", "Non-Significant" = "stripe")) +
   labs(
     x = "Effect Size (per °C temperature or m precipitation)",
     y = "Trait",
@@ -704,77 +708,68 @@ compare_spatial_temporal_plot <- ggplot(SpatialTemporal_comparison1,
   theme(
     legend.position = "right",
     panel.grid.major.y = element_blank()
-  )
+  ) +
+  geom_vline(xintercept = 0, color = "black", size = 0.7, linetype = "solid")
 
 #ggsave(plot = compare_spatial_temporal_plot, filename = "Compare_spatial_temporal_figure.pdf",  width = 25, height = 14, units = "cm", dpi = 300)
 
 ### SLA intercation ###
 
-climate_grid <- expand.grid(
-  Temp_decade = Temp_decade_vec,
-  Precip_decade = Precip_decade_vec)
+effects_df2 <- effects_df %>%
+  mutate(driver_trend = as.factor(paste(variable, source, sep = " ")),
+         pattern_type = ifelse(significant == "NO", "Non-Significant", "Significant")) |> 
+  mutate(driver_trend = factor(driver_trend, levels = common_driver_trend_levels))
 
-#model coefficients
-
-#Spatial
-
-SLA_spatial_intercept <- SLA_interaction_effect |> 
-  filter(term == "(Intercept)") |> 
-  pull(estimate)
-
-SLA_spatial_temp <- SLA_interaction_effect |> 
-  filter(term == "Temp_decade") |> 
-  pull(estimate)
-
-SLA_spatial_precip <- SLA_interaction_effect |> 
-  filter(term == "Precip_decade") |> 
-  pull(estimate)
-
-SLA_spatial_interaction <- SLA_interaction_effect |> 
-  filter(term == "Temp_decade:Precip_decade") |> 
-  pull(estimate)
-
-#Temporal
-
-SLA_temporal_year <- SLA_year_effect |> 
-  pull(estimate)
-
-SLA_temporal_temp <- SLA_temporal_year / temp_year_effect
-SLA_temporal_precip <- SLA_temporal_year / precip_year_effect
-
-climate_grid$SLA_pred_spatial <- SLA_spatial_intercept +
-  SLA_spatial_temp * climate_grid$Temp_decade +
-  SLA_spatial_precip * climate_grid$Precip_decade +
-  SLA_spatial_interaction * climate_grid$Temp_decade * climate_grid$Precip_decade
+# Set order for x-axis (which will be y-axis after flipping)
+level_order <- c(
+  "Temperature (temporal)",
+  paste0("Temperature trend at: ", precip_levels, " m/year"),
+  "Precipitation (temporal",
+  paste0("Precipitation trend at: ", temp_levels, " °C")
+)
 
 
-climate_grid$SLA_pred_temporal <- SLA_temporal_intercept +
-  SLA_temporal_temp * climate_grid$Temp_decade +
-  SLA_temporal_precip * climate_grid$Precip_decade
-
-
-ggplot(climate_grid, aes(x = Temp_decade, y = Precip_decade, fill = SLA_pred_spatial)) +
-  geom_tile() +
-  scale_fill_viridis_c() +
-  labs(
-    title = "Predicted SLA Change Based on Climate Interactions",
-    x = "Temperature Change",
-    y = "Precipitation Change",
-    fill = "Predicted SLA"
+# Plot
+SLA_plot <- ggplot(effects_df2, 
+                   aes(x = effect, y = level, 
+                       fill = driver_trend, 
+                       pattern = pattern_type,
+                       group = driver_trend)) +
+  geom_col_pattern(
+    position = position_dodge(width = 0.6),
+    width = 0.5,
+    color = "black",
+    size = 0.3,
+    pattern_density = 0.25,
+    pattern_spacing = 0.015,
+    pattern_fill = "black",
+    pattern_alpha = 0.3
   ) +
-  theme_minimal()
-
-ggplot(climate_grid, aes(x = Temp_decade, y = Precip_decade, fill = SLA_pred_temporal)) +
-  geom_tile() +
-  scale_fill_viridis_c() +
+  scale_fill_manual(values = custom_colors) +
+  scale_pattern_manual(values = c("Significant" = "none", "Non-Significant" = "stripe")) +
   labs(
-    title = "Predicted SLA Change Based on Climate Interactions",
-    x = "Temperature Change",
-    y = "Precipitation Change",
-    fill = "Predicted SLA"
+    x = "Effect Size (per °C temperature or m precipitation)",
+    y = "",
+    fill = "Driver & Trend",
+    pattern = "Significance"
   ) +
-  theme_minimal()
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "right",
+    panel.grid.major.y = element_blank()
+  ) +
+  geom_vline(xintercept = 0, color = "black", size = 0.7, linetype = "solid")
 
+SLA_plot
+
+
+combined_plot <- compare_spatial_temporal_plot / SLA_plot + 
+  plot_layout(heights = c(2.5, 1.5), guides = "collect") & 
+  theme(legend.position = "right")
+
+combined_plot
+
+#ggsave(plot = combined_plot, filename = "SLA_Compare_spatial_temporal_figure.pdf",  width = 25, height = 14, units = "cm", dpi = 300)
 
 
 ################################################################################################
