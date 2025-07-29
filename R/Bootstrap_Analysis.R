@@ -124,6 +124,28 @@ Imputed_traits_fullcommunity <- Trait_impute_per_year(com_dat = community_for_bo
 
 sum_moments_fullcommunity <- trait_summarise_boot_moments(Imputed_traits_fullcommunity)
 
+### Without intraspecific trait variability
+
+Trait_impute_per_year_without_ITV <- function(com_dat, trait_dat){
+  
+  SeedClim_traits <- trait_np_bootstrap(
+    trait_fill(comm = com_dat,
+               traits = trait_dat,
+               scale_hierarchy = c(),
+               taxon_col = c("Full_name", "Genus", "Family"),
+               trait_col = "Trait_trans",
+               value_col = "Value",
+               other_col = c("year", "siteID", "blockID", "turfID"),
+               abundance_col = "cover"))
+  
+  return(SeedClim_traits)
+}
+
+
+Imputed_traits_fullcommunity_without_ITV <- Trait_impute_per_year_without_ITV(com_dat = community_for_boostrapping, trait_dat = traitdata)
+
+sum_moments_fullcommunity_without_ITV <- trait_summarise_boot_moments(Imputed_traits_fullcommunity_without_ITV)
+
 
 #### Adding climate info & pivoting longer ####
 
@@ -139,6 +161,20 @@ moments_clim_long_fullcommunity <- Imputed_traits_fullcommunity  |>
 
 rm(Imputed_traits_fullcommunity)
 rm(sum_moments_fullcommunity)
+
+##Without intraspecific trait variability
+sum_moments_climate_fullcommunity_without_ITV = bind_rows(
+  sum_moments_fullcommunity_without_ITV  |>   
+    left_join(env, by = c("siteID" = "siteID", "year" = "year")))
+
+
+moments_clim_long_fullcommunity_without_ITV <- Imputed_traits_fullcommunity_without_ITV  |>   
+  pivot_longer(c("mean", "variance", "skewness", "kurtosis"), names_to = "moments", values_to = "value")  |>   
+  left_join(env, by = c("siteID" = "siteID", "year" = "year"))
+
+
+# rm(Imputed_traits_fullcommunity_without_ITV)
+# rm(sum_moments_fullcommunity_without_ITV)
 
 ###### Mixed effect model testing ######
 
@@ -161,23 +197,20 @@ model_data <- sum_moments_climate_fullcommunity  |>
   group_by(Trait_trans)  |>   
   nest()
 
-# community data
-
-com_data <- community_for_analysis  |>  
-  group_by(turfID, year)  |>   
-  mutate(species_richness = n())  |>   
-  unique()  |>   
-  group_by(turfID, year)  |>   
-  pivot_wider(names_from = functionalGroup, values_from = cover)  |>   
-  mutate(graminoid_cover = sum(graminoid, na.rm = TRUE),
-         forb_cover = sum(forb, na.rm = TRUE),
-         other_cover = sum(woody, pteridophyte, `NA`, na.rm = TRUE))  |>   
-  left_join(env, by = c("siteID" = "siteID", "year" = "year"))  |>   
-  pivot_longer(cols = c("species_richness", "graminoid_cover", "forb_cover", "other_cover", "total_vascular", "total_bryophytes", "vegetation_height", "moss_height"), names_to = "community_properties", values_to = "value")  |>   
-  select(siteID, turfID, Temp_yearly_spring, Precip_yearly, Temp_decade, Precip_decade, Temp_annomalies, Precip_annomalies, Temp_level, Precip_level, year, value, community_properties)  |>   
-  group_by(community_properties)  |>   
-  unique()  |>
-  mutate(value_transformed = scale(value))  |>   
+model_data_without_ITV <- sum_moments_climate_fullcommunity_without_ITV  |>   
+  ungroup()  |>  
+  select(Trait_trans, year, siteID, blockID, turfID, 
+         mean,
+         Temp_yearly_spring, Precip_yearly, 
+         Temp_decade, Precip_decade, 
+         Temp_annomalies, Precip_annomalies, 
+         Temp_level, Precip_level)  |> 
+  mutate(mean_transformed = scale(mean))  |> 
+  group_by(Trait_trans, siteID, turfID) |> 
+  mutate(mean_decade = mean(mean)) |> 
+  mutate(value = mean) |>  #To have the same name for what goes in the model for both trait and community data
+  ungroup() |> 
+  group_by(Trait_trans)  |>   
   nest()
 
 #### Functions for models and model outputs ####
@@ -257,6 +290,9 @@ compare_models <- function(models, hierarchy) {
   }
   return(best_model)
 }
+
+#Function for return the same models for the without ITV data as the other data
+
 
 #Fit and compare models
 fit_and_compare_models <- function(df, models, random_effects, correlation = NULL, model_type, hierarchy) {
@@ -346,6 +382,26 @@ models_output <- output(models, unnesting = "Trait_trans")
 
 
 #write.table(models_output, row.names = TRUE, col.names = TRUE, file = "model_output_traits_AfterModelSelection.csv")
+
+
+models_without_ITV <- model_data_without_ITV |>  
+  mutate(
+    climateModelResults = map(data, ~ fit_and_compare_models(.x, climate_models, random_effects, model_type = "climate", hierarchy = climate_hierarchy)),
+    temporalModelResults = map(data, ~ fit_and_compare_models(.x, temporal_models, random_effects, correlation = corAR1(form = ~ year | siteID/turfID), model_type = "temporal", hierarchy = temporal_hierarchy))
+  ) |>
+  mutate(
+    bestClimateModel = map(climateModelResults, "best_model"),
+    bestTemporalModel = map(temporalModelResults, "best_model"),
+    climateAICs = map(climateModelResults, ~ map(.x$all_AICs, ~ list(fixed_effects = .x$fixed_effects, AIC = .x$AIC, model_type = .x$model_type))),
+    temporalAICs = map(temporalModelResults, ~ map(.x$all_AICs, ~ list(fixed_effects = .x$fixed_effects, AIC = .x$AIC, model_type = .x$model_type)))
+  )
+
+models_without_ITV <- models_without_ITV |> 
+  mutate(phi = purrr::map(bestTemporalModel, extract_phi)) |> 
+  mutate(model_outputClimate = purrr::map(bestClimateModel, tidy)) |> 
+  mutate(model_outputTemporal = purrr::map(bestTemporalModel, tidy))
+
+models_output_without_ITV <- output(models_without_ITV, unnesting = "Trait_trans")
 
 
 ## Make a table of this for the paper 
