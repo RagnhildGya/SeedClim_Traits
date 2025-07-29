@@ -226,6 +226,7 @@ extract_phi <- function(model) {
 
 # Define the models for climate
 climate_models <- list(
+  "Null" = value ~ 1,
   "Temp" = value ~ Temp_decade,
   "Precip" = value ~ Precip_decade,
   "Temp + Precip" = value ~ Temp_decade + Precip_decade,
@@ -234,6 +235,8 @@ climate_models <- list(
 
 # Define the models for temporal
 temporal_models <- list(
+  "Null" = value ~ 1,
+  "Year" = value ~ year,
   "Temp + Year" = value ~ Temp_decade + year,
   "Precip + Year" = value ~ Precip_decade + year,
   "Temp + Precip + Year" = value ~ Temp_decade + Precip_decade + year,
@@ -246,22 +249,25 @@ temporal_models <- list(
 
 # Define the hierarchy for climate models
 climate_hierarchy <- list(
-  "Temp" = 1,
-  "Precip" = 1,
-  "Temp + Precip" = 2,
-  "Temp * Precip" = 3
+  "Null" = 1,
+  "Temp" = 2,
+  "Precip" = 2,
+  "Temp + Precip" = 3,
+  "Temp * Precip" = 4
 )
 
 # Define the hierarchy for temporal models
 temporal_hierarchy <- list(
-  "Temp + Year" = 1,
-  "Precip + Year" = 1,
-  "Temp + Precip + Year" = 2,
-  "Temp * Year + Precip + Year" = 3,
-  "Temp + Precip * Year + Year" = 3,
-  "Temp * Year + Precip * Year" = 4,
-  "Temp * Precip + Year" = 5,
-  "Temp * Precip * Year" = 6
+  "Null" = 1, 
+  "Year" = 2,
+  "Temp + Year" = 3,
+  "Precip + Year" = 3,
+  "Temp + Precip + Year" = 4,
+  "Temp * Year + Precip + Year" = 5,
+  "Temp + Precip * Year + Year" = 5,
+  "Temp * Year + Precip * Year" = 6,
+  "Temp * Precip + Year" = 7,
+  "Temp * Precip * Year" = 8
 )
 
 #Define random effects
