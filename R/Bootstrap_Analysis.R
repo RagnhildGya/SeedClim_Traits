@@ -17,7 +17,7 @@ library(ggcorrplot)
 # library(textshape)
 library(traitstrap)
 library(vegan)
-#library(ggvegan)
+library(ggvegan)
 library(partR2)
 #library(drake)
 #library(default)
@@ -787,6 +787,9 @@ anova(RDA_space, RDA_add_year, permutations = perm)
 anova(RDA_space, RDA_multi_year, permutations = perm)
 
 #Getting R2
+RsquareAdj(RDA_year)$adj.r.squared
+RsquareAdj(RDA_temp)$adj.r.squared
+RsquareAdj(RDA_precip)$adj.r.squared
 RsquareAdj(RDA_space_additive)$adj.r.squared
 RsquareAdj(RDA_space)$adj.r.squared
 RsquareAdj(RDA_add_year)$adj.r.squared
