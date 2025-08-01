@@ -356,7 +356,7 @@ Ord_plot_precip <- fviz_pca_ind(pca_trait, repel = TRUE,
 
 #ggsave("Ordination_Precip.svg", width = 18 , height = 11, units = "cm", dpi = 600)
 
-## Ordination over time ##
+### Ordination over time ###
 
 pca_fort <- augment(pca_trait, display = "Sites") %>% 
   bind_cols(Ord_boot_traits[1:6]) %>% 
@@ -386,6 +386,96 @@ c <- ggarrange(Ord_plot_traits, Ord_plot_time, Ord_plot_precip, Ord_plot_temp,
                legend = "none")
 
 #ggsave(plot = c, "Ord_timemean_temp_prec_four.pdf", width = 26 , height = 18, units = "cm")
+
+
+### Ordination - RDA ###
+
+## Plot the RDA
+
+# Get site and biplot scores
+site_scores <- scores(RDA_multi_year, display = "sites", scaling = 2)
+arrow_scores <- scores(RDA_multi_year, display = "bp", scaling = 2)
+trait_scores <- scores(RDA_multi_year, display = "species", scaling = 2)
+
+# Convert to data frames
+site_df <- as.data.frame(site_scores)
+site_df$site <- rownames(site_df)
+
+arrow_df <- as.data.frame(arrow_scores)
+arrow_df$var <- rownames(arrow_df)
+
+trait_df <- as.data.frame(trait_scores)
+trait_df$var <- rownames(trait_df)
+
+# Create the plot
+ggplot() +
+  geom_point(data = site_df, aes(x = RDA1, y = RDA2), color = "grey") + 
+  geom_segment(data = trait_df,
+               aes(x = 0, y = 0, xend = RDA1, yend = RDA2),
+               arrow = arrow(length = unit(0.2, "cm")),
+               linewidth = 1) +
+  geom_text(data = trait_df,
+            aes(x = RDA1, y = RDA2, label = var),
+            hjust = -0.1, vjust = -0.1, size = 5) +
+  theme_minimal() +
+  labs(x = "RDA1", y = "RDA2", color = "Variable group") +
+  theme(legend.position = "bottom")
+
+
+
+
+newdat <- expand.grid(
+  Temp_level = levels(Ord_boot_traits$Temp_level),
+  Precip_level = levels(Ord_boot_traits$Precip_level),
+  year = c(2009, 2019)  # your first and last year
+)
+
+#Predict site scores
+# Get predicted site scores in RDA space
+pred_scores <- predict(RDA_multi_year, newdata = newdat, type = "lc", scaling = 2)
+pred_df <- as.data.frame(pred_scores)
+
+# Add metadata
+pred_df$Temp_level <- newdat$Temp_level
+pred_df$Precip_level <- newdat$Precip_level
+pred_df$year <- newdat$year
+
+
+pred_df <- pred_df %>%
+  mutate(
+    Temp_level = factor(Temp_level, levels = c("6.5", "8.5", "10.5")),
+    climate_group = paste(Temp_level, Precip_level, sep = "_")
+  )
+
+# Plot it
+ggplot(pred_df, aes(x = RDA1, y = RDA2, colour = Precip_level)) +
+  geom_point(data = site_scores, aes(x = RDA1, y = RDA2),
+             colour = "grey30", alpha = 0.2, size = 1) +  # background points
+  geom_path(aes(group = climate_group, color = "black"), linewidth = 1) +
+  geom_point(data = pred_df %>% filter(year == 2009),
+             aes(shape = Precip_level, color = Precip_level),
+             size = 3,
+             show.legend = FALSE) +
+  scale_color_manual(name = "Annual precipitation", values = c(Precip_palette, "black")) +
+  scale_shape_manual(values = c(16, 17, 15, 18)) +
+  coord_equal() +
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.text = element_text(size = 14),
+    legend.title = element_text(size = 14),
+    plot.title = element_text(hjust = 0.5),
+    legend.position = "bottom"
+    
+  ) +
+  labs(
+    x = "RDA1",
+    y = "RDA2",
+    color = "Summer temperature",
+    shape = "Summer temperature"
+  ) +
+  guides(color = guide_legend(override.aes = list(size = 4))) +
+  facet_wrap(~Temp_level)
+
 
 
 #### Mixed effect model plots ####
