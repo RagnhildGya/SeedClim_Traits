@@ -751,7 +751,7 @@ precip_spatial_effect_without_ITV <- models_output_without_ITV |>
   select(Trait_trans, term, estimate, p.value, significant) |> 
   mutate(trend = "precip_spatial",
          data = "without ITV",
-         trend2 = "precip_spatial_withpoutITV")
+         trend2 = "precip_spatial_withoutITV")
 
 precip_temporal_effect <- models_output |> 
   filter(Trait_trans %in% c(precip_traits, "SLA_cm2_g"),
