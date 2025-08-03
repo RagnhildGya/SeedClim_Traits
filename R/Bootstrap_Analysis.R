@@ -225,7 +225,6 @@ extract_phi <- function(model) {
 
 # Define the models for climate
 climate_models <- list(
-#  "Null" = value ~ 1,
   "Temp" = value ~ Temp_decade,
   "Precip" = value ~ Precip_decade,
   "Temp + Precip" = value ~ Temp_decade + Precip_decade,
@@ -234,8 +233,6 @@ climate_models <- list(
 
 # Define the models for temporal
 temporal_models <- list(
-#  "Null" = value ~ 1,
-  "Year" = value ~ year,
   "Temp + Year" = value ~ Temp_decade + year,
   "Precip + Year" = value ~ Precip_decade + year,
   "Temp + Precip + Year" = value ~ Temp_decade + Precip_decade + year,
@@ -263,25 +260,22 @@ size_traits <- c("Dry_Mass_g_log", "C_percent", "Leaf_Area_cm2_log", "Plant_Heig
 
 # Define the hierarchy for climate models
 climate_hierarchy <- list(
-#  "Null" = 1,
-  "Temp" = 2,
-  "Precip" = 2,
-  "Temp + Precip" = 3,
-  "Temp * Precip" = 4
+  "Temp" = 1,
+  "Precip" = 1,
+  "Temp + Precip" = 2,
+  "Temp * Precip" = 3
 )
 
 # Define the hierarchy for temporal models
 temporal_hierarchy <- list(
-#  "Null" = 1, 
-  "Year" = 2,
-  "Temp + Year" = 3,
-  "Precip + Year" = 3,
-  "Temp + Precip + Year" = 4,
-  "Temp * Year + Precip + Year" = 5,
-  "Temp + Precip * Year + Year" = 5,
-  "Temp * Year + Precip * Year" = 6,
-  "Temp * Precip + Year" = 7,
-  "Temp * Precip * Year" = 8
+  "Temp + Year" = 1,
+  "Precip + Year" = 1,
+  "Temp + Precip + Year" = 2,
+  "Temp * Year + Precip + Year" = 3,
+  "Temp + Precip * Year + Year" = 3,
+  "Temp * Year + Precip * Year" = 4,
+  "Temp * Precip + Year" = 5,
+  "Temp * Precip * Year" = 6
 )
 
 #Define random effects
@@ -612,6 +606,39 @@ models_pred <- models |>
     pred_year
   })) |>
   mutate(Trait_pretty = recode(Trait_trans, !!!pretty_trait_names))
+
+## Without ITV ##
+
+models_pred_without_ITV <- models_without_ITV |> 
+  mutate(predicted_newdataClimate = map2(bestClimateModel, Trait_trans, ~ {
+    pred <- if (.y %in% temp_traits) {
+      pred_temp
+    } else if (.y %in% precip_traits) {
+      pred_precip
+    } else if (.y %in% interaction_traits) {
+      pred_interaction
+    }
+    pred <- pred |> mutate(
+      predicted = predict(.x, newdata = pred, level = 0, se.fit = TRUE)$fit,
+      se_predicted = predict(.x, newdata = pred, level = 0, se.fit = TRUE)$se.fit
+    )
+    pred
+  })) |>
+  mutate(predicted_newdataTemporal = map2(bestTemporalModel, Trait_trans, ~ {
+    pred_year <- if (.y %in% temp_traits) {
+      pred_temp_year
+    } else if (.y %in% precip_traits) {
+      pred_precip_year
+    } else if (.y %in% interaction_traits) {
+      pred_interaction_year
+    }
+    pred_year <- pred_year |> mutate(
+      predicted_year = predict(.x, newdata = pred_year, level = 0, se.fit = TRUE)$fit,
+      se_predicted_year = predict(.x, newdata = pred_year, level = 0, se.fit = TRUE)$se.fit
+    )
+    pred_year
+  })) |>
+  mutate(Trait_pretty = recode(Trait_trans, !!!pretty_trait_names))
   
 
 #Extract predictions for vizualization
@@ -620,6 +647,14 @@ predictions_climate <- models_pred |>
   unnest(predicted_newdataClimate)
 
 predictions_temporal <- models_pred |> 
+  select(Trait_trans, predicted_newdataTemporal) |> 
+  unnest(predicted_newdataTemporal)
+
+predictions_climate_without_ITV <- models_pred_without_ITV |> 
+  select(Trait_trans, predicted_newdataClimate) |> 
+  unnest(predicted_newdataClimate)
+
+predictions_temporal_without_ITV <- models_pred_without_ITV |> 
   select(Trait_trans, predicted_newdataTemporal) |> 
   unnest(predicted_newdataTemporal)
 
@@ -651,7 +686,16 @@ temp_spatial_effect <- models_output |>
          term == "Temp_decade",
          model == "climate") |> 
   select(Trait_trans, term, estimate, p.value, significant) |> 
-  mutate(trend = "temp_spatial")
+  mutate(trend = "temp_spatial",
+         data = "with ITV")
+
+temp_spatial_effect_without_ITV <- models_output_without_ITV |> 
+  filter(Trait_trans %in% c(temp_traits, "SLA_cm2_g"),
+         term == "Temp_decade",
+         model == "climate") |> 
+  select(Trait_trans, term, estimate, p.value, significant) |> 
+  mutate(trend = "temp_spatial",
+         data = "without ITV")
 
 temp_temporal_effect <- models_output |> 
   filter(Trait_trans %in% c(temp_traits, "SLA_cm2_g"),
@@ -659,11 +703,30 @@ temp_temporal_effect <- models_output |>
          model == "year") |> 
   select(Trait_trans, term, estimate, p.value, significant) |> 
   mutate(estimate = estimate/temp_year_effect) |> 
-  mutate(term = "Temp_decade") |> 
-  mutate(trend = "temp_temporal")
+  mutate(term = "Temp_decade",
+         trend = "temp_temporal",
+         data = "with ITV")
+
+temp_temporal_effect_without_ITV <- models_output_without_ITV |> 
+  filter(Trait_trans %in% c(temp_traits, "SLA_cm2_g"),
+         term == "year",
+         model == "year") |> 
+  select(Trait_trans, term, estimate, p.value, significant) |> 
+  mutate(estimate = estimate / temp_year_effect) |> 
+  mutate(term = "Temp_decade", 
+         trend = "temp_temporal",
+         data = "without ITV")
+
+
 
 temp_trait_spatialANDtemporal <- temp_spatial_effect |> 
   bind_rows(temp_temporal_effect)
+
+temp_trait_spatialANDtemporal_and_ITV <- temp_spatial_effect |> 
+  bind_rows(temp_spatial_effect_without_ITV) |> 
+  bind_rows(temp_temporal_effect) |> 
+  bind_rows(temp_temporal_effect_without_ITV)
+  
 
 
 ## Precipitation traits
