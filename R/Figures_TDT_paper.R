@@ -724,10 +724,14 @@ combined_plots_temporal <- ggarrange(combined_columns, plot_year_SLA, nrow = 2, 
 #### Comparing spatial and temporal patterns ####
 
 custom_colors <- c(
-  "Temperature Temporal" = Temp_palette[1],
-  "Temperature Spatial" = Temp_palette[2],
-  "Precipitation Temporal" = Precip_palette[1],
-  "Precipitation Spatial" = Precip_palette[3]
+  "Temperature Temporal with ITV" = Temp_palette[2],
+  "Temperature Spatial with ITV" = Temp_palette[3],
+  "Temperature Spatial wo ITV" = "darkred",
+  "Temperature Temporal wo ITV" = Temp_palette[1],
+  "Precipitation Temporal with ITV" = Precip_palette[2],
+  "Precipitation Spatial with ITV" = Precip_palette[4],
+  "Precipitation Spatial wo ITV" = Precip_palette[3],
+  "Precipitation Temporal wo ITV" = Precip_palette[1]
 )
 
 trait_order <- rev(c(temp_traits, interaction_traits, precip_traits))
@@ -745,8 +749,81 @@ pretty_trait_names <- c(
   "Dry_Mass_g_log" = "Leaf Dry Mass"
 )
 
-common_driver_trend_levels <- c("Temperature Temporal","Temperature Spatial",
-                                "Precipitation Temporal", "Precipitation Spatial")
+
+###TEST
+
+
+# Step 1: Wrangle plotting data
+SpatialTemporal_comparison_all <- SpatialTemporal_comparison_and_ITV |> 
+  mutate(
+    trend_short = case_when(
+      str_detect(trend2, "spatial") ~ "Spatial",
+      str_detect(trend2, "temporal") ~ "Temporal"
+    ),
+    ITV_label = case_when(
+      str_detect(trend2, "withoutITV") ~ "wo ITV",
+      str_detect(trend2, "withITV") ~ "with ITV"
+    ),
+    driver = case_when(
+      Trait_trans %in% temp_traits ~ "Temperature",
+      Trait_trans %in% precip_traits ~ "Precipitation",
+      Trait_trans %in% interaction_traits ~ "Temperature"  # Assumes interaction traits relate to temp
+    ),
+    driver_trend = paste(driver, trend_short, ITV_label),
+    pattern_type = ifelse(significant == "YES", "Significant", "Non-Significant"),
+    significance_alpha = if_else(significant == "YES", 1, 0.4)
+  ) |> 
+  mutate(
+    driver_trend = factor(driver_trend, levels = c(
+      "Temperature Temporal wo ITV", "Temperature Temporal with ITV", 
+       "Temperature Spatial wo ITV", "Temperature Spatial with ITV",
+       "Precipitation Temporal wo ITV", "Precipitation Temporal with ITV",
+       "Precipitation Spatial wo ITV", "Precipitation Spatial with ITV"
+    )),
+    Trait_trans = factor(Trait_trans, levels = trait_order),
+    Trait_pretty = recode(Trait_trans, !!!pretty_trait_names)
+  ) |> 
+  filter(!Trait_trans %in% c("SLA_cm2_g", "Wet_Mass_g_log"))  # Optional filtering
+
+# Step 2: Make plot
+compare_spatial_temporal_plot_all <- ggplot(SpatialTemporal_comparison_all, 
+                                            aes(x = estimate, y = Trait_pretty, 
+                                                fill = driver_trend, 
+                                                pattern = pattern_type,
+                                                group = driver_trend)) +
+  geom_col_pattern(
+    position = position_dodge(width = 0.7),
+    width = 0.55,
+    color = "black",
+    linewidth = 0.3,
+    pattern_density = 0.25,
+    pattern_spacing = 0.015,
+    pattern_fill = "black",
+    pattern_alpha = 0.3
+  ) +
+  scale_fill_manual(values = custom_colors) +
+  scale_pattern_manual(values = c("Significant" = "none", "Non-Significant" = "stripe")) +
+  # labs(
+  #   x = "Effect Size (per °C temperature or m precipitation)",
+  #   y = "Trait",
+  #   fill = "Driver & Trend",
+  #   pattern = "Significance",
+  #   title = ""
+  # ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "right",
+    panel.grid.major.y = element_blank()
+  ) +
+  geom_vline(xintercept = 0, color = "black", size = 0.7, linetype = "solid")
+
+
+
+
+
+
+common_driver_trend_levels <- c("Temperature Temporal", "Temperature Spatial wo ITV", "Temperature Spatial",
+                                "Precipitation Temporal", "Precipitation Spatial wo ITV", "Precipitation Spatial")
 
 
 SpatialTemporal_comparison1 <- SpatialTemporal_comparison |> 
