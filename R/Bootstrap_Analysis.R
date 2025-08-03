@@ -549,61 +549,6 @@ table_AIC <- flextable(models_AIC)
 #Run models for the dataset without ITV
 
 
-
-#### Running models - community ####
-
-models_com <- com_data |>  
-  mutate(
-    climateModelResults = map(data, ~ fit_and_compare_models(.x, climate_models, random_effects, model_type = "climate", hierarchy = climate_hierarchy)),
-    temporalModelResults = map(data, ~ fit_and_compare_models(.x, temporal_models, random_effects, correlation = corAR1(form = ~ year | siteID/turfID), model_type = "temporal", hierarchy = temporal_hierarchy))
-  ) |>
-  mutate(
-    bestClimateModel = map(climateModelResults, "best_model"),
-    bestTemporalModel = map(temporalModelResults, "best_model"),
-    climateAICs = map(climateModelResults, ~ map(.x$all_AICs, ~ list(fixed_effects = .x$fixed_effects, AIC = .x$AIC, model_type = .x$model_type))),
-    temporalAICs = map(temporalModelResults, ~ map(.x$all_AICs, ~ list(fixed_effects = .x$fixed_effects, AIC = .x$AIC, model_type = .x$model_type)))
-  )
-
-models_com <- models_com |> 
-  mutate(phi = purrr::map(bestTemporalModel, extract_phi)) |> 
-  mutate(model_outputClimate = purrr::map(bestClimateModel, tidy)) |> 
-  mutate(model_outputTemporal = purrr::map(bestTemporalModel, tidy))
-
-models_com_output <- output(models_com, unnesting = "community_properties")
-
-#write.table(models_com_output, row.names = TRUE, col.names = TRUE, file = "model_output_communityNEW.csv")
-
-#### Get AIC for every model ----
-
-models_com_AIC_climate <- models_com |> 
-  select(community_properties, climateAICs) |> 
-  unnest_longer(climateAICs) |> 
-  unnest_wider(climateAICs) |> 
-  select(community_properties, fixed_effects, AIC, model_type)
-
-models_com_AIC_temporal <- models_com |> 
-  select(community_properties, temporalAICs) |> 
-  unnest_longer(temporalAICs) |> 
-  unnest_wider(temporalAICs) |> 
-  select(community_properties, fixed_effects, AIC, model_type)
-
-models_com_AIC <- models_com_AIC_climate |> 
-  bind_rows(models_com_AIC_temporal)
-
-
-## Make a table of this for the paper 
-
-table_com_AIC <- flextable(models_com_AIC)
-
-# # Create a Word document and add the flextable
-#  doc <- read_docx() |> 
-#    body_add_flextable(table_com_AIC)
-# 
-# # Save the Word document
-# print(doc, target = "models_com_AIC_table.docx")
-# #Don't override now (I made some pretty-changes :) )
-
-
 #### Make predictions ####
 
 Temp_decade_vec <- seq(5.5, 12, length.out = 50)
