@@ -254,7 +254,7 @@ without_intraspecific_size_temporal_model <- value ~ Temp_decade + year
 without_intraspecific_SLA_temporal_model <- value ~ Temp_decade * Precip_decade + year
 
 #Define traits
-LE_traits <- c("CN_ratio", "LDMC", "Leaf_Thickness_Ave_mm", "N_percent", "SLA_cm2_g")
+LE_traits <- c("CN_ratio", "LDMC", "Leaf_Thickness_Ave_mm", "N_percent")
 size_traits <- c("Dry_Mass_g_log", "C_percent", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "Wet_Mass_g_log")
 
 
@@ -687,7 +687,8 @@ temp_spatial_effect <- models_output |>
          model == "climate") |> 
   select(Trait_trans, term, estimate, p.value, significant) |> 
   mutate(trend = "temp_spatial",
-         data = "with ITV")
+         data = "with ITV",
+         trend2 = "temp_spatial_withITV")
 
 temp_spatial_effect_without_ITV <- models_output_without_ITV |> 
   filter(Trait_trans %in% c(temp_traits, "SLA_cm2_g"),
@@ -695,7 +696,8 @@ temp_spatial_effect_without_ITV <- models_output_without_ITV |>
          model == "climate") |> 
   select(Trait_trans, term, estimate, p.value, significant) |> 
   mutate(trend = "temp_spatial",
-         data = "without ITV")
+         data = "without ITV",
+         trend2 = "temp_spatial_withoutITV")
 
 temp_temporal_effect <- models_output |> 
   filter(Trait_trans %in% c(temp_traits, "SLA_cm2_g"),
@@ -705,7 +707,8 @@ temp_temporal_effect <- models_output |>
   mutate(estimate = estimate/temp_year_effect) |> 
   mutate(term = "Temp_decade",
          trend = "temp_temporal",
-         data = "with ITV")
+         data = "with ITV",
+         trend2 = "temp_temporal_withITV")
 
 temp_temporal_effect_without_ITV <- models_output_without_ITV |> 
   filter(Trait_trans %in% c(temp_traits, "SLA_cm2_g"),
@@ -715,7 +718,8 @@ temp_temporal_effect_without_ITV <- models_output_without_ITV |>
   mutate(estimate = estimate / temp_year_effect) |> 
   mutate(term = "Temp_decade", 
          trend = "temp_temporal",
-         data = "without ITV")
+         data = "without ITV",
+         trend2 = "temp_temporal_withoutITV")
 
 
 
@@ -736,7 +740,18 @@ precip_spatial_effect <- models_output |>
          term == "Precip_decade",
          model == "climate") |> 
   select(Trait_trans, term, estimate, p.value, significant) |> 
-  mutate(trend = "precip_spatial")
+  mutate(trend = "precip_spatial",
+         data = "with ITV",
+         trend2 = "precip_spatial_withITV")
+
+precip_spatial_effect_without_ITV <- models_output_without_ITV |> 
+  filter(Trait_trans %in% c(precip_traits, "SLA_cm2_g"),
+         term == "Precip_decade",
+         model == "climate") |> 
+  select(Trait_trans, term, estimate, p.value, significant) |> 
+  mutate(trend = "precip_spatial",
+         data = "without ITV",
+         trend2 = "precip_spatial_withpoutITV")
 
 precip_temporal_effect <- models_output |> 
   filter(Trait_trans %in% c(precip_traits, "SLA_cm2_g"),
@@ -744,15 +759,38 @@ precip_temporal_effect <- models_output |>
          model == "year") |> 
   select(Trait_trans, term, estimate, p.value, significant) |> 
   mutate(estimate = estimate/precip_year_effect) |> 
-  mutate(term = "Precip_decade") |> 
-  mutate(trend = "precip_temporal")
+  mutate(term = "Precip_decade",
+         trend = "precip_temporal",
+         data = "with ITV",
+         trend2 = "precip_temporal_withITV")
+
+precip_temporal_effect_without_ITV <- models_output_without_ITV |> 
+  filter(Trait_trans %in% c(precip_traits, "SLA_cm2_g"),
+         term == "year",
+         model == "year") |> 
+  select(Trait_trans, term, estimate, p.value, significant) |> 
+  mutate(estimate = estimate/precip_year_effect) |> 
+  mutate(term = "Precip_decade",
+         trend = "precip_temporal",
+         data = "without ITV",
+         trend2 = "precip_temporal_withoutITV")
 
 
 precip_trait_spatialANDtemporal <- precip_spatial_effect |> 
   bind_rows(precip_temporal_effect)
 
+precip_trait_spatialANDtemporal_and_ITV <- precip_spatial_effect |> 
+  bind_rows(precip_spatial_effect_without_ITV) |> 
+  bind_rows(precip_temporal_effect) |> 
+  bind_rows(precip_temporal_effect_without_ITV)
+
+
+
 SpatialTemporal_comparison <- temp_trait_spatialANDtemporal |> 
   bind_rows(precip_trait_spatialANDtemporal)
+
+SpatialTemporal_comparison_and_ITV <- temp_trait_spatialANDtemporal_and_ITV |> 
+  bind_rows(precip_trait_spatialANDtemporal_and_ITV)
 
 ## Interaction - SLA
 
@@ -794,21 +832,24 @@ spatial_temp_df <- tibble(
   variable = "Temperature",
   level = names(temp_effects),
   effect = as.numeric(temp_effects),
-  source = "Spatial"
+  source = "Spatial",
+  data = "with ITV"
 )
 
 spatial_precip_df <- tibble(
   variable = "Precipitation",
   level = names(precip_effects),
   effect = as.numeric(precip_effects),
-  source = "Spatial"
+  source = "Spatial",
+  data = "with ITV"
 )
 
 temporal_df <- tibble(
   variable = c("Temperature", "Precipitation"),
   level = c("Temperature (temporal)", "Precipitation (temporal)"),
   effect = c(temp_effect_temporal, precip_effect_temporal),
-  source = "Temporal"
+  source = "Temporal",
+  data = "with ITV"
 ) 
 
 effects_df <- bind_rows(spatial_temp_df, spatial_precip_df, temporal_df) 
@@ -816,6 +857,68 @@ effects_df <- bind_rows(spatial_temp_df, spatial_precip_df, temporal_df)
 effects_df <- effects_df |> 
   mutate(significant = case_when(source == "Spatial" ~ "YES",
                                  source == "Temporal" ~ "NO"))
+
+## SLA without intraspecific ##
+
+SLA_interaction_effect_without_ITV <- models_output_without_ITV |> 
+  filter(Trait_trans == "SLA_cm2_g", model == "climate") |> 
+  select(Trait_trans, term, estimate, p.value, significant)
+
+SLA_year_effect_without_ITV <- models_output_without_ITV |> 
+  filter(Trait_trans == "SLA_cm2_g", model == "year", term == "year") |> 
+  pull(estimate)
+
+# Extract coefficients
+b_temp_wo <- SLA_interaction_effect_without_ITV %>% filter(term == "Temp_decade") %>% pull(estimate)
+b_precip_wo <- SLA_interaction_effect_without_ITV %>% filter(term == "Precip_decade") %>% pull(estimate)
+b_interaction_wo <- SLA_interaction_effect_without_ITV %>% filter(term == "Temp_decade:Precip_decade") %>% pull(estimate)
+
+# Spatial effects
+temp_effects_wo <- b_temp_wo + b_interaction_wo * precip_levels
+names(temp_effects_wo) <- paste0("Temperature trend at: ", precip_levels, " m/year")
+
+precip_effects_wo <- b_precip_wo + b_interaction_wo * temp_levels
+names(precip_effects_wo) <- paste0("Precipitation trend at: ", temp_levels, " °C")
+
+
+# Temporal effects (translated)
+temp_effect_temporal_wo <- SLA_year_effect_without_ITV / temp_year_effect
+precip_effect_temporal_wo <- SLA_year_effect_without_ITV / precip_year_effect
+
+
+# Assemble for plotting (no ITV)
+spatial_temp_df_wo <- tibble(
+  variable = "Temperature",
+  level = names(temp_effects_wo),
+  effect = as.numeric(temp_effects_wo),
+  source = "Spatial",
+  data = "without ITV"
+)
+
+spatial_precip_df_wo <- tibble(
+  variable = "Precipitation",
+  level = names(precip_effects_wo),
+  effect = as.numeric(precip_effects_wo),
+  source = "Spatial",
+  data = "without ITV"
+)
+
+temporal_df_wo <- tibble(
+  variable = c("Temperature", "Precipitation"),
+  level = c("Temperature (temporal)", "Precipitation (temporal)"),
+  effect = c(temp_effect_temporal_wo, precip_effect_temporal_wo),
+  source = "Temporal",
+  data = "without ITV"
+) 
+
+effects_df_wo <- bind_rows(spatial_temp_df_wo, spatial_precip_df_wo, temporal_df_wo)
+
+effects_df_wo <- effects_df_wo |> 
+  mutate(significant = case_when(source == "Spatial" ~ "YES",
+                                 source == "Temporal" ~ "NO"))
+
+effects_df_full <- effects_df |> 
+  bind_rows(effects_df_wo)
 
 #### Correlation ####
 
