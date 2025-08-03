@@ -221,12 +221,11 @@ extract_phi <- function(model) {
   coef(model$modelStruct$corStruct, unconstrained = FALSE)
 }
 
-
-#Functionsl for model selection
+#Functions for model selection
 
 # Define the models for climate
 climate_models <- list(
-  "Null" = value ~ 1,
+#  "Null" = value ~ 1,
   "Temp" = value ~ Temp_decade,
   "Precip" = value ~ Precip_decade,
   "Temp + Precip" = value ~ Temp_decade + Precip_decade,
@@ -235,7 +234,7 @@ climate_models <- list(
 
 # Define the models for temporal
 temporal_models <- list(
-  "Null" = value ~ 1,
+#  "Null" = value ~ 1,
   "Year" = value ~ year,
   "Temp + Year" = value ~ Temp_decade + year,
   "Precip + Year" = value ~ Precip_decade + year,
@@ -247,9 +246,24 @@ temporal_models <- list(
   "Temp * Precip * Year" = value ~ Temp_decade * Precip_decade * year
 )
 
+# Define the models for the without intraspecific variation - spatial
+without_intraspecific_LE_spatial_model <- value ~ Precip_decade
+without_intraspecific_size_spatial_model <- value ~ Temp_decade
+without_intraspecific_SLA_spatial_model <- value ~ Temp_decade * Precip_decade
+
+# Define the models for the without intraspecific variation - temporal
+without_intraspecific_LE_temporal_model <- value ~ Precip_decade + year
+without_intraspecific_size_temporal_model <- value ~ Temp_decade + year
+without_intraspecific_SLA_temporal_model <- value ~ Temp_decade * Precip_decade + year
+
+#Define traits
+LE_traits <- c("CN_ratio", "LDMC", "Leaf_Thickness_Ave_mm", "N_percent", "SLA_cm2_g")
+size_traits <- c("Dry_Mass_g_log", "C_percent", "Leaf_Area_cm2_log", "Plant_Height_mm_log", "Wet_Mass_g_log")
+
+
 # Define the hierarchy for climate models
 climate_hierarchy <- list(
-  "Null" = 1,
+#  "Null" = 1,
   "Temp" = 2,
   "Precip" = 2,
   "Temp + Precip" = 3,
@@ -258,7 +272,7 @@ climate_hierarchy <- list(
 
 # Define the hierarchy for temporal models
 temporal_hierarchy <- list(
-  "Null" = 1, 
+#  "Null" = 1, 
   "Year" = 2,
   "Temp + Year" = 3,
   "Precip + Year" = 3,
@@ -311,6 +325,20 @@ fit_and_compare_models <- function(df, models, random_effects, correlation = NUL
   return(list(best_model = best_model$model, all_AICs = results))
 }
 
+#Fit without comparing models for the datasets without intraspecific
+
+fit_and_compare_models_without_ITV <- function(df, model_formula, random_effects, correlation = NULL, model_type) {
+  model <- lme(model_formula, random = random_effects, correlation = correlation, data = df, na.action = na.omit)
+  
+  result <- list(
+    fixed_effects = as.character(formula(model))[3],
+    model = model,
+    AIC = AIC(model),
+    model_type = model_type
+  )
+  
+  return(list(best_model = model, all_AICs = list(result)))
+}
 
 # Functions to get output from models
 outputTemporal <-function(dat, unnesting) {
@@ -389,27 +417,6 @@ models_output <- output(models, unnesting = "Trait_trans")
 
 #write.table(models_output, row.names = TRUE, col.names = TRUE, file = "model_output_traits_AfterModelSelection.csv")
 
-
-models_without_ITV <- model_data_without_ITV |>  
-  mutate(
-    climateModelResults = map(data, ~ fit_and_compare_models(.x, climate_models, random_effects, model_type = "climate", hierarchy = climate_hierarchy)),
-    temporalModelResults = map(data, ~ fit_and_compare_models(.x, temporal_models, random_effects, correlation = corAR1(form = ~ year | siteID/turfID), model_type = "temporal", hierarchy = temporal_hierarchy))
-  ) |>
-  mutate(
-    bestClimateModel = map(climateModelResults, "best_model"),
-    bestTemporalModel = map(temporalModelResults, "best_model"),
-    climateAICs = map(climateModelResults, ~ map(.x$all_AICs, ~ list(fixed_effects = .x$fixed_effects, AIC = .x$AIC, model_type = .x$model_type))),
-    temporalAICs = map(temporalModelResults, ~ map(.x$all_AICs, ~ list(fixed_effects = .x$fixed_effects, AIC = .x$AIC, model_type = .x$model_type)))
-  )
-
-models_without_ITV <- models_without_ITV |> 
-  mutate(phi = purrr::map(bestTemporalModel, extract_phi)) |> 
-  mutate(model_outputClimate = purrr::map(bestClimateModel, tidy)) |> 
-  mutate(model_outputTemporal = purrr::map(bestTemporalModel, tidy))
-
-models_output_without_ITV <- output(models_without_ITV, unnesting = "Trait_trans")
-
-
 ## Make a table of this for the paper 
 
 table_models_output <- flextable(models_output)
@@ -453,6 +460,94 @@ table_AIC <- flextable(models_AIC)
 # Save the Word document
 #print(doc, target = "models_AIC_table.docx")
 #Don't override now (I made some pretty-changes :) )
+#Run models for the dataset without ITV
+
+#### Running models - traits without intraspecific variation ####
+
+models_without_ITV <- model_data_without_ITV |>
+  mutate(
+    # Assign spatial (climate) model formulas based on trait
+    climate_model_formula = case_when(
+      Trait_trans %in% LE_traits ~ list(without_intraspecific_LE_spatial_model),
+      Trait_trans %in% size_traits ~ list(without_intraspecific_size_spatial_model),
+      Trait_trans == "SLA_cm2_g" ~ list(without_intraspecific_SLA_spatial_model),
+      TRUE ~ NA                           # Handle unknown traits
+    ),
+    
+    # Assign temporal model formulas
+    temporal_model_formula = case_when(
+      Trait_trans %in% LE_traits ~ list(without_intraspecific_LE_temporal_model),
+      Trait_trans %in% size_traits ~ list(without_intraspecific_size_temporal_model),
+      Trait_trans == "SLA_cm2_g"  ~ list(without_intraspecific_SLA_temporal_model),
+      TRUE ~ NA
+    )
+  ) |>
+  mutate(
+    climateModelResults = map2(data, climate_model_formula, ~ fit_and_compare_models_without_ITV(.x, .y, random_effects, model_type = "climate")),
+    
+    temporalModelResults = map2(data, temporal_model_formula, ~ fit_and_compare_models_without_ITV(
+      .x, .y, random_effects,
+      correlation = corAR1(form = ~ year | siteID/turfID),
+      model_type = "temporal"
+    ))
+  ) |>
+  mutate(
+    bestClimateModel = map(climateModelResults, "best_model"),
+    bestTemporalModel = map(temporalModelResults, "best_model"),
+    climateAICs = map(climateModelResults, ~ .x$all_AICs),
+    temporalAICs = map(temporalModelResults, ~ .x$all_AICs),
+    phi = map(bestTemporalModel, extract_phi),
+    model_outputClimate = map(bestClimateModel, tidy),
+    model_outputTemporal = map(bestTemporalModel, tidy)
+  )
+
+models_output_without_ITV <- output(models_without_ITV, unnesting = "Trait_trans")
+
+## Make a table of this for the paper 
+
+table_models_output <- flextable(models_output)
+
+# Create a Word document and add the flextable
+doc <- read_docx() |> 
+  body_add_flextable(table_models_output) |> 
+  body_add_par("Model outputs", style = "heading 1")
+
+# Save the Word document
+print(doc, target = "models_output.docx")
+#Don't override now (I made some pretty-changes :) )
+
+#### Get AIC for every model ----
+
+models_AIC_climate <- models |> 
+  select(Trait_trans, climateAICs) |> 
+  unnest_longer(climateAICs) |> 
+  unnest_wider(climateAICs) |> 
+  select(Trait_trans, fixed_effects, AIC, model_type)
+
+models_AIC_temporal <- models |> 
+  select(Trait_trans, temporalAICs) |> 
+  unnest_longer(temporalAICs) |> 
+  unnest_wider(temporalAICs) |> 
+  select(Trait_trans, fixed_effects, AIC, model_type)
+
+models_AIC <- models_AIC_climate |> 
+  bind_rows(models_AIC_temporal)
+
+
+## Make a table of this for the paper 
+
+table_AIC <- flextable(models_AIC)
+
+# Create a Word document and add the flextable
+# doc <- read_docx() |> 
+#   body_add_flextable(table_AIC) |> 
+#   body_add_par("AIC Values for Different Models", style = "heading 1")
+
+# Save the Word document
+#print(doc, target = "models_AIC_table.docx")
+#Don't override now (I made some pretty-changes :) )
+#Run models for the dataset without ITV
+
 
 
 #### Running models - community ####
