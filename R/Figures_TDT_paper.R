@@ -724,15 +724,27 @@ combined_plots_temporal <- ggarrange(combined_columns, plot_year_SLA, nrow = 2, 
 #### Comparing spatial and temporal patterns ####
 
 custom_colors <- c(
-  "Temperature Temporal with ITV" = Temp_palette[2],
+  "Temperature Temporal with ITV" = Temp_palette[1],
   "Temperature Spatial with ITV" = Temp_palette[3],
-  "Temperature Spatial wo ITV" = "darkred",
-  "Temperature Temporal wo ITV" = Temp_palette[1],
+  "Temperature Spatial wo ITV" = Temp_palette[2],
+  "Temperature Temporal wo ITV" = "grey", 
   "Precipitation Temporal with ITV" = Precip_palette[2],
   "Precipitation Spatial with ITV" = Precip_palette[4],
   "Precipitation Spatial wo ITV" = Precip_palette[3],
   "Precipitation Temporal wo ITV" = Precip_palette[1]
 )
+
+custom_colors2 <- c(
+  "Temperature Temporal with ITV" = Temp_palette[1],
+  "Temperature Spatial with ITV" = Temp_palette[3],
+  "Temperature Spatial without ITV" = Temp_palette[2],
+  "Temperature Temporal without ITV" = "grey", 
+  "Precipitation Temporal with ITV" = Precip_palette[2],
+  "Precipitation Spatial with ITV" = Precip_palette[4],
+  "Precipitation Spatial without ITV" = Precip_palette[3],
+  "Precipitation Temporal without ITV" = Precip_palette[1]
+)
+
 
 trait_order <- rev(c(temp_traits, interaction_traits, precip_traits))
 
@@ -783,24 +795,28 @@ SpatialTemporal_comparison_all <- SpatialTemporal_comparison_and_ITV |>
     Trait_trans = factor(Trait_trans, levels = trait_order),
     Trait_pretty = recode(Trait_trans, !!!pretty_trait_names)
   ) |> 
-  filter(!Trait_trans %in% c("SLA_cm2_g", "Wet_Mass_g_log"))  # Optional filtering
+  filter(!Trait_trans %in% c("SLA_cm2_g", "Wet_Mass_g_log")) |> 
+  filter(!(trend_short == "Temporal" & ITV_label == "wo ITV"))
 
 # Step 2: Make plot
 compare_spatial_temporal_plot_all <- ggplot(SpatialTemporal_comparison_all, 
                                             aes(x = estimate, y = Trait_pretty, 
                                                 fill = driver_trend, 
-                                                pattern = pattern_type,
+                                                #pattern = pattern_type,
                                                 group = driver_trend)) +
-  geom_col_pattern(
-    position = position_dodge(width = 0.7),
-    width = 0.55,
-    color = "black",
-    linewidth = 0.3,
-    pattern_density = 0.25,
-    pattern_spacing = 0.015,
-    pattern_fill = "black",
-    pattern_alpha = 0.3
-  ) +
+  geom_col(position = position_dodge(width = 0.7),
+           width = 0.55,
+           color = "black") +
+  # geom_col_pattern(
+  #   position = position_dodge(width = 0.7),
+  #   width = 0.55,
+  #   color = "black",
+  #   linewidth = 0.3,
+  #   pattern_density = 0.25,
+  #   pattern_spacing = 0.015,
+  #   pattern_fill = "black",
+  #   pattern_alpha = 0.6
+  # ) +
   scale_fill_manual(values = custom_colors) +
   scale_pattern_manual(values = c("Significant" = "none", "Non-Significant" = "stripe")) +
   # labs(
@@ -812,107 +828,60 @@ compare_spatial_temporal_plot_all <- ggplot(SpatialTemporal_comparison_all,
   # ) +
   theme_minimal(base_size = 14) +
   theme(
-    legend.position = "right",
+    legend.position = "none",
     panel.grid.major.y = element_blank()
   ) +
   geom_vline(xintercept = 0, color = "black", size = 0.7, linetype = "solid")
 
 
-
-
-
-
-common_driver_trend_levels <- c("Temperature Temporal", "Temperature Spatial wo ITV", "Temperature Spatial",
-                                "Precipitation Temporal", "Precipitation Spatial wo ITV", "Precipitation Spatial")
-
-
-SpatialTemporal_comparison1 <- SpatialTemporal_comparison |> 
-  mutate(
-    trend_short = if_else(str_detect(trend, "spatial"), "Spatial", "Temporal"),
-    driver = case_when(
-      Trait_trans %in% temp_traits ~ "Temperature",
-      Trait_trans %in% precip_traits ~ "Precipitation",
-      Trait_trans %in% interaction_traits ~ "Temperature" 
-    ),
-    driver_trend = paste(driver, trend_short, sep = " "),
-    significance_alpha = if_else(significant == "YES", 1, 0.4)
-  ) |> 
-  mutate(driver_trend = factor(driver_trend, levels = common_driver_trend_levels)) |> 
-  mutate(Trait_trans = factor(Trait_trans, levels = trait_order)) |> 
-  filter(!Trait_trans %in% c("SLA_cm2_g", "Wet_Mass_g_log")) |> 
-  mutate(driver_trend = factor(driver_trend,
-                               levels = c("Temperature Temporal","Temperature Spatial",
-                                          "Precipitation Temporal", "Precipitation Spatial"))) |> 
-  mutate(Trait_pretty = recode(Trait_trans, !!!pretty_trait_names)) |> 
-  mutate(pattern_type = ifelse(significant == "YES", "Significant", "Non-Significant"))
-
-
-compare_spatial_temporal_plot <- ggplot(SpatialTemporal_comparison1, 
-                                        aes(x = estimate, y = Trait_pretty, 
-                                            fill = driver_trend, 
-                                            pattern = pattern_type,
-                                            group = driver_trend)) +
-  geom_col_pattern(
-    position = position_dodge(width = 0.6),
-    width = 0.5,
-    color = "black",
-    size = 0.3,
-    pattern_density = 0.25,
-    pattern_spacing = 0.015,
-    pattern_fill = "black",
-    pattern_alpha = 0.3
-  ) +
-  scale_fill_manual(values = custom_colors) +
-  scale_pattern_manual(values = c("Significant" = "none", "Non-Significant" = "stripe")) +
-  labs(
-    x = "Effect Size (per °C temperature or m precipitation)",
-    y = "Trait",
-    fill = "Driver & Trend",
-    pattern = "Significance",
-    title = ""
-  ) +
-  theme_minimal(base_size = 14) +
-  theme(
-    legend.position = "right",
-    panel.grid.major.y = element_blank()
-  ) +
-  geom_vline(xintercept = 0, color = "black", size = 0.7, linetype = "solid")
-
-#ggsave(plot = compare_spatial_temporal_plot, filename = "Compare_spatial_temporal_figure.pdf",  width = 25, height = 14, units = "cm", dpi = 300)
+#ggsave(plot = compare_spatial_temporal_plot_all, filename = "Compare_spatial_temporal_figure.pdf",  width = 25, height = 14, units = "cm", dpi = 300)
 
 ### SLA intercation ###
 
-effects_df2 <- effects_df %>%
-  mutate(driver_trend = as.factor(paste(variable, source, sep = " ")),
-         pattern_type = ifelse(significant == "NO", "Non-Significant", "Significant")) |> 
-  mutate(driver_trend = factor(driver_trend, levels = common_driver_trend_levels))
-
+#Order
+common_driver_trend_levels <- c("Temperature Temporal without ITV", "Temperature Temporal with ITV", 
+                                "Temperature Spatial without ITV", "Temperature Spatial with ITV",
+                                "Precipitation Temporal without ITV", "Precipitation Temporal with ITV",
+                                "Precipitation Spatial without ITV", "Precipitation Spatial with ITV")
 # Set order for x-axis (which will be y-axis after flipping)
 level_order <- c(
+  "Precipitation (temporal)",
+  paste0("Precipitation trend at: ", temp_levels, " °C"),
   "Temperature (temporal)",
-  paste0("Temperature trend at: ", precip_levels, " m/year"),
-  "Precipitation (temporal",
-  paste0("Precipitation trend at: ", temp_levels, " °C")
+  paste0("Temperature trend at: ", precip_levels, " m/year")
 )
+
+
+effects_df2 <- effects_df_full |> 
+  filter(!(source == "Temporal" & data == "without ITV")) |> 
+  mutate(driver_trend = paste(variable, source, data, sep = " "),
+         pattern_type = ifelse(significant == "NO", "Non-Significant", "Significant")) |> 
+  mutate(driver_trend = factor(driver_trend, levels = common_driver_trend_levels)) |> 
+  mutate(level = factor(level, levels = level_order))
+
+
 
 
 # Plot
 SLA_plot <- ggplot(effects_df2, 
                    aes(x = effect, y = level, 
                        fill = driver_trend, 
-                       pattern = pattern_type,
+                       #pattern = pattern_type,
                        group = driver_trend)) +
-  geom_col_pattern(
-    position = position_dodge(width = 0.6),
-    width = 0.5,
-    color = "black",
-    size = 0.3,
-    pattern_density = 0.25,
-    pattern_spacing = 0.015,
-    pattern_fill = "black",
-    pattern_alpha = 0.3
-  ) +
-  scale_fill_manual(values = custom_colors) +
+  geom_col(position = position_dodge(width = 0.7),
+           width = 0.55,
+           color = "black") +
+  # geom_col_pattern(
+  #   position = position_dodge(width = 0.6),
+  #   width = 0.5,
+  #   color = "black",
+  #   size = 0.3,
+  #   pattern_density = 0.25,
+  #   pattern_spacing = 0.015,
+  #   pattern_fill = "black",
+  #   pattern_alpha = 0.6
+  # ) +
+  scale_fill_manual(values = custom_colors2) +
   scale_pattern_manual(values = c("Significant" = "none", "Non-Significant" = "stripe")) +
   labs(
     x = "Effect Size (per °C temperature or m precipitation)",
@@ -922,7 +891,7 @@ SLA_plot <- ggplot(effects_df2,
   ) +
   theme_minimal(base_size = 14) +
   theme(
-    legend.position = "right",
+    legend.position = "bottom",
     panel.grid.major.y = element_blank()
   ) +
   geom_vline(xintercept = 0, color = "black", size = 0.7, linetype = "solid")
@@ -930,13 +899,13 @@ SLA_plot <- ggplot(effects_df2,
 SLA_plot
 
 
-combined_plot <- compare_spatial_temporal_plot / SLA_plot + 
-  plot_layout(heights = c(2.5, 1.5), guides = "collect") & 
-  theme(legend.position = "right")
+combined_plot <- compare_spatial_temporal_plot_all  / SLA_plot + 
+  plot_layout(heights = c(2.5, 1.5)) #& 
+  #theme(legend.position = "right")
 
 combined_plot
 
-#ggsave(plot = combined_plot, filename = "SLA_Compare_spatial_temporal_figure.pdf",  width = 25, height = 14, units = "cm", dpi = 300)
+#ggsave(plot = combined_plot, filename = "SLA_Compare_spatial_temporal_figure.pdf",  width = 25, height = 22, units = "cm", dpi = 300)
 
 
 ################################################################################################
