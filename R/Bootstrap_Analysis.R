@@ -882,8 +882,8 @@ names(precip_effects_wo) <- paste0("Precipitation trend at: ", temp_levels, " °
 
 
 # Temporal effects (translated)
-temp_effect_temporal_wo <- SLA_year_effect_without_ITV / temp_year_effect
-precip_effect_temporal_wo <- SLA_year_effect_without_ITV / precip_year_effect
+# temp_effect_temporal_wo <- SLA_year_effect_without_ITV / temp_year_effect
+# precip_effect_temporal_wo <- SLA_year_effect_without_ITV / precip_year_effect
 
 
 # Assemble for plotting (no ITV)
@@ -903,13 +903,13 @@ spatial_precip_df_wo <- tibble(
   data = "without ITV"
 )
 
-temporal_df_wo <- tibble(
-  variable = c("Temperature", "Precipitation"),
-  level = c("Temperature (temporal)", "Precipitation (temporal)"),
-  effect = c(temp_effect_temporal_wo, precip_effect_temporal_wo),
-  source = "Temporal",
-  data = "without ITV"
-) 
+# temporal_df_wo <- tibble(
+#   variable = c("Temperature", "Precipitation"),
+#   level = c("Temperature (temporal)", "Precipitation (temporal)"),
+#   effect = c(temp_effect_temporal_wo, precip_effect_temporal_wo),
+#   source = "Temporal",
+#   data = "without ITV"
+# ) 
 
 effects_df_wo <- bind_rows(spatial_temp_df_wo, spatial_precip_df_wo, temporal_df_wo)
 
