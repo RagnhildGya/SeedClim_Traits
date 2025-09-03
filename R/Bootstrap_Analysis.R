@@ -497,17 +497,19 @@ models_without_ITV <- model_data_without_ITV |>
 
 models_output_without_ITV <- output(models_without_ITV, unnesting = "Trait_trans")
 
+#write.table(models_output_without_ITV, row.names = TRUE, col.names = TRUE, file = "model_output_traits_AfterModelSelection_withouITV.csv")
+
 ## Make a table of this for the paper 
 
-table_models_output <- flextable(models_output)
+table_models_output2 <- flextable(models_output_without_ITV)
 
 # Create a Word document and add the flextable
-doc <- read_docx() |> 
-  body_add_flextable(table_models_output) |> 
+doc2 <- read_docx() |> 
+  body_add_flextable(table_models_output2) |> 
   body_add_par("Model outputs", style = "heading 1")
 
 # Save the Word document
-print(doc, target = "models_output.docx")
+print(doc2, target = "models_output_withoutITV.docx")
 #Don't override now (I made some pretty-changes :) )
 
 #### Get AIC for every model ----
